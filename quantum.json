@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-command-bar-todo.md",
   "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
   "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T21:27:07Z",
+  "updatedAt": "2026-06-09T21:33:49Z",
   "coverageThreshold": 80,
   "staleThresholdMinutes": 20,
   "fileConflicts": [
@@ -1421,7 +1421,7 @@
         "Typecheck and lint pass"
       ],
       "priority": 9,
-      "status": "pending",
+      "status": "passed",
       "startedAt": null,
       "dependsOn": [
         "US-005",
@@ -1441,7 +1441,7 @@
             "pnpm test -- --run src/components/TaskRow.test.tsx"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -1461,7 +1461,7 @@
             "US-014",
             "US-015"
           ],
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -1481,7 +1481,7 @@
             "US-014",
             "US-015"
           ],
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-004",
@@ -1504,7 +1504,7 @@
               "todayItems"
             ]
           },
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-005",
@@ -1520,22 +1520,22 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 command-only verification task",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:33:49Z"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:33:49Z"
         },
         "visualReview": {
-          "status": "pending",
+          "status": "passed",
           "blocking": false
         }
       },
@@ -2684,6 +2684,23 @@
         "e2e/states-commandmode.spec.ts"
       ],
       "learnings": "openCheatsheet is a CommandBar prop defaulting to no-op; US-017 wires the real overlay. Command list options execute on mouseDown to beat input blur."
+    },
+    {
+      "timestamp": "2026-06-09T21:33:49Z",
+      "iteration": 1,
+      "storyId": "US-009",
+      "action": "story_passed",
+      "details": "TaskRow + TaskList with selection/roving tabindex; TodayView wired to todayItems; 15 component tests; 20 e2e; visual gate PASS; seeded-state screenshots inspected at __screenshots__/e2e/states-tasklist.spec.ts/.",
+      "filesChanged": [
+        "src/components/TaskRow.tsx",
+        "src/components/TaskRow.test.tsx",
+        "src/components/TaskList.tsx",
+        "src/components/TaskList.test.tsx",
+        "src/components/TaskList.css",
+        "src/views/TodayView.tsx",
+        "e2e/states-tasklist.spec.ts"
+      ],
+      "learnings": "TaskList supports controlled (selectedId/onSelect) and uncontrolled selection for US-010 keymap. Title click opens inline edit with stopPropagation \u2014 e2e selecting a row must click the meta area. TaskRow/TaskList styles in TaskList.css."
     }
   ],
   "codebasePatterns": [
@@ -2699,7 +2716,8 @@
     "Parser: pass order recurrence->date->time->list->priority, first-wins per kind, word-level whole-token matching; chip displays: date \"Wed Jun 10\", time \"3:00 PM\", list \"#work\", priority \"P1\", recurrence source text",
     "Store: reducer(state, action) pure; mutating payloads carry injected ids/dates (newId, completedAt, today); internal inverse action types restore/markDone/revertComplete",
     "UI: classes shell-column/masthead/view-tabs/view-tab/keycap/empty-state in App.css; tokens only; aria-current=page marks active tab; useApp() from src/state/AppContext",
-    "Component tests: // @vitest-environment jsdom pragma + src/test-setup.ts localStorage shim; probe context state by rendering a JSON <pre> probe inside AppProvider"
+    "Component tests: // @vitest-environment jsdom pragma + src/test-setup.ts localStorage shim; probe context state by rendering a JSON <pre> probe inside AppProvider",
+    "TaskList sections prop: [{label, tasks, rollover?}]; empty sections omitted; all-empty renders empty-state line. TaskRow classes: task-row--p1/--rollover/--selected/--done"
   ],
   "userIntent": {
     "text": "todo app that implements the best features from existing todo apps and fixes common pain points",

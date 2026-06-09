@@ -1,0 +1,148 @@
+/* Task list + rows — DESIGN-SYSTEM.md §6. Tokens only. */
+
+.task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.task-section-label {
+  margin: var(--space-5) 0 var(--space-2);
+  font-family: var(--type-mono);
+  font-weight: 600;
+  font-size: var(--text-mono-size);
+  line-height: var(--text-mono-leading);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-muted);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-1);
+}
+
+.task-section {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.task-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-2);
+  cursor: default;
+}
+
+.task-row--p1 {
+  border-left-color: var(--color-accent);
+}
+
+.task-row--rollover {
+  border-left-color: var(--color-muted);
+}
+
+.task-row--selected {
+  border-left: 3px solid var(--color-accent);
+  box-shadow: var(--shadow-print) var(--color-border);
+}
+
+.task-row:hover {
+  background: var(--color-bg);
+}
+
+.task-row:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.task-row-checkbox {
+  opacity: 0;
+  accent-color: var(--color-accent);
+  margin: 0;
+  align-self: center;
+}
+
+.task-row:hover .task-row-checkbox,
+.task-row:focus-within .task-row-checkbox,
+.task-row--selected .task-row-checkbox,
+.task-row--done .task-row-checkbox {
+  opacity: 1;
+}
+
+.task-row-checkbox:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.task-row-title {
+  font-family: var(--type-body);
+  font-weight: 500;
+  font-size: 17px;
+  line-height: 24px;
+  color: var(--color-fg);
+  flex: 1;
+  cursor: text;
+}
+
+.task-row--done .task-row-title {
+  text-decoration: line-through;
+  text-decoration-color: var(--color-muted);
+  color: var(--color-muted);
+  transition: color var(--motion-base) var(--ease);
+}
+
+.task-row-since {
+  font-family: var(--type-body);
+  font-style: italic;
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-leading);
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.task-row-meta {
+  display: flex;
+  gap: var(--space-3);
+  font-family: var(--type-mono);
+  font-size: var(--text-mono-size);
+  line-height: var(--text-mono-leading);
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+  margin-left: auto;
+  text-align: right;
+}
+
+.task-row-edit {
+  flex: 1;
+  font-family: var(--type-body);
+  font-weight: 500;
+  font-size: 17px;
+  line-height: 24px;
+  color: var(--color-fg);
+  background: var(--color-surface);
+  border: none;
+  border-bottom: 1px solid var(--color-accent);
+  padding: 0;
+}
+
+.task-row-edit:focus {
+  outline: none;
+}
+
+@media (max-width: 767px) {
+  .task-row {
+    flex-wrap: wrap;
+  }
+
+  .task-row-meta {
+    margin-left: calc(var(--space-3) + 13px);
+    width: 100%;
+    text-align: left;
+  }
+}
