@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-command-bar-todo.md",
   "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
   "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T22:18:13.922356+00:00",
+  "updatedAt": "2026-06-09T22:28:39.516814+00:00",
   "coverageThreshold": 80,
   "staleThresholdMinutes": 20,
   "fileConflicts": [
@@ -2377,7 +2377,7 @@
         "Typecheck and lint pass"
       ],
       "priority": 17,
-      "status": "pending",
+      "status": "passed",
       "startedAt": null,
       "dependsOn": [
         "US-008",
@@ -2397,7 +2397,7 @@
             "pnpm test -- --run src/components/Cheatsheet.test.tsx"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -2411,7 +2411,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -2433,7 +2433,7 @@
               "Cheatsheet"
             ]
           },
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-004",
@@ -2448,19 +2448,17 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 command-only verification task",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
-          "issues": [],
-          "reviewedAt": null
+          "status": "passed",
+          "timestamp": "2026-06-09T22:28:39.516814+00:00"
         },
         "codeQuality": {
-          "status": "pending",
-          "issues": [],
-          "reviewedAt": null
+          "status": "passed",
+          "timestamp": "2026-06-09T22:28:39.516814+00:00"
         },
         "visualReview": {
           "status": "pending",
@@ -2804,6 +2802,22 @@
         "__screenshots__/e2e/states-banner.spec.ts/"
       ],
       "learnings": "e2e quota simulation: addInitScript patching Storage.prototype.setItem to throw DOMException QuotaExceededError for the app key only \u2014 load still works, save fails. Two Playwright pages in one context share localStorage and fire real storage events."
+    },
+    {
+      "timestamp": "2026-06-09T22:28:39.516814+00:00",
+      "iteration": 8,
+      "storyId": "US-017",
+      "action": "story_passed",
+      "details": "Cheatsheet overlay (own CSS): bg scrim at 0.8 opacity via pseudo-element, double-rule Fraunces header, two-column mono dl key table with all US-010 bindings; focus trapped (dialog-container focus, generic Tab cycle), Esc closes with stopPropagation beating keymap precedence, focus restored on unmount; wired ? (useKeymap) and >help (CommandBar prop) in App.tsx; 3 blessed baselines after fixing default focus ring + key-column collisions.",
+      "filesChanged": [
+        "src/components/Cheatsheet.tsx",
+        "src/components/Cheatsheet.css",
+        "src/components/Cheatsheet.test.tsx",
+        "src/App.tsx",
+        "e2e/states-cheatsheet.spec.ts",
+        "__screenshots__/e2e/states-cheatsheet.spec.ts/"
+      ],
+      "learnings": "Focus the dialog container (tabIndex -1), never a button, on modal open: user-event (and some AT) complete an Enter press as a click on whatever is focused at keyup, instantly closing the modal. Unconditional stopPropagation inside the dialog prevents keymap typeahead from stealing focus to the bar."
     }
   ],
   "codebasePatterns": [

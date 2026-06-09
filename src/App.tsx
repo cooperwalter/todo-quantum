@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import './App.css';
+import { Cheatsheet } from './components/Cheatsheet';
 import { CommandBar } from './components/CommandBar';
 import { StorageBanner } from './components/StorageBanner';
 import { Toast } from './components/Toast';
@@ -44,6 +46,7 @@ function ActiveView() {
 function Shell() {
   const { dispatch, setView, setBarText, barRef, selectedTaskId, setSelectedTaskId } = useApp();
   const { saveFailed, dismissSaveFailure } = usePersistence();
+  const [cheatsheetOpen, setCheatsheetOpen] = useState(false);
 
   useKeymap({
     barRef,
@@ -69,19 +72,20 @@ function Shell() {
     onRedo: () => dispatch({ type: 'redo' }),
     onTypeahead: (ch) => setBarText((prev) => prev + ch),
     setView,
-    openCheatsheet: () => {}, // wired by US-017
+    openCheatsheet: () => setCheatsheetOpen(true),
   });
 
   return (
     <div className="shell-column">
       <Masthead />
       {saveFailed && <StorageBanner onDismiss={dismissSaveFailure} />}
-      <CommandBar />
+      <CommandBar openCheatsheet={() => setCheatsheetOpen(true)} />
       <ViewTabs />
       <main className="view-region">
         <ActiveView />
       </main>
       <Toast />
+      {cheatsheetOpen && <Cheatsheet onClose={() => setCheatsheetOpen(false)} />}
     </div>
   );
 }

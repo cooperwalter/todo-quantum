@@ -1,0 +1,115 @@
+/* Cheatsheet overlay — DESIGN-SYSTEM §6. Surface sheet over a bg scrim at 80%. */
+
+.cheatsheet-scrim {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-7) var(--space-4);
+  z-index: 10;
+  overflow-y: auto;
+}
+
+.cheatsheet-scrim::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: var(--color-bg);
+  opacity: 0.8;
+}
+
+.cheatsheet {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-print) var(--color-border);
+  padding: var(--space-5) var(--space-5) var(--space-6);
+}
+
+/* Double-rule header echoing the masthead. */
+.cheatsheet-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 3px double var(--color-fg);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.cheatsheet-title {
+  margin: 0;
+  font-family: var(--type-display);
+  font-weight: 600;
+  font-size: var(--text-h2-size);
+  line-height: var(--text-h2-leading);
+  color: var(--color-fg);
+}
+
+.cheatsheet-close {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0 var(--space-1);
+  font-family: var(--type-mono);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-leading);
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.cheatsheet:focus {
+  outline: none;
+}
+
+.cheatsheet-close:hover {
+  color: var(--color-fg);
+}
+
+.cheatsheet-close:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Two-column mono key table. */
+.cheatsheet-table {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--space-5);
+  row-gap: var(--space-2);
+}
+
+.cheatsheet-row {
+  display: grid;
+  grid-template-columns: 10ch 1fr;
+  align-items: baseline;
+  column-gap: var(--space-3);
+}
+
+.cheatsheet-key {
+  font-family: var(--type-mono);
+  font-weight: 600;
+  font-size: var(--text-mono-size);
+  line-height: var(--text-mono-leading);
+  letter-spacing: 0.08em;
+  color: var(--color-fg);
+}
+
+.cheatsheet-action {
+  margin: 0;
+  font-family: var(--type-mono);
+  font-size: var(--text-mono-size);
+  line-height: var(--text-mono-leading);
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+@media (max-width: 767px) {
+  .cheatsheet-table {
+    grid-template-columns: 1fr;
+  }
+}
