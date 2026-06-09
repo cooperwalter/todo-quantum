@@ -1,0 +1,300 @@
+{
+  "storyId": "US-001",
+  "prdSha": "77339e3266bda2133c1fe8c8ab71d2fdf22a6317fa5efdd0f6bc20b90fd92258",
+  "acs": [
+    "src/lib/types.ts [NEW] exports Task, Recurrence, AppData exactly as specified in FR-26 and FR-29…FR-31 (no any anywhere)",
+    "src/lib/dates.ts [NEW] exports todayStr, addDays, nextWeekdayAfter, nextSaturdayAfter, isoWeekStart, snoozeTomorrow, snoozeNextWeek, snoozeWeekend — local-date-component math only (FR-32), strictly-after weekday semantics (FR-33) — planner-added AC for the shared date module",
+    "src/lib/persistence.ts [NEW] exports load(storage: StorageLike): LoadResult and save(storage: StorageLike, data: AppData): SaveResult (storage injected; never touches window directly)",
+    "save serializes, writes under key todo-quantum.v1, re-reads and parses to verify; returns {ok: false, reason: 'quota'} on QuotaExceededError without throwing",
+    "load of missing key returns {ok: true, data: {schemaVersion: 1, tasks: []}, recovered: false}",
+    "load of unparseable/schema-invalid JSON stashes the raw blob under todo-quantum.recovery.<ISO timestamp>, returns empty AppData with recovered: true",
+    "Unit tests (Vitest, generator fns makeTask/makeAppData) cover: round-trip, missing key, corrupt JSON stash, quota failure; all pass via pnpm test -- --run",
+    "Typecheck (pnpm run typecheck) and lint (pnpm run lint) pass"
+  ],
+  "contracts": {
+    "design_tokens": {
+      "color-accent": {
+        "value": "--color-accent",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-fg": {
+        "value": "--color-fg",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "space-scale": {
+        "value": "[4,8,12,16,24,32,48,64,96]"
+      },
+      "type-display": {
+        "value": "--type-display",
+        "pattern": "^--type-[a-z0-9]+$"
+      }
+    },
+    "routes": {
+      "home": {
+        "value": "/",
+        "pattern": "^/"
+      }
+    },
+    "storage_keys": {
+      "app_data": {
+        "value": "todo-quantum.v1",
+        "pattern": "^todo-quantum\\."
+      },
+      "recovery_prefix": {
+        "value": "todo-quantum.recovery.",
+        "pattern": "^todo-quantum\\.recovery\\."
+      }
+    },
+    "commands": {
+      "palette_set": {
+        "value": "today|upcoming|all|done|undo|redo|help"
+      }
+    },
+    "keybindings": {
+      "snooze_tomorrow": {
+        "value": "1"
+      },
+      "snooze_next_week": {
+        "value": "2"
+      },
+      "snooze_weekend": {
+        "value": "3"
+      },
+      "complete": {
+        "value": "x"
+      },
+      "cheatsheet": {
+        "value": "?"
+      }
+    },
+    "shared_types": {
+      "task": {
+        "value": "Task",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/types.ts",
+        "owner": "US-001",
+        "consumers": [
+          "US-002",
+          "US-003",
+          "US-004",
+          "US-005",
+          "US-006",
+          "US-009",
+          "US-012",
+          "US-013",
+          "US-014",
+          "US-015",
+          "US-016"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "id",
+              "type": "string"
+            },
+            {
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "name": "status",
+              "type": "'open' | 'done'"
+            },
+            {
+              "name": "dueDate",
+              "type": "string | null"
+            },
+            {
+              "name": "dueTime",
+              "type": "string | null"
+            },
+            {
+              "name": "list",
+              "type": "string | null"
+            },
+            {
+              "name": "priority",
+              "type": "1 | 2 | 3 | null"
+            },
+            {
+              "name": "recurrence",
+              "type": "Recurrence | null"
+            },
+            {
+              "name": "createdAt",
+              "type": "string"
+            },
+            {
+              "name": "completedAt",
+              "type": "string | null"
+            },
+            {
+              "name": "order",
+              "type": "number"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface Task {\n  id: string;\n  title: string;\n  status: 'open' | 'done';\n  dueDate: string | null;\n  dueTime: string | null;\n  list: string | null;\n  priority: 1 | 2 | 3 | null;\n  recurrence: Recurrence | null;\n  createdAt: string;\n  completedAt: string | null;\n  order: number;\n}"
+      },
+      "recurrence": {
+        "value": "Recurrence",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/types.ts",
+        "owner": "US-001",
+        "consumers": [
+          "US-002",
+          "US-003",
+          "US-004"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "freq",
+              "type": "'daily' | 'weekly' | 'monthly'"
+            },
+            {
+              "name": "interval",
+              "type": "number"
+            },
+            {
+              "name": "byWeekday",
+              "type": "number[] | null"
+            },
+            {
+              "name": "byMonthDay",
+              "type": "number | null"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface Recurrence {\n  freq: 'daily' | 'weekly' | 'monthly';\n  interval: number;\n  byWeekday: number[] | null;\n  byMonthDay: number | null;\n}"
+      },
+      "app_data": {
+        "value": "AppData",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/types.ts",
+        "owner": "US-001",
+        "consumers": [
+          "US-004",
+          "US-005",
+          "US-006",
+          "US-016"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "schemaVersion",
+              "type": "1"
+            },
+            {
+              "name": "tasks",
+              "type": "Task[]"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface AppData {\n  schemaVersion: 1;\n  tasks: Task[];\n}"
+      },
+      "chip": {
+        "value": "Chip",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/parser.ts",
+        "owner": "US-002",
+        "consumers": [
+          "US-007"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "start",
+              "type": "number"
+            },
+            {
+              "name": "end",
+              "type": "number"
+            },
+            {
+              "name": "kind",
+              "type": "'date' | 'time' | 'list' | 'priority' | 'recurrence'"
+            },
+            {
+              "name": "display",
+              "type": "string"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface Chip {\n  start: number;\n  end: number;\n  kind: 'date' | 'time' | 'list' | 'priority' | 'recurrence';\n  display: string;\n}"
+      },
+      "parse_result": {
+        "value": "ParseResult",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/parser.ts",
+        "owner": "US-002",
+        "consumers": [
+          "US-007",
+          "US-008"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "valid",
+              "type": "boolean"
+            },
+            {
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "name": "dueDate",
+              "type": "string | null"
+            },
+            {
+              "name": "dueTime",
+              "type": "string | null"
+            },
+            {
+              "name": "list",
+              "type": "string | null"
+            },
+            {
+              "name": "priority",
+              "type": "1 | 2 | 3 | null"
+            },
+            {
+              "name": "recurrence",
+              "type": "Recurrence | null"
+            },
+            {
+              "name": "chips",
+              "type": "Chip[]"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface ParseResult {\n  valid: boolean;\n  title: string;\n  dueDate: string | null;\n  dueTime: string | null;\n  list: string | null;\n  priority: 1 | 2 | 3 | null;\n  recurrence: Recurrence | null;\n  chips: Chip[];\n}"
+      }
+    }
+  },
+  "files": [
+    "src/lib/dates.test.ts",
+    "src/lib/dates.ts",
+    "src/lib/persistence.test.ts",
+    "src/lib/persistence.ts",
+    "src/lib/types.ts"
+  ],
+  "expectedTests": [
+    "pnpm test -- --run src/lib/dates.test.ts",
+    "pnpm test -- --run src/lib/dates.test.ts",
+    "pnpm test -- --run src/lib/persistence.test.ts"
+  ],
+  "otherCommands": [
+    "pnpm run typecheck",
+    "pnpm test -- --run src/lib",
+    "pnpm run typecheck",
+    "pnpm run lint"
+  ],
+  "plannedBy": "ql-plan",
+  "plannedAt": "2026-06-09T20:45:16Z"
+}

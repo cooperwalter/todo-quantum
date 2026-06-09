@@ -41,6 +41,25 @@ baseline. A baseline you never looked at is not a baseline.
 - Match implementation effort to the aesthetic: maximalism needs elaborate code;
   minimalism needs precision in spacing, type scale, and motion.
 
+## Approval rules (brainstorm/spec/plan walkthroughs)
+
+Never ask the user to approve content they cannot see. When presenting a design
+section, PRD section, or plan for approval:
+
+1. Print the **full section text** as a normal message the user will read — not
+   only inside your thinking, and not only as a file write.
+2. THEN ask the approval question. If you use a question tool, the question's
+   description/preview must carry the section content (or a faithful summary of
+   it) — the tool UI shows only the question, so "Section 1 — Overview: does it
+   look right?" with no visible overview is an empty approval.
+3. Format the in-question summary for scanning, never as prose: one decision per
+   line, as short `Label: choice` bullets (e.g. `- Storage: single versioned JSON
+   doc in localStorage`). No semicolon-chained run-on paragraphs, no bolding the
+   whole block. If the tool supports an option preview, put the full section
+   there and keep the question text to one line.
+4. An approval given without the content on screen is not an approval. Re-present
+   and re-ask.
+
 ## Parallel-execution rules
 
 - You may be one of several agents running in isolated worktrees. Touch only the

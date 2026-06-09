@@ -1,0 +1,305 @@
+{
+  "storyId": "US-006",
+  "prdSha": "77339e3266bda2133c1fe8c8ab71d2fdf22a6317fa5efdd0f6bc20b90fd92258",
+  "acs": [
+    "src/App.tsx (existing) replaced with shell: masthead (today's date, --type-display Fraunces over double rule per DESIGN-SYSTEM §1), view tabs (Today/Upcoming/All/Done, mono uppercase, accent underline on current), main column (max-width 720 desktop / 640 tablet / full 375 per §7), placeholder content region",
+    "src/components/ViewTabs.tsx [NEW]; current view held in App state; clicking a tab switches view",
+    "src/state/AppContext.tsx [NEW] exposes useApp() returning {state, dispatch, view, setView, barText, setBarText, recovered}; initial state loads from persistence load(localStorage) — planner-added AC realizing FR-15/FR-20/US-016 groundwork",
+    "Only --color-*/--space-*/--type-*/--radius-* tokens used — grep -rnE '#[0-9A-Fa-f]{3,6}' src/components src/App.tsx src/App.css returns no matches in changed files",
+    "Scaffold demo content and unused assets removed from src/App.tsx/src/App.css",
+    "Visual gate passes: bash verification/run-visual-gate.sh / (baseline created, rendered, inspected against DESIGN-SYSTEM.md before blessing)",
+    "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
+    "Typecheck and lint pass"
+  ],
+  "contracts": {
+    "design_tokens": {
+      "color-accent": {
+        "value": "--color-accent",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-fg": {
+        "value": "--color-fg",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "space-scale": {
+        "value": "[4,8,12,16,24,32,48,64,96]"
+      },
+      "type-display": {
+        "value": "--type-display",
+        "pattern": "^--type-[a-z0-9]+$"
+      }
+    },
+    "routes": {
+      "home": {
+        "value": "/",
+        "pattern": "^/"
+      }
+    },
+    "storage_keys": {
+      "app_data": {
+        "value": "todo-quantum.v1",
+        "pattern": "^todo-quantum\\."
+      },
+      "recovery_prefix": {
+        "value": "todo-quantum.recovery.",
+        "pattern": "^todo-quantum\\.recovery\\."
+      }
+    },
+    "commands": {
+      "palette_set": {
+        "value": "today|upcoming|all|done|undo|redo|help"
+      }
+    },
+    "keybindings": {
+      "snooze_tomorrow": {
+        "value": "1"
+      },
+      "snooze_next_week": {
+        "value": "2"
+      },
+      "snooze_weekend": {
+        "value": "3"
+      },
+      "complete": {
+        "value": "x"
+      },
+      "cheatsheet": {
+        "value": "?"
+      }
+    },
+    "shared_types": {
+      "task": {
+        "value": "Task",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/types.ts",
+        "owner": "US-001",
+        "consumers": [
+          "US-002",
+          "US-003",
+          "US-004",
+          "US-005",
+          "US-006",
+          "US-009",
+          "US-012",
+          "US-013",
+          "US-014",
+          "US-015",
+          "US-016"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "id",
+              "type": "string"
+            },
+            {
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "name": "status",
+              "type": "'open' | 'done'"
+            },
+            {
+              "name": "dueDate",
+              "type": "string | null"
+            },
+            {
+              "name": "dueTime",
+              "type": "string | null"
+            },
+            {
+              "name": "list",
+              "type": "string | null"
+            },
+            {
+              "name": "priority",
+              "type": "1 | 2 | 3 | null"
+            },
+            {
+              "name": "recurrence",
+              "type": "Recurrence | null"
+            },
+            {
+              "name": "createdAt",
+              "type": "string"
+            },
+            {
+              "name": "completedAt",
+              "type": "string | null"
+            },
+            {
+              "name": "order",
+              "type": "number"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface Task {\n  id: string;\n  title: string;\n  status: 'open' | 'done';\n  dueDate: string | null;\n  dueTime: string | null;\n  list: string | null;\n  priority: 1 | 2 | 3 | null;\n  recurrence: Recurrence | null;\n  createdAt: string;\n  completedAt: string | null;\n  order: number;\n}"
+      },
+      "recurrence": {
+        "value": "Recurrence",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/types.ts",
+        "owner": "US-001",
+        "consumers": [
+          "US-002",
+          "US-003",
+          "US-004"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "freq",
+              "type": "'daily' | 'weekly' | 'monthly'"
+            },
+            {
+              "name": "interval",
+              "type": "number"
+            },
+            {
+              "name": "byWeekday",
+              "type": "number[] | null"
+            },
+            {
+              "name": "byMonthDay",
+              "type": "number | null"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface Recurrence {\n  freq: 'daily' | 'weekly' | 'monthly';\n  interval: number;\n  byWeekday: number[] | null;\n  byMonthDay: number | null;\n}"
+      },
+      "app_data": {
+        "value": "AppData",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/types.ts",
+        "owner": "US-001",
+        "consumers": [
+          "US-004",
+          "US-005",
+          "US-006",
+          "US-016"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "schemaVersion",
+              "type": "1"
+            },
+            {
+              "name": "tasks",
+              "type": "Task[]"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface AppData {\n  schemaVersion: 1;\n  tasks: Task[];\n}"
+      },
+      "chip": {
+        "value": "Chip",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/parser.ts",
+        "owner": "US-002",
+        "consumers": [
+          "US-007"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "start",
+              "type": "number"
+            },
+            {
+              "name": "end",
+              "type": "number"
+            },
+            {
+              "name": "kind",
+              "type": "'date' | 'time' | 'list' | 'priority' | 'recurrence'"
+            },
+            {
+              "name": "display",
+              "type": "string"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface Chip {\n  start: number;\n  end: number;\n  kind: 'date' | 'time' | 'list' | 'priority' | 'recurrence';\n  display: string;\n}"
+      },
+      "parse_result": {
+        "value": "ParseResult",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/parser.ts",
+        "owner": "US-002",
+        "consumers": [
+          "US-007",
+          "US-008"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "valid",
+              "type": "boolean"
+            },
+            {
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "name": "dueDate",
+              "type": "string | null"
+            },
+            {
+              "name": "dueTime",
+              "type": "string | null"
+            },
+            {
+              "name": "list",
+              "type": "string | null"
+            },
+            {
+              "name": "priority",
+              "type": "1 | 2 | 3 | null"
+            },
+            {
+              "name": "recurrence",
+              "type": "Recurrence | null"
+            },
+            {
+              "name": "chips",
+              "type": "Chip[]"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface ParseResult {\n  valid: boolean;\n  title: string;\n  dueDate: string | null;\n  dueTime: string | null;\n  list: string | null;\n  priority: 1 | 2 | 3 | null;\n  recurrence: Recurrence | null;\n  chips: Chip[];\n}"
+      }
+    }
+  },
+  "files": [
+    "e2e/shell.spec.ts",
+    "src/App.css",
+    "src/App.tsx",
+    "src/components/ViewTabs.tsx",
+    "src/state/AppContext.tsx",
+    "src/views/AllView.tsx",
+    "src/views/DoneView.tsx",
+    "src/views/TodayView.tsx",
+    "src/views/UpcomingView.tsx",
+    "verification/visual.spec.ts-snapshots"
+  ],
+  "expectedTests": [
+    "pnpm exec playwright test e2e/shell.spec.ts"
+  ],
+  "otherCommands": [
+    "pnpm run typecheck",
+    "pnpm run typecheck",
+    "pnpm run typecheck",
+    "grep -rnE '#[0-9A-Fa-f]{3,6}' src/components src/views src/App.tsx src/App.css || echo NO_HEX_LITERALS",
+    "pnpm run typecheck",
+    "bash verification/run-visual-gate.sh /"
+  ],
+  "plannedBy": "ql-plan",
+  "plannedAt": "2026-06-09T20:45:16Z"
+}
