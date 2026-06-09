@@ -361,3 +361,41 @@ describe('scale', () => {
     expect(state.data.tasks.find((t) => t.id === 'added-x')?.order).toBe(101);
   });
 });
+
+describe('snooze targets (FR-33...FR-35, US-012)', () => {
+  it('snoozeTomorrow target moves a rollover task to tomorrow and out of the rollover section', async () => {
+    const { snoozeTomorrow } = await import('./dates');
+    const { todayItems } = await import('./selectors');
+    const today = '2026-06-09';
+    const task = makeTask({ dueDate: '2026-06-01' });
+    let state = makeState([task]);
+    expect(todayItems(state.data, today).rollover).toHaveLength(1);
+    state = reducer(state, { type: 'snooze', id: task.id, dueDate: snoozeTomorrow(today) });
+    expect(state.data.tasks[0].dueDate).toBe('2026-06-10');
+    expect(todayItems(state.data, today).rollover).toHaveLength(0);
+  });
+
+  it('snoozeNextWeek target crosses a month boundary (2026-06-29 -> 2026-07-06)', async () => {
+    const { snoozeNextWeek } = await import('./dates');
+    const task = makeTask({ dueDate: '2026-06-29' });
+    let state = makeState([task]);
+    state = reducer(state, { type: 'snooze', id: task.id, dueDate: snoozeNextWeek('2026-06-29') });
+    expect(state.data.tasks[0].dueDate).toBe('2026-07-06');
+  });
+
+  it('snoozeWeekend on a Saturday yields the FOLLOWING Saturday (2026-06-13 -> 2026-06-20)', async () => {
+    const { snoozeWeekend } = await import('./dates');
+    const task = makeTask({ dueDate: '2026-06-13' });
+    let state = makeState([task]);
+    state = reducer(state, { type: 'snooze', id: task.id, dueDate: snoozeWeekend('2026-06-13') });
+    expect(state.data.tasks[0].dueDate).toBe('2026-06-20');
+  });
+
+  it('snoozing a dueDate:null task assigns the target date (FR-35)', async () => {
+    const { snoozeTomorrow } = await import('./dates');
+    const task = makeTask({ dueDate: null });
+    let state = makeState([task]);
+    state = reducer(state, { type: 'snooze', id: task.id, dueDate: snoozeTomorrow('2026-06-09') });
+    expect(state.data.tasks[0].dueDate).toBe('2026-06-10');
+  });
+});

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import './TaskList.css';
-import { isoWeekday, todayStr } from '../lib/dates';
+import { isoWeekday, snoozeNextWeek, snoozeTomorrow, snoozeWeekend, todayStr } from '../lib/dates';
 import { formatTimeDisplay } from '../lib/parser';
 import { useApp } from '../state/AppContext';
 import type { Task } from '../lib/types';
@@ -19,6 +19,18 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
   const { dispatch } = useApp();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task.title);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const snoozeOptions: { label: string; target: (today: string) => string }[] = [
+    { label: 'Tomorrow', target: snoozeTomorrow },
+    { label: 'Next week', target: snoozeNextWeek },
+    { label: 'Weekend', target: snoozeWeekend },
+  ];
+
+  function snoozeTo(target: (today: string) => string) {
+    dispatch({ type: 'snooze', id: task.id, dueDate: target(todayStr(new Date())) });
+    setMenuOpen(false);
+  }
 
   function complete() {
     dispatch({
@@ -105,6 +117,41 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
         </span>
       )}
       {sinceLabel !== null && <span className="task-row-since">{sinceLabel}</span>}
+      {task.status === 'open' && (
+        <span className="task-row-overflow">
+          <button
+            type="button"
+            className="task-row-overflow-button"
+            aria-label={`Task options for ${task.title}`}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            onClick={(e) => {
+              e.stopPropagation();
+              setMenuOpen((prev) => !prev);
+            }}
+          >
+            ⋯
+          </button>
+          {menuOpen && (
+            <span className="task-row-menu" role="menu" aria-label="Snooze">
+              {snoozeOptions.map((option) => (
+                <button
+                  key={option.label}
+                  type="button"
+                  role="menuitem"
+                  className="task-row-menu-item"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    snoozeTo(option.target);
+                  }}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </span>
+          )}
+        </span>
+      )}
       <span className="task-row-meta">
         {task.dueTime !== null && <span className="task-row-time">{formatTimeDisplay(task.dueTime)}</span>}
         {task.list !== null && <span className="task-row-list">#{task.list}</span>}

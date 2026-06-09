@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-command-bar-todo.md",
   "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
   "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T21:47:35Z",
+  "updatedAt": "2026-06-09T21:51:06Z",
   "coverageThreshold": 80,
   "staleThresholdMinutes": 20,
   "fileConflicts": [
@@ -1799,7 +1799,7 @@
         "Typecheck and lint pass"
       ],
       "priority": 12,
-      "status": "pending",
+      "status": "passed",
       "startedAt": null,
       "dependsOn": [
         "US-010",
@@ -1818,7 +1818,7 @@
             "pnpm test -- --run src/lib/store.test.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -1832,7 +1832,7 @@
             "pnpm test -- --run src/components/TaskRow.test.tsx src/hooks/useKeymap.test.tsx"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -1855,7 +1855,7 @@
               "snoozeWeekend"
             ]
           },
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-004",
@@ -1870,22 +1870,22 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 command-only verification task",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:51:06Z"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:51:06Z"
         },
         "visualReview": {
-          "status": "pending",
+          "status": "passed",
           "blocking": false
         }
       },
@@ -2734,6 +2734,21 @@
         "e2e/states-focus.spec.ts"
       ],
       "learnings": "Selection state + barRef live in AppContext (selectedTaskId/setSelectedTaskId/barRef) \u2014 sequential-mode deviation from declared filePaths, needed because US-010 cannot edit TodayView per ownership. US-013 must preserve TaskList selectedId/onSelect wiring. onEdit triggers TaskRow inline edit via DOM .task-row-title click. setBarText is Dispatch<SetStateAction<string>> for typeahead appends."
+    },
+    {
+      "timestamp": "2026-06-09T21:51:06Z",
+      "iteration": 1,
+      "storyId": "US-012",
+      "action": "story_passed",
+      "details": "Snooze: store-suite target tests (weekend-on-weekend, month boundary, undated->Scheduled), TaskRow overflow menu (Tomorrow/Next week/Weekend), key-1 snooze e2e; 262 unit, 33 e2e, visual gate PASS; menu screenshot inspected.",
+      "filesChanged": [
+        "src/lib/store.test.ts",
+        "src/components/TaskRow.tsx",
+        "src/components/TaskRow.test.tsx",
+        "src/components/TaskList.css",
+        "e2e/states-snooze.spec.ts"
+      ],
+      "learnings": "Key 1/2/3 snooze was already wired in US-010 useKeymap; US-012 adds mouse parity via the overflow menu. Toast labels (Snoozed to X / Scheduled) come from the wrapped dispatch in AppContext."
     }
   ],
   "codebasePatterns": [
