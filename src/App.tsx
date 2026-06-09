@@ -1,4 +1,5 @@
 import './App.css';
+import { CommandBar } from './components/CommandBar';
 import { ViewTabs } from './components/ViewTabs';
 import { AppProvider, useApp } from './state/AppContext';
 import { AllView } from './views/AllView';
@@ -39,6 +40,7 @@ function Shell() {
   return (
     <div className="shell-column">
       <Masthead />
+      <CommandBar />
       <ViewTabs />
       <main className="view-region">
         <ActiveView />

@@ -1,0 +1,95 @@
+/* Command bar — DESIGN-SYSTEM.md §6. Tokens only. */
+
+.command-bar-region {
+  padding: var(--space-4) 0 0;
+}
+
+.command-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-fg);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-print) var(--color-border);
+  padding: var(--space-2) var(--space-3);
+}
+
+.command-bar--error {
+  border-color: var(--color-danger);
+  transition: border-color var(--motion-fast) var(--ease);
+}
+
+.command-bar:focus-within {
+  box-shadow: var(--shadow-print) var(--color-accent);
+}
+
+.command-bar-prompt {
+  color: var(--color-accent);
+  font-family: var(--type-mono);
+  font-size: var(--text-mono-size);
+  line-height: var(--text-mono-leading);
+}
+
+.command-bar-field {
+  position: relative;
+  flex: 1;
+}
+
+.command-bar-input,
+.command-bar-mirror {
+  font-family: var(--type-mono);
+  font-weight: 400;
+  font-size: var(--text-mono-size);
+  line-height: var(--text-mono-leading);
+  letter-spacing: normal;
+  padding: var(--space-1) 0;
+  border: none;
+  width: 100%;
+  box-sizing: border-box;
+  white-space: pre;
+}
+
+.command-bar-input {
+  background: transparent;
+  color: transparent;
+  caret-color: var(--color-fg);
+  position: relative;
+}
+
+.command-bar-input:focus {
+  outline: none;
+}
+
+.command-bar-mirror {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--color-fg);
+  overflow: hidden;
+}
+
+.command-bar-chip {
+  color: var(--color-accent);
+  border-bottom: 2px solid var(--color-accent);
+}
+
+.command-bar-error {
+  margin: var(--space-1) 0 0;
+  font-family: var(--type-mono);
+  font-size: var(--text-mono-size);
+  line-height: var(--text-mono-leading);
+  color: var(--color-danger);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
