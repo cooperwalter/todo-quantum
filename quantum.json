@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-command-bar-todo.md",
   "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
   "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T20:58:38Z",
+  "updatedAt": "2026-06-09T21:00:25Z",
   "coverageThreshold": 80,
   "staleThresholdMinutes": 20,
   "fileConflicts": [
@@ -720,7 +720,7 @@
         "Typecheck and lint pass"
       ],
       "priority": 3,
-      "status": "pending",
+      "status": "passed",
       "startedAt": null,
       "dependsOn": [
         "US-001"
@@ -738,7 +738,7 @@
             "pnpm test -- --run src/lib/recurrence.test.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -757,19 +757,19 @@
           "consumedBy": [
             "US-004"
           ],
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:00:25Z"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:00:25Z"
         }
       },
       "retries": {
@@ -2593,6 +2593,18 @@
         "src/lib/parser.test.ts"
       ],
       "learnings": "Adjacent date+time tokens merge into a single date chip with display \"Wed Jun 10, 3:00 PM\" to satisfy the 3-chip canonical AC; non-adjacent stay separate."
+    },
+    {
+      "timestamp": "2026-06-09T21:00:25Z",
+      "iteration": 1,
+      "storyId": "US-003",
+      "action": "story_passed",
+      "details": "recurrence.ts nextOccurrence TDD; 21 tests covering daily/weekly/monthly, parity, clamping, overdue, DST weeks",
+      "filesChanged": [
+        "src/lib/recurrence.ts",
+        "src/lib/recurrence.test.ts"
+      ],
+      "learnings": "Weekly parity computed via isoWeekStart deltas; monthly via year*12+month arithmetic with clamping; anchor parity preserved on overdue completion."
     }
   ],
   "codebasePatterns": [
