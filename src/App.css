@@ -92,6 +92,46 @@
   color: var(--color-muted);
 }
 
+/* Load reveal (§5) — the one orchestrated motion moment.
+   Masthead settles first; Today rows reveal with a 40ms stagger
+   (per-row animation-delay set by TodayView, within motion-slow total). */
+@keyframes masthead-settle {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes row-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.masthead {
+  animation: masthead-settle var(--motion-base) var(--ease) backwards;
+}
+
+.task-row--reveal {
+  animation: row-reveal var(--motion-base) var(--ease) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .masthead,
+  .task-row--reveal {
+    animation: none;
+  }
+}
+
 /* Responsive intent (§7). */
 @media (max-width: 1279px) {
   .shell-column {

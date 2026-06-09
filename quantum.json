@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-command-bar-todo.md",
   "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
   "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T21:51:06Z",
+  "updatedAt": "2026-06-09T22:00:03.781126+00:00",
   "coverageThreshold": 80,
   "staleThresholdMinutes": 20,
   "fileConflicts": [
@@ -1914,7 +1914,7 @@
         "Typecheck and lint pass"
       ],
       "priority": 13,
-      "status": "pending",
+      "status": "passed",
       "startedAt": null,
       "dependsOn": [
         "US-009",
@@ -1934,7 +1934,7 @@
             "pnpm test -- --run src/hooks/useToday.test.tsx"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -1948,7 +1948,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -1971,7 +1971,7 @@
               "todayItems"
             ]
           },
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-004",
@@ -1984,7 +1984,7 @@
             "pnpm exec playwright test e2e/today.spec.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-005",
@@ -1999,19 +1999,17 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 command-only verification task",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
-          "issues": [],
-          "reviewedAt": null
+          "status": "passed",
+          "timestamp": "2026-06-09T22:00:03.781126+00:00"
         },
         "codeQuality": {
-          "status": "pending",
-          "issues": [],
-          "reviewedAt": null
+          "status": "passed",
+          "timestamp": "2026-06-09T22:00:03.781126+00:00"
         },
         "visualReview": {
           "status": "pending",
@@ -2749,6 +2747,21 @@
         "e2e/states-snooze.spec.ts"
       ],
       "learnings": "Key 1/2/3 snooze was already wired in US-010 useKeymap; US-012 adds mouse parity via the overflow menu. Toast labels (Snoozed to X / Scheduled) come from the wrapped dispatch in AppContext."
+    },
+    {
+      "timestamp": "2026-06-09T22:00:03.781126+00:00",
+      "iteration": 8,
+      "storyId": "US-013",
+      "action": "story_passed",
+      "details": "useToday hook (focus recompute + re-arming local-midnight timer, DST-safe via local Date constructor); TodayView assembled with load reveal (masthead settles, rows stagger 40ms via inline animation-delay, reduced-motion animation:none); e2e today.spec.ts; canonical baseline unchanged and re-verified.",
+      "filesChanged": [
+        "src/hooks/useToday.ts",
+        "src/hooks/useToday.test.tsx",
+        "src/views/TodayView.tsx",
+        "src/App.css",
+        "e2e/today.spec.ts"
+      ],
+      "learnings": "Machine TZ is fixed CST (no DST) \u2014 DST-sensitive tests must pin process.env.TZ at top of test file before imports. Reveal classes added imperatively in useLayoutEffect survive React re-renders unless className prop changes; gate one-shot reveal with module-level flag."
     }
   ],
   "codebasePatterns": [
@@ -2767,7 +2780,8 @@
     "Component tests: // @vitest-environment jsdom pragma + src/test-setup.ts localStorage shim; probe context state by rendering a JSON <pre> probe inside AppProvider",
     "TaskList sections prop: [{label, tasks, rollover?}]; empty sections omitted; all-empty renders empty-state line. TaskRow classes: task-row--p1/--rollover/--selected/--done",
     "Toast: useApp().toast + showToast; wrapped dispatch emits Captured/Completed/Done \u2014 next <date>/Deleted/Snoozed to <date>/Scheduled/Saved/Reopened/Undone/Redone",
-    "useKeymap config: callbacks (onComplete/onEdit/onDelete/onSnooze/onUndo/onRedo/onTypeahead) + getRowIds reads DOM .task-row[data-task-id]; today injectable"
+    "useKeymap config: callbacks (onComplete/onEdit/onDelete/onSnooze/onUndo/onRedo/onTypeahead) + getRowIds reads DOM .task-row[data-task-id]; today injectable",
+    "DST-sensitive unit tests pin process.env.TZ=America/New_York as first line of the test file; midnight math via new Date(y,m,d+1,0,0,0) local constructor, never +24h"
   ],
   "userIntent": {
     "text": "todo app that implements the best features from existing todo apps and fixes common pain points",
