@@ -1,0 +1,49 @@
+{
+  "$comment": "quantum-lens config. This is the single file that makes the framework generalize. Edit `stack` and the `gates` commands to match your project. Any gate set to null is skipped. The visual.* gates only make sense for projects that render a UI; set them to null for APIs/CLIs/libraries and the visual layer disappears automatically.",
+  "project": ".",
+  "stack": "web-react",
+  "_stackOptions": [
+    "web-react",
+    "web-vue",
+    "web-svelte",
+    "web-static",
+    "api-node",
+    "api-python",
+    "cli",
+    "library"
+  ],
+  "baseUrl": "http://localhost:5173",
+  "devServer": "pnpm run dev",
+  "buildCommand": "pnpm run build",
+  "gates": {
+    "_comment": "Each value is a shell command run from the project root, or null to skip. Exit code 0 = pass. These become the verification commands quantum-loop's Iron Law demands as evidence.",
+    "typecheck": "pnpm run typecheck",
+    "lint": "pnpm run lint",
+    "unit": "pnpm test -- --run",
+    "integration": "pnpm run test:integration",
+    "e2e": "pnpm exec playwright test e2e/",
+    "coverageThreshold": 80,
+    "visual.regression": "pnpm exec playwright test verification/visual.spec.ts",
+    "visual.a11y": "pnpm exec playwright test verification/a11y.spec.ts",
+    "visual.lighthouse": "pnpm exec lhci autorun || true",
+    "visual.reviewer": "advisory"
+  },
+  "visual": {
+    "_comment": "Settings for the visual gate. breakpoints drive responsive screenshots; lighthouse thresholds gate quality scores.",
+    "enabled": true,
+    "breakpoints": {
+      "mobile": 375,
+      "tablet": 768,
+      "desktop": 1280
+    },
+    "screenshotDiffMaxPixelRatio": 0.01,
+    "a11yMaxViolations": 0,
+    "lighthouse": {
+      "performance": 0.9,
+      "accessibility": 1,
+      "best-practices": 0.95
+    }
+  },
+  "designSystem": "DESIGN-SYSTEM.md",
+  "specChecklist": "SPEC-CHECKLIST.md"
+}

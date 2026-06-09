@@ -1,0 +1,121 @@
+{
+  "$comment": "Seed for quantum.json. /ql-plan will expand this. Pre-loaded with design-token contracts and a worked UI story so the visual gate is wired as Iron-Law evidence from the start. Replace token values with yours from DESIGN-SYSTEM.md.",
+  "project": ".",
+  "branchName": "ql/initial-feature",
+  "coverageThreshold": 80,
+  "staleThresholdMinutes": 20,
+  "contracts": {
+    "design_tokens": {
+      "color-accent": {
+        "value": "--color-accent",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-fg": {
+        "value": "--color-fg",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "space-scale": {
+        "value": "[4,8,12,16,24,32,48,64,96]"
+      },
+      "type-display": {
+        "value": "--type-display",
+        "pattern": "^--type-[a-z0-9]+$"
+      }
+    },
+    "routes": {
+      "home": {
+        "value": "/",
+        "pattern": "^/"
+      }
+    }
+  },
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Home screen renders to design system",
+      "description": "As a visitor, I want the home screen to render to the design system so the app looks right on first load.",
+      "acceptanceCriteria": [
+        "Home screen renders using only DESIGN-SYSTEM.md tokens (no literals)",
+        "Mounted at route / in App.tsx",
+        "Visual gate passes (regression + a11y + lighthouse)"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "startedAt": null,
+      "dependsOn": [],
+      "_footprintNote": "quantum-loop derives each story's file footprint by aggregating tasks[].filePaths (lib/dag-query.sh). Stories that land in the same wave (same satisfied deps) MUST have disjoint task filePaths, or quantum-loop's conflict filter serializes them instead of running them in parallel. Run `npm run plan:lint` to check.",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Write component render test (TDD)",
+          "filePaths": [
+            "src/screens/Home.test.tsx"
+          ],
+          "commands": [
+            "pnpm test -- --run src/screens/Home.test.tsx"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        },
+        {
+          "id": "T-002",
+          "title": "Implement Home screen using design tokens, wire into App",
+          "filePaths": [
+            "src/screens/Home.tsx",
+            "src/App.tsx"
+          ],
+          "commands": [
+            "pnpm test -- --run src/screens/Home.test.tsx"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false — implementation of the test written in T-001",
+          "status": "pending",
+          "wiring_verification": {
+            "file": "src/App.tsx",
+            "must_contain": [
+              "Home",
+              "route path=\"/\""
+            ]
+          }
+        },
+        {
+          "id": "T-003",
+          "title": "Visual gate: baseline + a11y + lighthouse",
+          "filePaths": [],
+          "commands": [
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false — command-only verification task, no source files",
+          "status": "pending"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        },
+        "codeQuality": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        },
+        "visualReview": {
+          "status": "pending",
+          "blocking": false
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": ""
+    }
+  ],
+  "codebasePatterns": [
+    "All colors/spacing/type via CSS variables from DESIGN-SYSTEM.md — no literals in components",
+    "Every interactive element has a visible focus-visible style"
+  ]
+}
