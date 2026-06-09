@@ -82,6 +82,16 @@
   padding: var(--space-5) 0;
 }
 
+/* Filter hint — mono note under the bar while All-view filtering (FR-20). */
+.filter-hint {
+  margin: 0 0 var(--space-3);
+  font-family: var(--type-mono);
+  font-size: var(--text-mono-size);
+  line-height: var(--text-mono-leading);
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+}
+
 /* Empty states — italic Newsreader, muted (§6). */
 .empty-state {
   margin: 0;

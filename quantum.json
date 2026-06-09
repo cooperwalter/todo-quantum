@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-command-bar-todo.md",
   "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
   "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T22:04:37.142615+00:00",
+  "updatedAt": "2026-06-09T22:12:26.667020+00:00",
   "coverageThreshold": 80,
   "staleThresholdMinutes": 20,
   "fileConflicts": [
@@ -2150,7 +2150,7 @@
         "Typecheck and lint pass"
       ],
       "priority": 15,
-      "status": "pending",
+      "status": "passed",
       "startedAt": null,
       "dependsOn": [
         "US-008",
@@ -2172,7 +2172,7 @@
             "pnpm test -- --run src/views/AllView.test.tsx src/views/DoneView.test.tsx"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -2196,7 +2196,7 @@
               "barText"
             ]
           },
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -2209,7 +2209,7 @@
             "pnpm exec playwright test e2e/all-done.spec.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-004",
@@ -2224,19 +2224,17 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 command-only verification task",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
-          "issues": [],
-          "reviewedAt": null
+          "status": "passed",
+          "timestamp": "2026-06-09T22:12:26.667020+00:00"
         },
         "codeQuality": {
-          "status": "pending",
-          "issues": [],
-          "reviewedAt": null
+          "status": "passed",
+          "timestamp": "2026-06-09T22:12:26.667020+00:00"
         },
         "visualReview": {
           "status": "pending",
@@ -2774,6 +2772,23 @@
         "__screenshots__/e2e/upcoming.spec.ts/"
       ],
       "learnings": "e2e screenshot baselines embed the live masthead date and relative seed dates \u2014 suite assumes same-day regeneration, consistent with prior states-* baselines."
+    },
+    {
+      "timestamp": "2026-06-09T22:12:26.667020+00:00",
+      "iteration": 8,
+      "storyId": "US-015",
+      "action": "story_passed",
+      "details": "AllView partitions allItems(filterText) into Dated/Anytime TaskList sections; FR-20 live filter from shared barText (non-empty, not >-prefixed) with mono filter-hint; DoneView renders custom done rows (TaskRow checkbox is disabled when done) with checkbox + x-key uncomplete; 6 blessed baselines (all-filtered/done x 3 breakpoints). Footprint deviation surfaced: added .filter-hint to src/App.css (outside contract files; no conflict \u2014 App.css wave owner US-013 already merged).",
+      "filesChanged": [
+        "src/views/AllView.tsx",
+        "src/views/DoneView.tsx",
+        "src/views/AllView.test.tsx",
+        "src/views/DoneView.test.tsx",
+        "src/App.css",
+        "e2e/all-done.spec.ts",
+        "__screenshots__/e2e/all-done.spec.ts/"
+      ],
+      "learnings": "useKeymap listens at document level so row-level React handlers fire first; DoneView x-reopen must stopPropagation or the keymap re-completes the row. TaskRow checkbox is disabled for done tasks \u2014 Done view needs its own row markup for uncomplete."
     }
   ],
   "codebasePatterns": [
