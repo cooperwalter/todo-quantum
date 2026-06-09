@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-command-bar-todo.md",
   "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
   "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T21:02:19Z",
+  "updatedAt": "2026-06-09T21:05:51Z",
   "coverageThreshold": 80,
   "staleThresholdMinutes": 20,
   "fileConflicts": [
@@ -795,7 +795,7 @@
         "Typecheck and lint pass"
       ],
       "priority": 4,
-      "status": "pending",
+      "status": "passed",
       "startedAt": null,
       "dependsOn": [
         "US-001",
@@ -814,7 +814,7 @@
             "pnpm test -- --run src/lib/store.test.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -831,7 +831,7 @@
           "consumedBy": [
             "US-006"
           ],
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -844,7 +844,7 @@
             "pnpm test -- --run src/lib/store.test.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-004",
@@ -867,19 +867,19 @@
               "nextOccurrence"
             ]
           },
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:05:51Z"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:05:51Z"
         }
       },
       "retries": {
@@ -2617,6 +2617,18 @@
         "src/lib/selectors.test.ts"
       ],
       "learnings": "todayItems returns {rollover, dueToday, anytime}; upcomingGroups returns [{kind, start, label, tasks}] with labels \"Wed Jun 10\" / \"Week of Jun 15\" (UI uppercases via CSS)."
+    },
+    {
+      "timestamp": "2026-06-09T21:05:51Z",
+      "iteration": 1,
+      "storyId": "US-004",
+      "action": "story_passed",
+      "details": "store.ts reducer TDD; 30 store tests; inverse-op undo/redo cap 50; recurring complete spawns via nextOccurrence with compound inverse",
+      "filesChanged": [
+        "src/lib/store.ts",
+        "src/lib/store.test.ts"
+      ],
+      "learnings": "Inverse ops are themselves union members (restore{task,index}, markDone, revertComplete{spawnedId}); delete inverse re-inserts at original array index for deep-equal round-trips; redo re-spawns deterministically by reusing spawnedId as newId."
     }
   ],
   "codebasePatterns": [
@@ -2629,7 +2641,8 @@
     "Date math uses local-date components from src/lib/dates.ts \u2014 never UTC ms arithmetic across days",
     "Same-wave stories own disjoint files: views live in src/views/<View>.tsx, components in src/components/, App.tsx is owned by exactly one in-flight story at a time",
     "Date helpers use ISO weekday numbering 1=Mon..7=Sun; all date math via local components (new Date(y,m-1,d+n,12))",
-    "Parser: pass order recurrence->date->time->list->priority, first-wins per kind, word-level whole-token matching; chip displays: date \"Wed Jun 10\", time \"3:00 PM\", list \"#work\", priority \"P1\", recurrence source text"
+    "Parser: pass order recurrence->date->time->list->priority, first-wins per kind, word-level whole-token matching; chip displays: date \"Wed Jun 10\", time \"3:00 PM\", list \"#work\", priority \"P1\", recurrence source text",
+    "Store: reducer(state, action) pure; mutating payloads carry injected ids/dates (newId, completedAt, today); internal inverse action types restore/markDone/revertComplete"
   ],
   "userIntent": {
     "text": "todo app that implements the best features from existing todo apps and fixes common pain points",
