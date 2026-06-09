@@ -136,3 +136,92 @@ describe('CommandBar accessibility (FR-45)', () => {
     expect(announcement?.textContent).toContain('priority P1');
   });
 });
+
+function ViewProbe() {
+  const { view } = useApp();
+  return <span data-testid="view-probe">{view}</span>;
+}
+
+function renderBarWithView() {
+  return render(
+    <AppProvider>
+      <CommandBar now={NOW} />
+      <ViewProbe />
+      <TasksProbe />
+    </AppProvider>,
+  );
+}
+
+describe('CommandBar command mode (FR-18, FR-19)', () => {
+  it("flips to command mode on a leading '>' (prompt glyph and mono class)", async () => {
+    const user = userEvent.setup();
+    renderBarWithView();
+    await user.type(screen.getByRole('textbox'), '>');
+    expect(document.querySelector('.command-bar-prompt')?.textContent).toBe('❯');
+    expect(document.querySelector('.command-bar--command')).toBeTruthy();
+  });
+
+  it('renders a fuzzy-filtered command list with role=listbox', async () => {
+    const user = userEvent.setup();
+    renderBarWithView();
+    await user.type(screen.getByRole('textbox'), '>');
+    const listbox = screen.getByRole('listbox');
+    expect(listbox).toBeTruthy();
+    expect(screen.getAllByRole('option')).toHaveLength(7);
+  });
+
+  it("'>tdy' highlights today and Enter switches the view", async () => {
+    const user = userEvent.setup();
+    renderBarWithView();
+    await user.type(screen.getByRole('textbox'), '>done');
+    expect(screen.getAllByRole('option')).toHaveLength(1);
+    await user.keyboard('{Enter}');
+    expect(screen.getByTestId('view-probe').textContent).toBe('done');
+    expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('');
+  });
+
+  it("'>tdy' fuzzy-matches today via subsequence", async () => {
+    const user = userEvent.setup();
+    renderBarWithView();
+    await user.type(screen.getByRole('textbox'), '>tdy{Enter}');
+    expect(screen.getByTestId('view-probe').textContent).toBe('today');
+  });
+
+  it("'>undo' Enter dispatches undo (a captured task is removed)", async () => {
+    const user = userEvent.setup();
+    renderBarWithView();
+    await user.type(screen.getByRole('textbox'), 'Buy milk{Enter}');
+    expect(probedTasks()).toHaveLength(1);
+    await user.type(screen.getByRole('textbox'), '>undo{Enter}');
+    expect(probedTasks()).toHaveLength(0);
+  });
+
+  it('moves aria-activedescendant with ArrowDown and ArrowUp', async () => {
+    const user = userEvent.setup();
+    renderBarWithView();
+    const input = screen.getByRole('textbox');
+    await user.type(input, '>');
+    const first = input.getAttribute('aria-activedescendant');
+    await user.keyboard('{ArrowDown}');
+    const second = input.getAttribute('aria-activedescendant');
+    expect(second).not.toBe(first);
+    await user.keyboard('{ArrowUp}');
+    expect(input.getAttribute('aria-activedescendant')).toBe(first);
+  });
+
+  it('Esc exits command mode leaving an empty input', async () => {
+    const user = userEvent.setup();
+    renderBarWithView();
+    const input = screen.getByRole('textbox');
+    await user.type(input, '>tod{Escape}');
+    expect((input as HTMLInputElement).value).toBe('');
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('never treats text without a leading > as a command (FR-18)', async () => {
+    const user = userEvent.setup();
+    renderBarWithView();
+    await user.type(screen.getByRole('textbox'), 'today undo help');
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+});

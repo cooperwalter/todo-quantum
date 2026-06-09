@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-command-bar-todo.md",
   "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
   "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T21:23:15Z",
+  "updatedAt": "2026-06-09T21:27:07Z",
   "coverageThreshold": 80,
   "staleThresholdMinutes": 20,
   "fileConflicts": [
@@ -1291,7 +1291,7 @@
         "Typecheck and lint pass"
       ],
       "priority": 8,
-      "status": "pending",
+      "status": "passed",
       "startedAt": null,
       "dependsOn": [
         "US-007"
@@ -1309,7 +1309,7 @@
             "pnpm test -- --run src/lib/commands.test.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -1326,7 +1326,7 @@
           "consumedBy": [
             "US-017"
           ],
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -1339,7 +1339,7 @@
             "pnpm test -- --run src/components/CommandBar.test.tsx"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-004",
@@ -1362,7 +1362,7 @@
               "fuzzyMatch"
             ]
           },
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-005",
@@ -1377,22 +1377,22 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 command-only verification task",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:27:07Z"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:27:07Z"
         },
         "visualReview": {
-          "status": "pending",
+          "status": "passed",
           "blocking": false
         }
       },
@@ -2668,6 +2668,22 @@
         "e2e/states-commandbar.spec.ts"
       ],
       "learnings": "Component tests use per-file // @vitest-environment jsdom pragma. Node>=22 ships a disabled localStorage global that makes vitest populateGlobal skip jsdom Storage \u2014 src/test-setup.ts re-attaches it. Esc revert keeps the literal text in the bar and demotes the token from the parse (revertedTokens list). CommandBar styles colocated in CommandBar.css (App.css is owned by US-006/US-013). When re-blessing baselines, verify against a FRESH dev server and re-run the comparison."
+    },
+    {
+      "timestamp": "2026-06-09T21:27:07Z",
+      "iteration": 1,
+      "storyId": "US-008",
+      "action": "story_passed",
+      "details": "Command mode: commands.ts registry (7 commands) + fuzzy subsequence matcher; CommandBar > mode with listbox, aria-activedescendant, Esc-to-empty; 208 unit tests, 15 e2e, visual gate PASS; command-mode screenshots inspected at 3 breakpoints.",
+      "filesChanged": [
+        "src/lib/commands.ts",
+        "src/lib/commands.test.ts",
+        "src/components/CommandBar.tsx",
+        "src/components/CommandBar.css",
+        "src/components/CommandBar.test.tsx",
+        "e2e/states-commandmode.spec.ts"
+      ],
+      "learnings": "openCheatsheet is a CommandBar prop defaulting to no-op; US-017 wires the real overlay. Command list options execute on mouseDown to beat input blur."
     }
   ],
   "codebasePatterns": [

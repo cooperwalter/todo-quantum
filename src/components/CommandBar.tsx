@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import './CommandBar.css';
+import { COMMANDS, fuzzyMatch } from '../lib/commands';
 import { parse } from '../lib/parser';
 import type { Chip, ParseResult } from '../lib/parser';
 import { useApp } from '../state/AppContext';
@@ -87,11 +88,20 @@ function mirrorSegments(input: string, chips: Chip[]): MirrorSegment[] {
   return segments;
 }
 
-export function CommandBar({ now }: { now?: Date }) {
-  const { barText, setBarText, dispatch } = useApp();
+export function CommandBar({ now, openCheatsheet }: { now?: Date; openCheatsheet?: () => void }) {
+  const { barText, setBarText, dispatch, setView } = useApp();
   const [reverted, setReverted] = useState<RevertedToken[]>([]);
   const [error, setError] = useState(false);
+  const [selectedCommand, setSelectedCommand] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const commandMode = barText.startsWith('>');
+  const commandQuery = commandMode ? barText.slice(1).trim() : '';
+  const commandMatches = useMemo(
+    () => (commandMode ? fuzzyMatch(commandQuery, COMMANDS) : []),
+    [commandMode, commandQuery],
+  );
+  const activeCommand = Math.min(selectedCommand, Math.max(commandMatches.length - 1, 0));
 
   const parsed = useMemo(() => {
     const raw = parse(barText, now ?? new Date());
@@ -101,9 +111,35 @@ export function CommandBar({ now }: { now?: Date }) {
   function handleChange(value: string) {
     setBarText(value);
     setError(false);
+    setSelectedCommand(0);
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (commandMode) {
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setSelectedCommand((prev) => Math.min(prev + 1, commandMatches.length - 1));
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        setSelectedCommand((prev) => Math.max(prev - 1, 0));
+      } else if (event.key === 'Enter') {
+        const command = commandMatches[activeCommand];
+        if (command !== undefined) {
+          command.run({
+            setView,
+            dispatch,
+            openCheatsheet: openCheatsheet ?? (() => {}),
+          });
+        }
+        setBarText('');
+        setSelectedCommand(0);
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        setBarText('');
+        setSelectedCommand(0);
+      }
+      return;
+    }
     if (event.key === 'Enter') {
       if (!parsed.valid) {
         setError(true);
@@ -138,17 +174,20 @@ export function CommandBar({ now }: { now?: Date }) {
     }
   }
 
-  const announcement = parsed.chips.map(announcementFor).join(', ');
+  const announcement = commandMode ? '' : parsed.chips.map(announcementFor).join(', ');
+  const chips = commandMode ? [] : parsed.chips;
 
   return (
     <div className="command-bar-region">
-      <div className={`command-bar${error ? ' command-bar--error' : ''}`}>
+      <div
+        className={`command-bar${error ? ' command-bar--error' : ''}${commandMode ? ' command-bar--command' : ''}`}
+      >
         <span className="command-bar-prompt" aria-hidden="true">
-          ▸
+          {commandMode ? '❯' : '▸'}
         </span>
         <div className="command-bar-field">
           <div className="command-bar-mirror" aria-hidden="true">
-            {mirrorSegments(barText, parsed.chips).map((seg) =>
+            {mirrorSegments(barText, chips).map((seg) =>
               seg.chip ? (
                 <span key={seg.key} className="command-bar-chip">
                   {seg.text}
@@ -167,6 +206,10 @@ export function CommandBar({ now }: { now?: Date }) {
             onKeyDown={handleKeyDown}
             aria-label="Capture a task"
             aria-describedby="command-bar-announcement"
+            aria-controls={commandMode ? 'command-bar-listbox' : undefined}
+            aria-activedescendant={
+              commandMode && commandMatches.length > 0 ? `command-option-${activeCommand}` : undefined
+            }
             autoFocus
             autoComplete="off"
             spellCheck={false}
@@ -176,6 +219,27 @@ export function CommandBar({ now }: { now?: Date }) {
       <span id="command-bar-announcement" className="visually-hidden">
         {announcement}
       </span>
+      {commandMode && commandMatches.length > 0 && (
+        <ul id="command-bar-listbox" className="command-bar-listbox" role="listbox" aria-label="Commands">
+          {commandMatches.map((command, index) => (
+            <li
+              key={command.id}
+              id={`command-option-${index}`}
+              role="option"
+              aria-selected={index === activeCommand}
+              className={`command-bar-option${index === activeCommand ? ' command-bar-option--active' : ''}`}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                command.run({ setView, dispatch, openCheatsheet: openCheatsheet ?? (() => {}) });
+                setBarText('');
+                setSelectedCommand(0);
+              }}
+            >
+              {command.label}
+            </li>
+          ))}
+        </ul>
+      )}
       {error && <p className="command-bar-error">nothing to capture</p>}
     </div>
   );
