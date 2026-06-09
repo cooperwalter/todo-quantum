@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-command-bar-todo.md",
   "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
   "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T21:00:25Z",
+  "updatedAt": "2026-06-09T21:02:19Z",
   "coverageThreshold": 80,
   "staleThresholdMinutes": 20,
   "fileConflicts": [
@@ -905,7 +905,7 @@
         "Typecheck and lint pass"
       ],
       "priority": 5,
-      "status": "pending",
+      "status": "passed",
       "startedAt": null,
       "dependsOn": [
         "US-001"
@@ -923,7 +923,7 @@
             "pnpm test -- --run src/lib/selectors.test.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -945,19 +945,19 @@
             "US-014",
             "US-015"
           ],
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:02:19Z"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:02:19Z"
         }
       },
       "retries": {
@@ -2605,6 +2605,18 @@
         "src/lib/recurrence.test.ts"
       ],
       "learnings": "Weekly parity computed via isoWeekStart deltas; monthly via year*12+month arithmetic with clamping; anchor parity preserved on overdue completion."
+    },
+    {
+      "timestamp": "2026-06-09T21:02:19Z",
+      "iteration": 1,
+      "storyId": "US-005",
+      "action": "story_passed",
+      "details": "selectors.ts todayItems/upcomingGroups/allItems/doneItems TDD; 22 selector tests; rollover derived at read time",
+      "filesChanged": [
+        "src/lib/selectors.ts",
+        "src/lib/selectors.test.ts"
+      ],
+      "learnings": "todayItems returns {rollover, dueToday, anytime}; upcomingGroups returns [{kind, start, label, tasks}] with labels \"Wed Jun 10\" / \"Week of Jun 15\" (UI uppercases via CSS)."
     }
   ],
   "codebasePatterns": [
