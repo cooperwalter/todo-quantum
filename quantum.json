@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-command-bar-todo.md",
   "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
   "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T20:53:30Z",
+  "updatedAt": "2026-06-09T20:58:38Z",
   "coverageThreshold": 80,
   "staleThresholdMinutes": 20,
   "fileConflicts": [
@@ -619,7 +619,7 @@
         "Typecheck and lint pass"
       ],
       "priority": 2,
-      "status": "pending",
+      "status": "passed",
       "startedAt": null,
       "dependsOn": [
         "US-001"
@@ -637,7 +637,7 @@
             "pnpm test -- --run src/lib/parser.test.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -651,7 +651,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -664,7 +664,7 @@
             "pnpm test -- --run src/lib/parser.test.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-004",
@@ -683,19 +683,19 @@
           "consumedBy": [
             "US-007"
           ],
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T20:58:38Z"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T20:58:38Z"
         }
       },
       "retries": {
@@ -2581,6 +2581,18 @@
         "vite.config.ts"
       ],
       "learnings": "vitest default include collected Playwright specs; scoped test.include to src/**/*.test.{ts,tsx} in vite.config.ts. Use pnpm exec vitest run <file> for targeted runs (pnpm passes literal -- through). ISO weekday convention 1=Mon..7=Sun."
+    },
+    {
+      "timestamp": "2026-06-09T20:58:38Z",
+      "iteration": 1,
+      "storyId": "US-002",
+      "action": "story_passed",
+      "details": "parser.ts full FR-1..FR-10 grammar TDD; 53 parser tests; adjacent date+time tokens merge into one chip (canonical = 3 chips)",
+      "filesChanged": [
+        "src/lib/parser.ts",
+        "src/lib/parser.test.ts"
+      ],
+      "learnings": "Adjacent date+time tokens merge into a single date chip with display \"Wed Jun 10, 3:00 PM\" to satisfy the 3-chip canonical AC; non-adjacent stay separate."
     }
   ],
   "codebasePatterns": [
@@ -2592,7 +2604,8 @@
     "No `any` in TypeScript \u2014 use real types or unknown",
     "Date math uses local-date components from src/lib/dates.ts \u2014 never UTC ms arithmetic across days",
     "Same-wave stories own disjoint files: views live in src/views/<View>.tsx, components in src/components/, App.tsx is owned by exactly one in-flight story at a time",
-    "Date helpers use ISO weekday numbering 1=Mon..7=Sun; all date math via local components (new Date(y,m-1,d+n,12))"
+    "Date helpers use ISO weekday numbering 1=Mon..7=Sun; all date math via local components (new Date(y,m-1,d+n,12))",
+    "Parser: pass order recurrence->date->time->list->priority, first-wins per kind, word-level whole-token matching; chip displays: date \"Wed Jun 10\", time \"3:00 PM\", list \"#work\", priority \"P1\", recurrence source text"
   ],
   "userIntent": {
     "text": "todo app that implements the best features from existing todo apps and fixes common pain points",
