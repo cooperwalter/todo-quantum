@@ -1,6 +1,5 @@
 /* quantum-lens design tokens — direction: "Morning Edition" (warm broadsheet editorial).
    Chosen via /lens-design 2026-06-09. All fg/bg pairs contrast-checked WCAG AA — see DESIGN-SYSTEM.md §3. */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..500&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
   /* type families */

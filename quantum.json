@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-command-bar-todo.md",
   "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
   "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T22:28:39.516814+00:00",
+  "updatedAt": "2026-06-09T22:43:29.989459+00:00",
   "coverageThreshold": 80,
   "staleThresholdMinutes": 20,
   "fileConflicts": [
@@ -2489,7 +2489,7 @@
         "Typecheck and lint pass"
       ],
       "priority": 18,
-      "status": "pending",
+      "status": "passed",
       "startedAt": null,
       "dependsOn": [
         "US-012",
@@ -2512,7 +2512,7 @@
             "pnpm exec playwright test e2e/speed.spec.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -2530,19 +2530,17 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 command-only verification task, no source files",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
-          "issues": [],
-          "reviewedAt": null
+          "status": "passed",
+          "timestamp": "2026-06-09T22:43:29.989459+00:00"
         },
         "codeQuality": {
-          "status": "pending",
-          "issues": [],
-          "reviewedAt": null
+          "status": "passed",
+          "timestamp": "2026-06-09T22:43:29.989459+00:00"
         }
       },
       "retries": {
@@ -2818,6 +2816,21 @@
         "__screenshots__/e2e/states-cheatsheet.spec.ts/"
       ],
       "learnings": "Focus the dialog container (tabIndex -1), never a button, on modal open: user-event (and some AT) complete an Enter press as a click on whatever is focused at keyup, instantly closing the modal. Unconditional stopPropagation inside the dialog prevents keymap typeahead from stealing focus to the bar."
+    },
+    {
+      "timestamp": "2026-06-09T22:43:29.989459+00:00",
+      "iteration": 8,
+      "storyId": "US-018",
+      "action": "story_passed",
+      "details": "speed.spec.ts: G-1 capture <200ms via in-page keyup-to-row PerformanceObserver-style timer (measured well under 200ms), G-2 zero-click Today, G-3 triage with only down/x/1/2/3, undo journey, reload persistence, dark-theme smoke, 100-task render. FR-48 lighthouse: lighthouserc.json repointed to production build (pnpm run build && pnpm run preview, port 4173) -> perf 1.0 / a11y 1.0 / bp 1.0. Inline fix task: Google Fonts moved from render-blocking CSS @import (tokens.css) to async link in index.html (media=print onload swap + preconnect + noscript) \u2014 FCP 4.6s -> 1.2s. Also added local process declare in useToday.test.tsx (tsc -b build is the real typecheck; root tsc --noEmit checks nothing).",
+      "filesChanged": [
+        "e2e/speed.spec.ts",
+        "lighthouserc.json",
+        "index.html",
+        "src/styles/tokens.css",
+        "src/hooks/useToday.test.tsx"
+      ],
+      "learnings": "Root tsconfig has files:[] so pnpm run typecheck (tsc --noEmit) validates nothing \u2014 the build (tsc -b) is the effective type gate. Lighthouse against vite dev server is meaningless (0.58); prod preview scored 1.0 after de-blocking fonts. lhci cannot seed localStorage without puppeteer; seeded-load perf is covered by a Playwright 100-task render test."
     }
   ],
   "codebasePatterns": [

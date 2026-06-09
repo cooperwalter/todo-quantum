@@ -2,9 +2,9 @@
   "ci": {
     "collect": {
       "url": [
-        "http://localhost:5173"
+        "http://localhost:4173"
       ],
-      "startServerCommand": "pnpm run dev",
+      "startServerCommand": "pnpm run build && pnpm run preview",
       "numberOfRuns": 1
     },
     "assert": {
