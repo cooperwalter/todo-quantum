@@ -1,0 +1,43 @@
+/* Storage banner — persistent danger notice under the masthead (FR-41, §6). */
+
+.storage-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-danger);
+  border-left: 3px solid var(--color-danger);
+  border-radius: var(--radius-md);
+}
+
+.storage-banner-text {
+  font-family: var(--type-mono);
+  font-size: var(--text-mono-size);
+  line-height: var(--text-mono-leading);
+  letter-spacing: 0.04em;
+  color: var(--color-fg);
+}
+
+.storage-banner-dismiss {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0 var(--space-1);
+  font-family: var(--type-mono);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-leading);
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.storage-banner-dismiss:hover {
+  color: var(--color-fg);
+}
+
+.storage-banner-dismiss:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

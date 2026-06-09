@@ -1,0 +1,87 @@
+import { test, expect } from '@playwright/test';
+import type { Page } from '@playwright/test';
+
+const BREAKPOINTS: [string, number][] = [
+  ['mobile', 375],
+  ['tablet', 768],
+  ['desktop', 1280],
+];
+
+const BANNER_COPY = "Changes aren't being saved — this browser's storage is unavailable.";
+
+function breakStorageWrites(page: Page) {
+  return page.addInitScript(() => {
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key: string, value: string) {
+      if (key === 'todo-quantum.v1') {
+        throw new DOMException('quota exceeded', 'QuotaExceededError');
+      }
+      return original.call(this, key, value);
+    };
+  });
+}
+
+const FREEZE =
+  '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}';
+
+test('a failing save shows the danger banner and capture keeps working in memory', async ({ page }) => {
+  await breakStorageWrites(page);
+  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.locator('.command-bar-input').fill('Quota test task');
+  await page.locator('.command-bar-input').press('Enter');
+  await expect(page.locator('.task-row-title')).toHaveText(['Quota test task']);
+  await expect(page.locator('.storage-banner')).toHaveText(new RegExp(BANNER_COPY.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  await page.locator('.command-bar-input').fill('Second in-memory task');
+  await page.locator('.command-bar-input').press('Enter');
+  await expect(page.locator('.task-row')).toHaveCount(2);
+});
+
+test('the banner dismiss button hides the banner', async ({ page }) => {
+  await breakStorageWrites(page);
+  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.locator('.command-bar-input').fill('Quota test task');
+  await page.locator('.command-bar-input').press('Enter');
+  await expect(page.locator('.storage-banner')).toBeVisible();
+  await page.getByLabel('Dismiss storage warning').click();
+  await expect(page.locator('.storage-banner')).toHaveCount(0);
+});
+
+test('a capture in one tab reloads the list and toasts in a second tab', async ({ context }) => {
+  const pageA = await context.newPage();
+  const pageB = await context.newPage();
+  await pageA.goto('/', { waitUntil: 'networkidle' });
+  await pageB.goto('/', { waitUntil: 'networkidle' });
+
+  await pageA.locator('.command-bar-input').fill('Tab sync test');
+  await pageA.locator('.command-bar-input').press('Enter');
+  await expect(pageA.locator('.task-row-title')).toHaveText(['Tab sync test']);
+
+  await expect(pageB.locator('.toast-message')).toHaveText('List updated in another tab');
+  await expect(pageB.locator('.task-row-title')).toHaveText(['Tab sync test']);
+});
+
+test('a captured task survives a reload via the debounced save', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.locator('.command-bar-input').fill('Persisted task');
+  await page.locator('.command-bar-input').press('Enter');
+  await expect(page.locator('.task-row-title')).toHaveText(['Persisted task']);
+  await page.waitForTimeout(400);
+  await page.reload({ waitUntil: 'networkidle' });
+  await expect(page.locator('.task-row-title')).toHaveText(['Persisted task']);
+});
+
+for (const [name, width] of BREAKPOINTS) {
+  test(`storage banner visible under the masthead @ ${name}`, async ({ page }) => {
+    await breakStorageWrites(page);
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await page.locator('.command-bar-input').fill('Quota test task');
+    await page.locator('.command-bar-input').press('Enter');
+    await expect(page.locator('.storage-banner')).toBeVisible();
+    await page.addStyleTag({ content: FREEZE });
+    await expect(page).toHaveScreenshot(`banner-visible-${name}.png`, {
+      fullPage: true,
+      animations: 'disabled',
+    });
+  });
+}

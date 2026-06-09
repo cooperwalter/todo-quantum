@@ -1,8 +1,10 @@
 import './App.css';
 import { CommandBar } from './components/CommandBar';
+import { StorageBanner } from './components/StorageBanner';
 import { Toast } from './components/Toast';
 import { ViewTabs } from './components/ViewTabs';
 import { useKeymap } from './hooks/useKeymap';
+import { usePersistence } from './hooks/usePersistence';
 import { todayStr } from './lib/dates';
 import { AppProvider, useApp } from './state/AppContext';
 import { AllView } from './views/AllView';
@@ -41,6 +43,7 @@ function ActiveView() {
 
 function Shell() {
   const { dispatch, setView, setBarText, barRef, selectedTaskId, setSelectedTaskId } = useApp();
+  const { saveFailed, dismissSaveFailure } = usePersistence();
 
   useKeymap({
     barRef,
@@ -72,6 +75,7 @@ function Shell() {
   return (
     <div className="shell-column">
       <Masthead />
+      {saveFailed && <StorageBanner onDismiss={dismissSaveFailure} />}
       <CommandBar />
       <ViewTabs />
       <main className="view-region">

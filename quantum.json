@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-command-bar-todo.md",
   "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
   "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T22:12:26.667020+00:00",
+  "updatedAt": "2026-06-09T22:18:13.922356+00:00",
   "coverageThreshold": 80,
   "staleThresholdMinutes": 20,
   "fileConflicts": [
@@ -2265,7 +2265,7 @@
         "Typecheck and lint pass"
       ],
       "priority": 16,
-      "status": "pending",
+      "status": "passed",
       "startedAt": null,
       "dependsOn": [
         "US-010",
@@ -2284,7 +2284,7 @@
             "pnpm test -- --run src/hooks/usePersistence.test.tsx"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -2298,7 +2298,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -2322,7 +2322,7 @@
               "StorageBanner"
             ]
           },
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-004",
@@ -2337,19 +2337,17 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 command-only verification task",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
-          "issues": [],
-          "reviewedAt": null
+          "status": "passed",
+          "timestamp": "2026-06-09T22:18:13.922356+00:00"
         },
         "codeQuality": {
-          "status": "pending",
-          "issues": [],
-          "reviewedAt": null
+          "status": "passed",
+          "timestamp": "2026-06-09T22:18:13.922356+00:00"
         },
         "visualReview": {
           "status": "pending",
@@ -2789,6 +2787,23 @@
         "__screenshots__/e2e/all-done.spec.ts/"
       ],
       "learnings": "useKeymap listens at document level so row-level React handlers fire first; DoneView x-reopen must stopPropagation or the keymap re-completes the row. TaskRow checkbox is disabled for done tasks \u2014 Done view needs its own row markup for uncomplete."
+    },
+    {
+      "timestamp": "2026-06-09T22:18:13.922356+00:00",
+      "iteration": 8,
+      "storyId": "US-016",
+      "action": "story_passed",
+      "details": "usePersistence hook: 250ms debounced save with coalescing, beforeunload + unmount flush, storage-event externalReload with stack clear and toast, recovery toast; StorageBanner component (own CSS file, danger tokens) wired under masthead in App.tsx; e2e includes real two-tab sync and quota-failure via patched Storage.prototype.setItem; 3 blessed banner baselines; full e2e suite 59/59.",
+      "filesChanged": [
+        "src/hooks/usePersistence.ts",
+        "src/hooks/usePersistence.test.tsx",
+        "src/components/StorageBanner.tsx",
+        "src/components/StorageBanner.css",
+        "src/App.tsx",
+        "e2e/states-banner.spec.ts",
+        "__screenshots__/e2e/states-banner.spec.ts/"
+      ],
+      "learnings": "e2e quota simulation: addInitScript patching Storage.prototype.setItem to throw DOMException QuotaExceededError for the app key only \u2014 load still works, save fails. Two Playwright pages in one context share localStorage and fire real storage events."
     }
   ],
   "codebasePatterns": [
@@ -2808,7 +2823,8 @@
     "TaskList sections prop: [{label, tasks, rollover?}]; empty sections omitted; all-empty renders empty-state line. TaskRow classes: task-row--p1/--rollover/--selected/--done",
     "Toast: useApp().toast + showToast; wrapped dispatch emits Captured/Completed/Done \u2014 next <date>/Deleted/Snoozed to <date>/Scheduled/Saved/Reopened/Undone/Redone",
     "useKeymap config: callbacks (onComplete/onEdit/onDelete/onSnooze/onUndo/onRedo/onTypeahead) + getRowIds reads DOM .task-row[data-task-id]; today injectable",
-    "DST-sensitive unit tests pin process.env.TZ=America/New_York as first line of the test file; midnight math via new Date(y,m,d+1,0,0,0) local constructor, never +24h"
+    "DST-sensitive unit tests pin process.env.TZ=America/New_York as first line of the test file; midnight math via new Date(y,m,d+1,0,0,0) local constructor, never +24h",
+    "New components get their own CSS file next to the component (StorageBanner.css pattern), tokens only"
   ],
   "userIntent": {
     "text": "todo app that implements the best features from existing todo apps and fixes common pain points",
