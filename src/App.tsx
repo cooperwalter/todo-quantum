@@ -1,5 +1,6 @@
 import './App.css';
 import { CommandBar } from './components/CommandBar';
+import { Toast } from './components/Toast';
 import { ViewTabs } from './components/ViewTabs';
 import { AppProvider, useApp } from './state/AppContext';
 import { AllView } from './views/AllView';
@@ -45,6 +46,7 @@ function Shell() {
       <main className="view-region">
         <ActiveView />
       </main>
+      <Toast />
     </div>
   );
 }
