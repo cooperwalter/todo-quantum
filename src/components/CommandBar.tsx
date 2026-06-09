@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import './CommandBar.css';
 import { COMMANDS, fuzzyMatch } from '../lib/commands';
 import { parse } from '../lib/parser';
@@ -89,11 +89,10 @@ function mirrorSegments(input: string, chips: Chip[]): MirrorSegment[] {
 }
 
 export function CommandBar({ now, openCheatsheet }: { now?: Date; openCheatsheet?: () => void }) {
-  const { barText, setBarText, dispatch, setView } = useApp();
+  const { barText, setBarText, dispatch, setView, barRef } = useApp();
   const [reverted, setReverted] = useState<RevertedToken[]>([]);
   const [error, setError] = useState(false);
   const [selectedCommand, setSelectedCommand] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const commandMode = barText.startsWith('>');
   const commandQuery = commandMode ? barText.slice(1).trim() : '';
@@ -163,7 +162,7 @@ export function CommandBar({ now, openCheatsheet }: { now?: Date; openCheatsheet
       setBarText('');
       setReverted([]);
       setError(false);
-      inputRef.current?.focus();
+      barRef.current?.focus();
     } else if (event.key === 'Escape' && parsed.chips.length > 0) {
       event.preventDefault();
       const last = [...parsed.chips].sort((a, b) => a.start - b.start)[parsed.chips.length - 1];
@@ -198,7 +197,7 @@ export function CommandBar({ now, openCheatsheet }: { now?: Date; openCheatsheet
             )}
           </div>
           <input
-            ref={inputRef}
+            ref={barRef}
             className="command-bar-input"
             type="text"
             value={barText}

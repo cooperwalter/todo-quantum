@@ -2,6 +2,8 @@ import './App.css';
 import { CommandBar } from './components/CommandBar';
 import { Toast } from './components/Toast';
 import { ViewTabs } from './components/ViewTabs';
+import { useKeymap } from './hooks/useKeymap';
+import { todayStr } from './lib/dates';
 import { AppProvider, useApp } from './state/AppContext';
 import { AllView } from './views/AllView';
 import { DoneView } from './views/DoneView';
@@ -38,6 +40,35 @@ function ActiveView() {
 }
 
 function Shell() {
+  const { dispatch, setView, setBarText, barRef, selectedTaskId, setSelectedTaskId } = useApp();
+
+  useKeymap({
+    barRef,
+    getRowIds: () =>
+      Array.from(document.querySelectorAll<HTMLElement>('.task-row[data-task-id]')).map(
+        (el) => el.dataset.taskId as string,
+      ),
+    selectedId: selectedTaskId,
+    setSelectedId: setSelectedTaskId,
+    onComplete: (id) =>
+      dispatch({
+        type: 'complete',
+        id,
+        completedAt: new Date().toISOString(),
+        today: todayStr(new Date()),
+        newId: crypto.randomUUID(),
+      }),
+    onEdit: (id) =>
+      document.querySelector<HTMLElement>(`[data-task-id="${id}"] .task-row-title`)?.click(),
+    onDelete: (id) => dispatch({ type: 'delete', id }),
+    onSnooze: (id, dueDate) => dispatch({ type: 'snooze', id, dueDate }),
+    onUndo: () => dispatch({ type: 'undo' }),
+    onRedo: () => dispatch({ type: 'redo' }),
+    onTypeahead: (ch) => setBarText((prev) => prev + ch),
+    setView,
+    openCheatsheet: () => {}, // wired by US-017
+  });
+
   return (
     <div className="shell-column">
       <Masthead />

@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-command-bar-todo.md",
   "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
   "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T21:41:03Z",
+  "updatedAt": "2026-06-09T21:47:35Z",
   "coverageThreshold": 80,
   "staleThresholdMinutes": 20,
   "fileConflicts": [
@@ -1563,7 +1563,7 @@
         "Typecheck and lint pass"
       ],
       "priority": 10,
-      "status": "pending",
+      "status": "passed",
       "startedAt": null,
       "dependsOn": [
         "US-007",
@@ -1583,7 +1583,7 @@
             "pnpm test -- --run src/hooks/useKeymap.test.tsx"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -1601,7 +1601,7 @@
             "US-012",
             "US-017"
           ],
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -1623,7 +1623,7 @@
               "useKeymap"
             ]
           },
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-004",
@@ -1638,22 +1638,22 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 command-only verification task",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:47:35Z"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:47:35Z"
         },
         "visualReview": {
-          "status": "pending",
+          "status": "passed",
           "blocking": false
         }
       },
@@ -2717,6 +2717,23 @@
         "e2e/states-toast.spec.ts"
       ],
       "learnings": "useApp().dispatch is the WRAPPED dispatch (builds toast message from pre-reduce state via stateRef). Fake timers + user-event deadlock in vitest4/jsdom \u2014 use fireEvent + vi.useFakeTimers({toFake:[setTimeout,clearTimeout]}) for timer-driven component tests."
+    },
+    {
+      "timestamp": "2026-06-09T21:47:35Z",
+      "iteration": 1,
+      "storyId": "US-010",
+      "action": "story_passed",
+      "details": "useKeymap hook: FR-15..FR-17 focus model, FR-37 undo routing in 3 contexts, g-sequences, typeahead handoff; 20 hook tests; 30 e2e; visual gate PASS; focus-state screenshot inspected.",
+      "filesChanged": [
+        "src/hooks/useKeymap.ts",
+        "src/hooks/useKeymap.test.tsx",
+        "src/App.tsx",
+        "src/state/AppContext.tsx",
+        "src/components/CommandBar.tsx",
+        "src/views/TodayView.tsx",
+        "e2e/states-focus.spec.ts"
+      ],
+      "learnings": "Selection state + barRef live in AppContext (selectedTaskId/setSelectedTaskId/barRef) \u2014 sequential-mode deviation from declared filePaths, needed because US-010 cannot edit TodayView per ownership. US-013 must preserve TaskList selectedId/onSelect wiring. onEdit triggers TaskRow inline edit via DOM .task-row-title click. setBarText is Dispatch<SetStateAction<string>> for typeahead appends."
     }
   ],
   "codebasePatterns": [
@@ -2734,7 +2751,8 @@
     "UI: classes shell-column/masthead/view-tabs/view-tab/keycap/empty-state in App.css; tokens only; aria-current=page marks active tab; useApp() from src/state/AppContext",
     "Component tests: // @vitest-environment jsdom pragma + src/test-setup.ts localStorage shim; probe context state by rendering a JSON <pre> probe inside AppProvider",
     "TaskList sections prop: [{label, tasks, rollover?}]; empty sections omitted; all-empty renders empty-state line. TaskRow classes: task-row--p1/--rollover/--selected/--done",
-    "Toast: useApp().toast + showToast; wrapped dispatch emits Captured/Completed/Done \u2014 next <date>/Deleted/Snoozed to <date>/Scheduled/Saved/Reopened/Undone/Redone"
+    "Toast: useApp().toast + showToast; wrapped dispatch emits Captured/Completed/Done \u2014 next <date>/Deleted/Snoozed to <date>/Scheduled/Saved/Reopened/Undone/Redone",
+    "useKeymap config: callbacks (onComplete/onEdit/onDelete/onSnooze/onUndo/onRedo/onTypeahead) + getRowIds reads DOM .task-row[data-task-id]; today injectable"
   ],
   "userIntent": {
     "text": "todo app that implements the best features from existing todo apps and fixes common pain points",

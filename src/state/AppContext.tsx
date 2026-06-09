@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import type { Dispatch, ReactNode } from 'react';
+import type { Dispatch, ReactNode, RefObject, SetStateAction } from 'react';
 import { formatDateDisplay } from '../lib/parser';
 import { load } from '../lib/persistence';
 import { nextOccurrence } from '../lib/recurrence';
@@ -17,7 +17,10 @@ interface AppContextValue {
   view: View;
   setView: (view: View) => void;
   barText: string;
-  setBarText: (text: string) => void;
+  setBarText: Dispatch<SetStateAction<string>>;
+  barRef: RefObject<HTMLInputElement | null>;
+  selectedTaskId: string | null;
+  setSelectedTaskId: (id: string | null) => void;
   recovered: boolean;
   toast: string | null;
   showToast: (message: string) => void;
@@ -64,6 +67,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [state, rawDispatch] = useReducer(reducer, loadResult.data, initialStoreState);
   const [view, setView] = useState<View>('today');
   const [barText, setBarText] = useState('');
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const barRef = useRef<HTMLInputElement | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stateRef = useRef(state);
@@ -94,11 +99,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setView,
       barText,
       setBarText,
+      barRef,
+      selectedTaskId,
+      setSelectedTaskId,
       recovered: loadResult.recovered,
       toast,
       showToast,
     }),
-    [state, dispatch, view, barText, loadResult.recovered, toast, showToast],
+    [state, dispatch, view, barText, selectedTaskId, loadResult.recovered, toast, showToast],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
