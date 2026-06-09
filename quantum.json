@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-command-bar-todo.md",
   "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
   "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T21:05:51Z",
+  "updatedAt": "2026-06-09T21:12:28Z",
   "coverageThreshold": 80,
   "staleThresholdMinutes": 20,
   "fileConflicts": [
@@ -984,7 +984,7 @@
         "Typecheck and lint pass"
       ],
       "priority": 6,
-      "status": "pending",
+      "status": "passed",
       "startedAt": null,
       "dependsOn": [
         "US-004"
@@ -1012,7 +1012,7 @@
             "US-015",
             "US-016"
           ],
-          "status": "pending",
+          "status": "passed",
           "wiring_verification": {
             "file": "src/state/AppContext.tsx",
             "must_contain": [
@@ -1041,7 +1041,7 @@
               "AppProvider"
             ]
           },
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -1068,7 +1068,7 @@
               "DoneView"
             ]
           },
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-004",
@@ -1083,7 +1083,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 CSS/scaffold cleanup, verified by hex-grep command and the visual gate",
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-005",
@@ -1096,7 +1096,7 @@
             "pnpm exec playwright test e2e/shell.spec.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-006",
@@ -1110,22 +1110,22 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 command-only verification task, no source files",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:12:28Z"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-09T21:12:28Z"
         },
         "visualReview": {
-          "status": "pending",
+          "status": "passed",
           "blocking": false
         }
       },
@@ -2629,6 +2629,27 @@
         "src/lib/store.test.ts"
       ],
       "learnings": "Inverse ops are themselves union members (restore{task,index}, markDone, revertComplete{spawnedId}); delete inverse re-inserts at original array index for deep-equal round-trips; redo re-spawns deterministically by reusing spawnedId as newId."
+    },
+    {
+      "timestamp": "2026-06-09T21:12:28Z",
+      "iteration": 1,
+      "storyId": "US-006",
+      "action": "story_passed",
+      "details": "App shell: masthead (Fraunces over double rule), ViewTabs, 4 placeholder views, AppContext over store reducer seeded from persistence.load. Visual gate PASS (regression 3/3, axe 4/4). Baselines inspected at __screenshots__/verification/visual.spec.ts/--{mobile,tablet,desktop}.png. Lighthouse perf 0.58 advisory (dev-server measurement).",
+      "filesChanged": [
+        "src/App.tsx",
+        "src/App.css",
+        "src/index.css",
+        "src/components/ViewTabs.tsx",
+        "src/views/TodayView.tsx",
+        "src/views/UpcomingView.tsx",
+        "src/views/AllView.tsx",
+        "src/views/DoneView.tsx",
+        "src/state/AppContext.tsx",
+        "e2e/shell.spec.ts",
+        "playwright.config.ts"
+      ],
+      "learnings": "playwright.config.ts now has webServer with reuseExistingServer:true \u2014 playwright manages the dev server for e2e. Visual baselines live at __screenshots__/verification/visual.spec.ts/ (snapshotPathTemplate), not verification/visual.spec.ts-snapshots. Lighthouse perf vs dev server is advisory (config || true)."
     }
   ],
   "codebasePatterns": [
@@ -2642,7 +2663,8 @@
     "Same-wave stories own disjoint files: views live in src/views/<View>.tsx, components in src/components/, App.tsx is owned by exactly one in-flight story at a time",
     "Date helpers use ISO weekday numbering 1=Mon..7=Sun; all date math via local components (new Date(y,m-1,d+n,12))",
     "Parser: pass order recurrence->date->time->list->priority, first-wins per kind, word-level whole-token matching; chip displays: date \"Wed Jun 10\", time \"3:00 PM\", list \"#work\", priority \"P1\", recurrence source text",
-    "Store: reducer(state, action) pure; mutating payloads carry injected ids/dates (newId, completedAt, today); internal inverse action types restore/markDone/revertComplete"
+    "Store: reducer(state, action) pure; mutating payloads carry injected ids/dates (newId, completedAt, today); internal inverse action types restore/markDone/revertComplete",
+    "UI: classes shell-column/masthead/view-tabs/view-tab/keycap/empty-state in App.css; tokens only; aria-current=page marks active tab; useApp() from src/state/AppContext"
   ],
   "userIntent": {
     "text": "todo app that implements the best features from existing todo apps and fixes common pain points",

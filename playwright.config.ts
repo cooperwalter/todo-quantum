@@ -6,4 +6,9 @@ export default defineConfig({
   snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
   use: { baseURL: cfg.baseUrl },
   expect: { toHaveScreenshot: { maxDiffPixelRatio: cfg.visual.screenshotDiffMaxPixelRatio } },
+  webServer: {
+    command: cfg.devServer,
+    url: cfg.baseUrl,
+    reuseExistingServer: true,
+  },
 });
