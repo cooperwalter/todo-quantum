@@ -31,3 +31,8 @@ tmp/
 .ql-wt/
 .quantum-logs/
 quantum.json.tmp
+
+# playwright/lighthouse artifacts
+test-results/
+playwright-report/
+.lighthouseci/
