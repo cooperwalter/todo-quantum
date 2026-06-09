@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-command-bar-todo.md",
   "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
   "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T22:00:03.781126+00:00",
+  "updatedAt": "2026-06-09T22:04:37.142615+00:00",
   "coverageThreshold": 80,
   "staleThresholdMinutes": 20,
   "fileConflicts": [
@@ -2039,7 +2039,7 @@
         "Typecheck and lint pass"
       ],
       "priority": 14,
-      "status": "pending",
+      "status": "passed",
       "startedAt": null,
       "dependsOn": [
         "US-009",
@@ -2058,7 +2058,7 @@
             "pnpm test -- --run src/views/UpcomingView.test.tsx"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -2081,7 +2081,7 @@
               "TaskList"
             ]
           },
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -2094,7 +2094,7 @@
             "pnpm exec playwright test e2e/upcoming.spec.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-004",
@@ -2109,19 +2109,17 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 command-only verification task",
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
-          "issues": [],
-          "reviewedAt": null
+          "status": "passed",
+          "timestamp": "2026-06-09T22:04:37.142615+00:00"
         },
         "codeQuality": {
-          "status": "pending",
-          "issues": [],
-          "reviewedAt": null
+          "status": "passed",
+          "timestamp": "2026-06-09T22:04:37.142615+00:00"
         },
         "visualReview": {
           "status": "pending",
@@ -2762,6 +2760,20 @@
         "e2e/today.spec.ts"
       ],
       "learnings": "Machine TZ is fixed CST (no DST) \u2014 DST-sensitive tests must pin process.env.TZ at top of test file before imports. Reveal classes added imperatively in useLayoutEffect survive React re-renders unless className prop changes; gate one-shot reveal with module-level flag."
+    },
+    {
+      "timestamp": "2026-06-09T22:04:37.142615+00:00",
+      "iteration": 8,
+      "storyId": "US-014",
+      "action": "story_passed",
+      "details": "UpcomingView maps upcomingGroups(data, useToday()) onto TaskList sections (day labels then week labels, CSS-uppercased); empty state preserved; e2e seeds 4 tasks across 3 weeks and asserts group membership; 3 new blessed baselines upcoming-grouped-{mobile,tablet,desktop}.",
+      "filesChanged": [
+        "src/views/UpcomingView.tsx",
+        "src/views/UpcomingView.test.tsx",
+        "e2e/upcoming.spec.ts",
+        "__screenshots__/e2e/upcoming.spec.ts/"
+      ],
+      "learnings": "e2e screenshot baselines embed the live masthead date and relative seed dates \u2014 suite assumes same-day regeneration, consistent with prior states-* baselines."
     }
   ],
   "codebasePatterns": [
