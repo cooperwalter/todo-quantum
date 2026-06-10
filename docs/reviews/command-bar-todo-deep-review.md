@@ -75,3 +75,24 @@ None — no opposed findings on the same location.
 3. F-006 + F-007 (keymap g-sequence + honest toasts)
 4. F-009 + F-012 (test-infra: coverage provider + TZ pin)
 5. F-010, F-011, F-014..F-019 and advisories as a polish wave
+
+---
+
+## Resolution (2026-06-10)
+
+All blockers, all highs, and the actionable mediums/advisories were fixed in three commits
+(`543125a` resilience, `6addcd6` command-bar/keyboard, `643f272` gates) with regression tests
+pinning each fix (335 unit tests, up from 306; 29 new). Verified fresh after the fixes:
+
+- typecheck ✅ · lint ✅ · unit 335/335 ✅ · coverage ENFORCED at 92/86/93/95 (≥80 gate) ✅
+- e2e 72/72 ✅ · visual gate PASS (regression + axe + lighthouse) ✅
+- Lighthouse under the FR-48 100-task seed: ≥0.9 ✅ (was 0.88 until the reveal stagger was
+  capped at --motion-slow per DESIGN-SYSTEM §5 — the uncapped stagger was both a spec
+  violation and the perf gap)
+- F-003/F-004/F-005/F-007/F-013 re-verified live in the browser via devtools
+
+Deliberately deferred (tracked, not fixed): F-018 DoneView/TaskRow consolidation and the
+low-severity dedup debt (date-format helpers ×3, View union ×3, dead exports, e2e SeedTask
+type) — refactors better done as their own pass. One finding became a meta-lesson: M10
+(trust-the-port) bit this very session when a foreign dev server on 5173 failed all 72 e2e
+against the wrong app; the gates now own their servers on a strict dedicated port.

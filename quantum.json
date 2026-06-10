@@ -2982,7 +2982,21 @@
           "exemplary cross-story contract discipline (single-source keys/types/tokens, byte-identical copy)",
           "honest test suite: no over-mocking, real failure injection, true Enter-to-paint measurement"
         ],
-        "verdict": "REQUEST_CHANGES"
+        "verdict": "REQUEST_CHANGES",
+        "resolution": {
+          "status": "RESOLVED",
+          "resolvedAt": "2026-06-10T19:30:00Z",
+          "commits": [
+            "543125a",
+            "6addcd6",
+            "643f272"
+          ],
+          "deferred": [
+            "F-018 DoneView/TaskRow consolidation",
+            "low-severity dedup debt (date-format x3, View union x3, dead exports, e2e SeedTask type)"
+          ],
+          "evidence": "typecheck+lint pass; 335/335 unit; coverage enforced 92/86/93/95; 72/72 e2e; visual gate PASS; seeded Lighthouse >=0.9; F-003/004/005/007/013 re-verified live"
+        }
       }
     }
   }
