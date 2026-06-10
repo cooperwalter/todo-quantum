@@ -5,6 +5,18 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // Project-unique ports (vite's defaults 5173/4173 collide with other local
+  // projects — a foreign server on the default port once failed all 72 e2e
+  // against the wrong app). strictPort fails loudly instead of silently
+  // auto-incrementing somewhere the gates aren't looking.
+  server: {
+    port: 5273,
+    strictPort: true,
+  },
+  preview: {
+    port: 5274,
+    strictPort: true,
+  },
   test: {
     include: ['src/**/*.test.{ts,tsx}'],
     setupFiles: ['./src/test-setup.ts'],
@@ -16,7 +28,7 @@ export default defineConfig({
     },
     environmentOptions: {
       jsdom: {
-        url: 'http://localhost:5173/',
+        url: 'http://localhost:5273/',
       },
     },
     coverage: {

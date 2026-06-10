@@ -2,7 +2,7 @@
   "ci": {
     "collect": {
       "url": [
-        "http://localhost:4173"
+        "http://localhost:5274"
       ],
       "startServerCommand": "pnpm run build && pnpm run preview",
       "puppeteerScript": "verification/lh-seed.cjs",

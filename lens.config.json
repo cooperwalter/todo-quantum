@@ -13,7 +13,7 @@
     "library"
   ],
   "baseUrl": "http://localhost:5273",
-  "devServer": "pnpm run dev --port 5273 --strictPort",
+  "devServer": "pnpm run dev",
   "buildCommand": "pnpm run build",
   "gates": {
     "_comment": "Each value is a shell command run from the project root, or null to skip. Exit code 0 = pass. These become the verification commands quantum-loop's Iron Law demands as evidence.",
