@@ -9,6 +9,9 @@ export default defineConfig({
   webServer: {
     command: cfg.devServer,
     url: cfg.baseUrl,
-    reuseExistingServer: true,
+    // Never reuse an unknown server: a stale or foreign process on the port
+    // makes every gate "verify" the wrong code (deep-review finding M10 —
+    // observed live: another project's dev server on 5173 failed all 72 e2e).
+    reuseExistingServer: false,
   },
 });

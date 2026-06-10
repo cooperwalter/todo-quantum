@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
-declare const process: { env: Record<string, string | undefined> };
-process.env.TZ = 'America/New_York';
+// TZ is pinned suite-wide to America/New_York in vite.config.ts (test.env.TZ).
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, render, screen } from '@testing-library/react';

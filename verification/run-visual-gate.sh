@@ -22,19 +22,14 @@ LH_CMD="$(node -e 'const g=require("./'"$CFG"'").gates; console.log(g["visual.li
 export QL_ROUTE="$ROUTE"           # consumed by the .spec.ts files
 export QL_BASE_URL="$BASE_URL"
 
-started_server=""
-cleanup() { [[ -n "$started_server" ]] && kill "$started_server" 2>/dev/null || true; }
-trap cleanup EXIT
-
-# Start dev server only if base URL is not already serving.
-if ! curl -fsS --max-time 2 "$BASE_URL" >/dev/null 2>&1; then
-  echo "==> starting dev server: $DEV_CMD"
-  bash -c "$DEV_CMD" >/tmp/ql-dev.log 2>&1 &
-  started_server=$!
-  for i in $(seq 1 30); do
-    curl -fsS --max-time 2 "$BASE_URL" >/dev/null 2>&1 && break
-    sleep 1
-  done
+# Server lifecycle is owned by playwright.config.ts webServer (strictPort,
+# reuseExistingServer: false) and by lhci's startServerCommand — the script
+# must NOT pre-start one. A pre-started or stale server on the port means the
+# gates "verify" code that isn't under review (deep-review finding M10); the
+# strict config now fails loudly instead.
+if curl -fsS --max-time 2 "$BASE_URL" >/dev/null 2>&1; then
+  echo "FAIL: something is already serving $BASE_URL — stop it so the gate can start a fresh server ($DEV_CMD)"
+  exit 2
 fi
 
 fail=0

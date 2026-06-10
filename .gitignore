@@ -36,3 +36,4 @@ quantum.json.tmp
 test-results/
 playwright-report/
 .lighthouseci/
+coverage/
