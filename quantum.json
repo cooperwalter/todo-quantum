@@ -478,8 +478,8 @@
       "title": "Task types, date helpers, and persistence module",
       "description": "As the app, I need versioned load/save of AppData to localStorage so user data survives reloads and corruption is recoverable.",
       "acceptanceCriteria": [
-        "src/lib/types.ts [NEW] exports Task, Recurrence, AppData exactly as specified in FR-26 and FR-29\u2026FR-31 (no any anywhere)",
-        "src/lib/dates.ts [NEW] exports todayStr, addDays, nextWeekdayAfter, nextSaturdayAfter, isoWeekStart, snoozeTomorrow, snoozeNextWeek, snoozeWeekend \u2014 local-date-component math only (FR-32), strictly-after weekday semantics (FR-33) \u2014 planner-added AC for the shared date module",
+        "src/lib/types.ts [NEW] exports Task, Recurrence, AppData exactly as specified in FR-26 and FR-29…FR-31 (no any anywhere)",
+        "src/lib/dates.ts [NEW] exports todayStr, addDays, nextWeekdayAfter, nextSaturdayAfter, isoWeekStart, snoozeTomorrow, snoozeNextWeek, snoozeWeekend — local-date-component math only (FR-32), strictly-after weekday semantics (FR-33) — planner-added AC for the shared date module",
         "src/lib/persistence.ts [NEW] exports load(storage: StorageLike): LoadResult and save(storage: StorageLike, data: AppData): SaveResult (storage injected; never touches window directly)",
         "save serializes, writes under key todo-quantum.v1, re-reads and parses to verify; returns {ok: false, reason: 'quota'} on QuotaExceededError without throwing",
         "load of missing key returns {ok: true, data: {schemaVersion: 1, tasks: []}, recovered: false}",
@@ -509,7 +509,7 @@
         {
           "id": "T-002",
           "title": "Implement src/lib/dates.ts to pass the tests",
-          "description": "Implement the pure date-component helpers from T-001 in src/lib/dates.ts. All functions take explicit date strings or Date 'now' parameters \u2014 no Date.now() inside (FR-32, FR-10 determinism). Export snooze target helpers: snoozeTomorrow(today), snoozeNextWeek(today) (+7), snoozeWeekend(today) (next Saturday strictly after today).",
+          "description": "Implement the pure date-component helpers from T-001 in src/lib/dates.ts. All functions take explicit date strings or Date 'now' parameters — no Date.now() inside (FR-32, FR-10 determinism). Export snooze target helpers: snoozeTomorrow(today), snoozeNextWeek(today) (+7), snoozeWeekend(today) (next Saturday strictly after today).",
           "filePaths": [
             "src/lib/dates.ts"
           ],
@@ -517,7 +517,7 @@
             "pnpm test -- --run src/lib/dates.test.ts"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
+          "notes": "testFirst: false — implementation of the tests written in T-001",
           "consumedBy": [
             "US-003",
             "US-005",
@@ -529,7 +529,7 @@
         {
           "id": "T-003",
           "title": "Create src/lib/types.ts type definitions",
-          "description": "Create src/lib/types.ts with the EXACT definitions from contracts.shared_types (Task, Recurrence, AppData \u2014 copy the contract definition strings verbatim). Add StorageLike (pick of Storage: getItem/setItem/removeItem), LoadResult, SaveResult discriminated unions. Pure types only, no runtime code, no any.",
+          "description": "Create src/lib/types.ts with the EXACT definitions from contracts.shared_types (Task, Recurrence, AppData — copy the contract definition strings verbatim). Add StorageLike (pick of Storage: getItem/setItem/removeItem), LoadResult, SaveResult discriminated unions. Pure types only, no runtime code, no any.",
           "filePaths": [
             "src/lib/types.ts"
           ],
@@ -537,7 +537,7 @@
             "pnpm run typecheck"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 pure type definitions, no runtime logic",
+          "notes": "testFirst: false — pure type definitions, no runtime logic",
           "consumedBy": [
             "US-002",
             "US-003",
@@ -575,7 +575,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-004",
+          "notes": "testFirst: false — implementation of the tests written in T-004",
           "consumedBy": [
             "US-006",
             "US-016"
@@ -609,9 +609,9 @@
       "title": "Natural-language parser",
       "description": "As a user, I want 'Send report tomorrow 3pm #work !p1' parsed into structured fields as I type so capture is one line of text.",
       "acceptanceCriteria": [
-        "src/lib/parser.ts [NEW] exports parse(input: string, now: Date): ParseResult \u2014 deterministic, now injected",
+        "src/lib/parser.ts [NEW] exports parse(input: string, now: Date): ParseResult — deterministic, now injected",
         "ParseResult = {title, dueDate, dueTime, list, priority, recurrence, chips} where chips: Array<{start, end, kind, display}> carries source ranges",
-        "Implements the FR-1\u2026FR-10 grammar table exactly: every listed token parses; every listed non-token stays literal",
+        "Implements the FR-1…FR-10 grammar table exactly: every listed token parses; every listed non-token stays literal",
         "'Pay May invoice' yields title 'Pay May invoice' with zero chips (FR-2 anchor rule)",
         "'Send report tomorrow 3pm #work !p1' with now=2026-06-09 yields dueDate 2026-06-10, dueTime 15:00, list work, priority 1, title 'Send report', 3 chips",
         "Empty-after-extraction title yields {valid: false} (FR-13)",
@@ -629,7 +629,7 @@
         {
           "id": "T-001",
           "title": "Write failing grammar tests: dates and times (TDD)",
-          "description": "Create src/lib/parser.test.ts (import Task/Recurrence types from src/lib/types.ts created by US-001 \u2014 do NOT redefine). Cover FR-1\u2026FR-3: today/tomorrow/yesterday; bare weekdays mon\u2026sunday (next strictly after now); 'next friday' (following ISO week); 'jun 12' and '12 jun' (next future occurrence); 'in 3 days'/'in 2 weeks'; times 3pm, 3:30pm, 15:00 (only with a date present or am/pm suffix); bare '3' never a time. Literal fallbacks: 'Pay May invoice' zero chips; 'meet monday-ish' stays literal (not whole word); '25:00' stays literal. Each test name states the expected parse.",
+          "description": "Create src/lib/parser.test.ts (import Task/Recurrence types from src/lib/types.ts created by US-001 — do NOT redefine). Cover FR-1…FR-3: today/tomorrow/yesterday; bare weekdays mon…sunday (next strictly after now); 'next friday' (following ISO week); 'jun 12' and '12 jun' (next future occurrence); 'in 3 days'/'in 2 weeks'; times 3pm, 3:30pm, 15:00 (only with a date present or am/pm suffix); bare '3' never a time. Literal fallbacks: 'Pay May invoice' zero chips; 'meet monday-ish' stays literal (not whole word); '25:00' stays literal. Each test name states the expected parse.",
           "filePaths": [
             "src/lib/parser.test.ts"
           ],
@@ -642,7 +642,7 @@
         {
           "id": "T-002",
           "title": "Implement date/time tokenization in src/lib/parser.ts",
-          "description": "Create src/lib/parser.ts with Chip + ParseResult interfaces (copy contracts.shared_types.chip / parse_result definitions verbatim) and implement whole-word, keyword-anchored date/time token recognition per FR-1\u2026FR-3 using helpers from src/lib/dates.ts. Pure function of (input, now) \u2014 FR-10.",
+          "description": "Create src/lib/parser.ts with Chip + ParseResult interfaces (copy contracts.shared_types.chip / parse_result definitions verbatim) and implement whole-word, keyword-anchored date/time token recognition per FR-1…FR-3 using helpers from src/lib/dates.ts. Pure function of (input, now) — FR-10.",
           "filePaths": [
             "src/lib/parser.ts"
           ],
@@ -650,13 +650,13 @@
             "pnpm test -- --run src/lib/parser.test.ts"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
+          "notes": "testFirst: false — implementation of the tests written in T-001",
           "status": "passed"
         },
         {
           "id": "T-003",
           "title": "Write failing grammar tests: list, priority, recurrence, chips, title (TDD)",
-          "description": "Extend src/lib/parser.test.ts for FR-4\u2026FR-9 and FR-13: single #list (first wins, later '#x' literal, 1-32 word chars); !p1/!p2/!p3 only (!p4 and !urgent literal); recurrence forms 'every day', 'daily', 'every 2 weeks', 'every monday', 'every weekday' (byWeekday Mon\u2013Fri); duplicate same-kind tokens first-wins; chips carry exact {start,end} source ranges and human display strings; title is residue whitespace-collapsed; input that is ONLY tokens yields valid:false. Canonical: 'Send report tomorrow 3pm #work !p1' full assertion from the AC.",
+          "description": "Extend src/lib/parser.test.ts for FR-4…FR-9 and FR-13: single #list (first wins, later '#x' literal, 1-32 word chars); !p1/!p2/!p3 only (!p4 and !urgent literal); recurrence forms 'every day', 'daily', 'every 2 weeks', 'every monday', 'every weekday' (byWeekday Mon–Fri); duplicate same-kind tokens first-wins; chips carry exact {start,end} source ranges and human display strings; title is residue whitespace-collapsed; input that is ONLY tokens yields valid:false. Canonical: 'Send report tomorrow 3pm #work !p1' full assertion from the AC.",
           "filePaths": [
             "src/lib/parser.test.ts"
           ],
@@ -679,7 +679,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-003",
+          "notes": "testFirst: false — implementation of the tests written in T-003",
           "consumedBy": [
             "US-007"
           ],
@@ -712,7 +712,7 @@
       "title": "Recurrence engine",
       "description": "As a user, I want recurring tasks to regenerate on completion at the right next date so repeating work schedules itself.",
       "acceptanceCriteria": [
-        "src/lib/recurrence.ts [NEW] exports nextOccurrence(rec: Recurrence, anchor: string, today: string): string implementing FR-26\u2026FR-28 (smallest pattern-matching date strictly after max(anchor, today))",
+        "src/lib/recurrence.ts [NEW] exports nextOccurrence(rec: Recurrence, anchor: string, today: string): string implementing FR-26…FR-28 (smallest pattern-matching date strictly after max(anchor, today))",
         "Monthly byMonthDay: 31 from 2026-01-31 yields 2026-02-28 (clamp rule FR-27)",
         "Weekly byWeekday:[1] anchored Monday, completed the following Wednesday, yields the next Monday after today (no back-dated avalanche, FR-28)",
         "every 2 weeks preserves anchor parity: next = anchor + 14k, smallest strictly after today",
@@ -730,7 +730,7 @@
         {
           "id": "T-001",
           "title": "Write failing tests for nextOccurrence (TDD)",
-          "description": "Create src/lib/recurrence.test.ts (import Recurrence from src/lib/types.ts created by US-001 \u2014 do NOT redefine). Cases: daily interval 1 and 3; weekly single and multi byWeekday; biweekly anchor parity (anchor + 14k strictly after today); monthly byMonthDay 1, 15, 31 with Feb clamp (2026-01-31 \u2192 2026-02-28); overdue completion advances from today not anchor; completion ON the due date advances one period; DST weeks 2026-03-08 / 2026-11-01 produce calendar-correct dates; interval boundaries (interval 1 minimum, 12 months). Test names state the expected next date.",
+          "description": "Create src/lib/recurrence.test.ts (import Recurrence from src/lib/types.ts created by US-001 — do NOT redefine). Cases: daily interval 1 and 3; weekly single and multi byWeekday; biweekly anchor parity (anchor + 14k strictly after today); monthly byMonthDay 1, 15, 31 with Feb clamp (2026-01-31 → 2026-02-28); overdue completion advances from today not anchor; completion ON the due date advances one period; DST weeks 2026-03-08 / 2026-11-01 produce calendar-correct dates; interval boundaries (interval 1 minimum, 12 months). Test names state the expected next date.",
           "filePaths": [
             "src/lib/recurrence.test.ts"
           ],
@@ -743,7 +743,7 @@
         {
           "id": "T-002",
           "title": "Implement src/lib/recurrence.ts; run story gates",
-          "description": "Implement nextOccurrence using src/lib/dates.ts component math (no UTC ms arithmetic \u2014 FR-32). Algorithm: generate pattern dates anchored at 'anchor', return the smallest strictly greater than max(anchor, today). Run full story gates.",
+          "description": "Implement nextOccurrence using src/lib/dates.ts component math (no UTC ms arithmetic — FR-32). Algorithm: generate pattern dates anchored at 'anchor', return the smallest strictly greater than max(anchor, today). Run full story gates.",
           "filePaths": [
             "src/lib/recurrence.ts"
           ],
@@ -753,7 +753,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
+          "notes": "testFirst: false — implementation of the tests written in T-001",
           "consumedBy": [
             "US-004"
           ],
@@ -819,7 +819,7 @@
         {
           "id": "T-002",
           "title": "Implement src/lib/store.ts reducer with inverse-op stacks",
-          "description": "Create src/lib/store.ts: StoreState {data, undoStack, redoStack}, Action discriminated union, pure reducer. Each mutating action computes its inverse action and pushes it (cap 50 FIFO). undo/redo pop-apply-push. order assignment for add = max existing order + 1 (FR-30). Dependencies injected via action payloads (newId, dates) \u2014 reducer stays pure.",
+          "description": "Create src/lib/store.ts: StoreState {data, undoStack, redoStack}, Action discriminated union, pure reducer. Each mutating action computes its inverse action and pushes it (cap 50 FIFO). undo/redo pop-apply-push. order assignment for add = max existing order + 1 (FR-30). Dependencies injected via action payloads (newId, dates) — reducer stays pure.",
           "filePaths": [
             "src/lib/store.ts"
           ],
@@ -827,7 +827,7 @@
             "pnpm test -- --run src/lib/store.test.ts"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
+          "notes": "testFirst: false — implementation of the tests written in T-001",
           "consumedBy": [
             "US-006"
           ],
@@ -849,7 +849,7 @@
         {
           "id": "T-004",
           "title": "Implement recurring-complete spawn and externalReload; run story gates",
-          "description": "Wire nextOccurrence from src/lib/recurrence.ts (created by US-003 \u2014 import, do NOT reimplement) into the complete action for recurring tasks; implement compound inverse (remove spawn + restore status); implement externalReload. Run full story gates.",
+          "description": "Wire nextOccurrence from src/lib/recurrence.ts (created by US-003 — import, do NOT reimplement) into the complete action for recurring tasks; implement compound inverse (remove spawn + restore status); implement externalReload. Run full story gates.",
           "filePaths": [
             "src/lib/store.ts"
           ],
@@ -859,7 +859,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-003",
+          "notes": "testFirst: false — implementation of the tests written in T-003",
           "wiring_verification": {
             "file": "src/lib/store.ts",
             "must_contain": [
@@ -896,9 +896,9 @@
       "title": "View selectors",
       "description": "As a user, I want Today/Upcoming/All/Done computed from one task list so views are always consistent.",
       "acceptanceCriteria": [
-        "src/lib/selectors.ts [NEW] exports todayItems(data, today), upcomingGroups(data, today), allItems(data, filterText), doneItems(data) implementing FR-21\u2026FR-23",
+        "src/lib/selectors.ts [NEW] exports todayItems(data, today), upcomingGroups(data, today), allItems(data, filterText), doneItems(data) implementing FR-21…FR-23",
         "todayItems returns three ordered sections: rollover (open, dueDate < today, ascending dueDate), due-today (dueTime ascending then order), anytime (dueDate null, by order)",
-        "upcomingGroups returns day-groups for today+1\u2026today+7 then ISO-week groups, ALREADY omitting empty groups (the selector filters; the UI renders what it receives \u2014 FR-22)",
+        "upcomingGroups returns day-groups for today+1…today+7 then ISO-week groups, ALREADY omitting empty groups (the selector filters; the UI renders what it receives — FR-22)",
         "allItems('rep') matches case-insensitive substring on title and list; empty filter returns all open tasks",
         "doneItems sorts by completedAt descending",
         "Unit tests cover each section's membership and ordering with a fixed today; all pass",
@@ -928,7 +928,7 @@
         {
           "id": "T-002",
           "title": "Implement src/lib/selectors.ts; run story gates",
-          "description": "Implement the four selectors as pure functions over AppData using src/lib/dates.ts comparisons. Rollover is DERIVED here (FR-24) \u2014 no stored flag. Run full story gates.",
+          "description": "Implement the four selectors as pure functions over AppData using src/lib/dates.ts comparisons. Rollover is DERIVED here (FR-24) — no stored flag. Run full story gates.",
           "filePaths": [
             "src/lib/selectors.ts"
           ],
@@ -938,7 +938,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
+          "notes": "testFirst: false — implementation of the tests written in T-001",
           "consumedBy": [
             "US-009",
             "US-013",
@@ -974,10 +974,10 @@
       "title": "App shell, masthead, view tabs, and state provider",
       "description": "As a visitor, I want the app shell rendered to the design system so the structure exists for every later story.",
       "acceptanceCriteria": [
-        "src/App.tsx (existing) replaced with shell: masthead (today's date, --type-display Fraunces over double rule per DESIGN-SYSTEM \u00a71), view tabs (Today/Upcoming/All/Done, mono uppercase, accent underline on current), main column (max-width 720 desktop / 640 tablet / full 375 per \u00a77), placeholder content region",
+        "src/App.tsx (existing) replaced with shell: masthead (today's date, --type-display Fraunces over double rule per DESIGN-SYSTEM §1), view tabs (Today/Upcoming/All/Done, mono uppercase, accent underline on current), main column (max-width 720 desktop / 640 tablet / full 375 per §7), placeholder content region",
         "src/components/ViewTabs.tsx [NEW]; current view held in App state; clicking a tab switches view",
-        "src/state/AppContext.tsx [NEW] exposes useApp() returning {state, dispatch, view, setView, barText, setBarText, recovered}; initial state loads from persistence load(localStorage) \u2014 planner-added AC realizing FR-15/FR-20/US-016 groundwork",
-        "Only --color-*/--space-*/--type-*/--radius-* tokens used \u2014 grep -rnE '#[0-9A-Fa-f]{3,6}' src/components src/App.tsx src/App.css returns no matches in changed files",
+        "src/state/AppContext.tsx [NEW] exposes useApp() returning {state, dispatch, view, setView, barText, setBarText, recovered}; initial state loads from persistence load(localStorage) — planner-added AC realizing FR-15/FR-20/US-016 groundwork",
+        "Only --color-*/--space-*/--type-*/--radius-* tokens used — grep -rnE '#[0-9A-Fa-f]{3,6}' src/components src/App.tsx src/App.css returns no matches in changed files",
         "Scaffold demo content and unused assets removed from src/App.tsx/src/App.css",
         "Visual gate passes: bash verification/run-visual-gate.sh / (baseline created, rendered, inspected against DESIGN-SYSTEM.md before blessing)",
         "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
@@ -994,7 +994,7 @@
         {
           "id": "T-001",
           "title": "Create AppContext state provider over the store reducer",
-          "description": "Create src/state/AppContext.tsx: React context + provider wrapping useReducer over the US-004 reducer (import from src/lib/store.ts \u2014 do NOT create an inline replacement). INITIAL STATE comes from load(window.localStorage) via src/lib/persistence.ts (created by US-001 \u2014 import, do NOT reimplement); hold the LoadResult's recovered flag in context for US-016 to surface as a toast later. Expose {state, dispatch, view, setView, barText, setBarText, recovered} via useApp() hook. View type: 'today' | 'upcoming' | 'all' | 'done'. barText is shared so US-015's All-view filter can read it. NOTE: this makes localStorage-seeded e2e specs work from US-006 onward; US-016 owns saving, banner, recovery toast, and multi-tab.",
+          "description": "Create src/state/AppContext.tsx: React context + provider wrapping useReducer over the US-004 reducer (import from src/lib/store.ts — do NOT create an inline replacement). INITIAL STATE comes from load(window.localStorage) via src/lib/persistence.ts (created by US-001 — import, do NOT reimplement); hold the LoadResult's recovered flag in context for US-016 to surface as a toast later. Expose {state, dispatch, view, setView, barText, setBarText, recovered} via useApp() hook. View type: 'today' | 'upcoming' | 'all' | 'done'. barText is shared so US-015's All-view filter can read it. NOTE: this makes localStorage-seeded e2e specs work from US-006 onward; US-016 owns saving, banner, recovery toast, and multi-tab.",
           "filePaths": [
             "src/state/AppContext.tsx"
           ],
@@ -1002,7 +1002,7 @@
             "pnpm run typecheck"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 thin React wiring over the US-004-unit-tested reducer; behavior verified by the e2e in T-003 (component-test tooling arrives in US-007)",
+          "notes": "testFirst: false — thin React wiring over the US-004-unit-tested reducer; behavior verified by the e2e in T-003 (component-test tooling arrives in US-007)",
           "consumedBy": [
             "US-007",
             "US-009",
@@ -1024,7 +1024,7 @@
         {
           "id": "T-002",
           "title": "Implement masthead and ViewTabs",
-          "description": "Replace scaffold src/App.tsx structure: wrap in AppProvider; render masthead (today's local date via dates.ts, Fraunces --type-display over double rule per DESIGN-SYSTEM \u00a71) and ViewTabs (src/components/ViewTabs.tsx [NEW], mono uppercase tabs, accent underline current via tokens, keycap hints hidden below 768 per \u00a77). View-switch region added in T-003.",
+          "description": "Replace scaffold src/App.tsx structure: wrap in AppProvider; render masthead (today's local date via dates.ts, Fraunces --type-display over double rule per DESIGN-SYSTEM §1) and ViewTabs (src/components/ViewTabs.tsx [NEW], mono uppercase tabs, accent underline current via tokens, keycap hints hidden below 768 per §7). View-switch region added in T-003.",
           "filePaths": [
             "src/App.tsx",
             "src/components/ViewTabs.tsx"
@@ -1033,7 +1033,7 @@
             "pnpm run typecheck"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 presentational scaffold; behavior covered by T-005 e2e and the visual gate (component-test tooling arrives in US-007)",
+          "notes": "testFirst: false — presentational scaffold; behavior covered by T-005 e2e and the visual gate (component-test tooling arrives in US-007)",
           "wiring_verification": {
             "file": "src/App.tsx",
             "must_contain": [
@@ -1046,7 +1046,7 @@
         {
           "id": "T-003",
           "title": "Create placeholder views and view-switch region",
-          "description": "Create src/views/TodayView.tsx, UpcomingView.tsx, AllView.tsx, DoneView.tsx as placeholders (each renders its italic empty state per \u00a76 \u2014 later stories own these files, which keeps waves disjoint) and render the active one in App.tsx based on useApp().view.",
+          "description": "Create src/views/TodayView.tsx, UpcomingView.tsx, AllView.tsx, DoneView.tsx as placeholders (each renders its italic empty state per §6 — later stories own these files, which keeps waves disjoint) and render the active one in App.tsx based on useApp().view.",
           "filePaths": [
             "src/views/TodayView.tsx",
             "src/views/UpcomingView.tsx",
@@ -1058,7 +1058,7 @@
             "pnpm run typecheck"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 presentational placeholders; behavior covered by T-005 e2e and the visual gate",
+          "notes": "testFirst: false — presentational placeholders; behavior covered by T-005 e2e and the visual gate",
           "wiring_verification": {
             "file": "src/App.tsx",
             "must_contain": [
@@ -1073,7 +1073,7 @@
         {
           "id": "T-004",
           "title": "Rewrite App.css from tokens; remove scaffold demo",
-          "description": "Rewrite src/App.css using only --color-*/--space-*/--type-*/--radius-* tokens (layout per \u00a77 breakpoints: column max-width 720 desktop / 640 tablet / full-bleed 375); delete scaffold demo markup remnants and unused assets (src/assets/hero.png, react.svg if unreferenced). Verify zero hex literals.",
+          "description": "Rewrite src/App.css using only --color-*/--space-*/--type-*/--radius-* tokens (layout per §7 breakpoints: column max-width 720 desktop / 640 tablet / full-bleed 375); delete scaffold demo markup remnants and unused assets (src/assets/hero.png, react.svg if unreferenced). Verify zero hex literals.",
           "filePaths": [
             "src/App.css"
           ],
@@ -1082,7 +1082,7 @@
             "pnpm run typecheck"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 CSS/scaffold cleanup, verified by hex-grep command and the visual gate",
+          "notes": "testFirst: false — CSS/scaffold cleanup, verified by hex-grep command and the visual gate",
           "status": "passed"
         },
         {
@@ -1101,7 +1101,7 @@
         {
           "id": "T-006",
           "title": "Visual gate: create and inspect the first baseline",
-          "description": "Run the visual gate for route /. This creates the FIRST baseline (PNGs in verification/visual.spec.ts-snapshots/): render it, LOOK at the screenshots at 375/768/1280, confirm masthead/tabs/empty-state match DESIGN-SYSTEM.md \u00a71/\u00a76/\u00a77 before blessing (Pixel Law). Cite the inspected screenshot paths in completion evidence.",
+          "description": "Run the visual gate for route /. This creates the FIRST baseline (PNGs in verification/visual.spec.ts-snapshots/): render it, LOOK at the screenshots at 375/768/1280, confirm masthead/tabs/empty-state match DESIGN-SYSTEM.md §1/§6/§7 before blessing (Pixel Law). Cite the inspected screenshot paths in completion evidence.",
           "filePaths": [
             "verification/visual.spec.ts-snapshots"
           ],
@@ -1109,7 +1109,7 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 command-only verification task, no source files",
+          "notes": "testFirst: false — command-only verification task, no source files",
           "status": "passed"
         }
       ],
@@ -1143,13 +1143,13 @@
       "title": "Command bar with live parse chips",
       "description": "As a user, I want tokens to become visible chips as I type so I trust the parse before pressing Enter.",
       "acceptanceCriteria": [
-        "src/components/CommandBar.tsx [NEW]: text input styled per DESIGN-SYSTEM \u00a76 (vermilion \u25b8 prompt, fg border, print shadow), permanently mounted above the view tabs",
-        "On each input change, parse() runs and recognized tokens render as accent-underlined chips inline (overlay or mirrored rendering \u2014 visually inside the bar), per \u00a76 never boxed",
+        "src/components/CommandBar.tsx [NEW]: text input styled per DESIGN-SYSTEM §6 (vermilion ▸ prompt, fg border, print shadow), permanently mounted above the view tabs",
+        "On each input change, parse() runs and recognized tokens render as accent-underlined chips inline (overlay or mirrored rendering — visually inside the bar), per §6 never boxed",
         "Enter with valid parse dispatches add, clears input, keeps focus in the bar (FR-12)",
         "Enter with empty/invalid title: danger border flash at --motion-fast, inline mono message 'nothing to capture', no task created (FR-13)",
-        "Esc with \u22651 chip reverts the most recent chip to literal text (FR-14); input value updates accordingly",
+        "Esc with ≥1 chip reverts the most recent chip to literal text (FR-14); input value updates accordingly",
         "Chips have visually-hidden text announcing the parse (e.g. 'due tomorrow 3 PM') via aria-describedby on the input (FR-45)",
-        "Dev deps @testing-library/react, @testing-library/user-event, jsdom [NEW dev deps \u2014 this story introduces all three] added; component tests: typing canonical string renders 3 chips; Enter dispatches add and clears; Esc reverts last chip",
+        "Dev deps @testing-library/react, @testing-library/user-event, jsdom [NEW dev deps — this story introduces all three] added; component tests: typing canonical string renders 3 chips; Enter dispatches add and clears; Esc reverts last chip",
         "Visual gate passes for / including a state with the canonical string typed",
         "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
         "Typecheck and lint pass"
@@ -1166,7 +1166,7 @@
         {
           "id": "T-001",
           "title": "Add component-test tooling (dev deps + vitest jsdom config)",
-          "description": "Add dev deps @testing-library/react, @testing-library/user-event, jsdom via pnpm add -D. Configure Vitest for component tests in vite.config.ts (test.environment 'jsdom' \u2014 or per-file // @vitest-environment jsdom pragma; choose one and note it in codebasePatterns). Verify existing src/lib tests still pass.",
+          "description": "Add dev deps @testing-library/react, @testing-library/user-event, jsdom via pnpm add -D. Configure Vitest for component tests in vite.config.ts (test.environment 'jsdom' — or per-file // @vitest-environment jsdom pragma; choose one and note it in codebasePatterns). Verify existing src/lib tests still pass.",
           "filePaths": [
             "package.json",
             "vite.config.ts"
@@ -1175,7 +1175,7 @@
             "pnpm test -- --run"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 config/scaffold task (dev-dependency and test-environment setup)",
+          "notes": "testFirst: false — config/scaffold task (dev-dependency and test-environment setup)",
           "status": "passed"
         },
         {
@@ -1194,7 +1194,7 @@
         {
           "id": "T-003",
           "title": "Implement CommandBar component",
-          "description": "Create src/components/CommandBar.tsx: controlled input bound to useApp().barText; on change run parse(input, now) from src/lib/parser.ts (created by US-002 \u2014 import, do NOT reimplement); render chips inline via mirrored overlay (accent underline, never boxed, \u00a76); \u25b8 prompt glyph in accent; print shadow per \u00a76; Enter/Esc per FR-12\u2026FR-14; aria-describedby chip announcements (FR-45); danger flash uses --motion-fast and --color-danger tokens only.",
+          "description": "Create src/components/CommandBar.tsx: controlled input bound to useApp().barText; on change run parse(input, now) from src/lib/parser.ts (created by US-002 — import, do NOT reimplement); render chips inline via mirrored overlay (accent underline, never boxed, §6); ▸ prompt glyph in accent; print shadow per §6; Enter/Esc per FR-12…FR-14; aria-describedby chip announcements (FR-45); danger flash uses --motion-fast and --color-danger tokens only.",
           "filePaths": [
             "src/components/CommandBar.tsx"
           ],
@@ -1202,7 +1202,7 @@
             "pnpm test -- --run src/components/CommandBar.test.tsx"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-002",
+          "notes": "testFirst: false — implementation of the tests written in T-002",
           "consumedBy": [
             "US-008",
             "US-010",
@@ -1223,7 +1223,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 wiring task verified by wiring_verification and the T-002 suite",
+          "notes": "testFirst: false — wiring task verified by wiring_verification and the T-002 suite",
           "wiring_verification": {
             "file": "src/App.tsx",
             "must_contain": [
@@ -1245,7 +1245,7 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 command-only verification task",
+          "notes": "testFirst: false — command-only verification task",
           "status": "passed"
         }
       ],
@@ -1279,8 +1279,8 @@
       "title": "Command mode",
       "description": "As a user, I want > to switch the bar into a fuzzy command palette so navigation never needs the mouse.",
       "acceptanceCriteria": [
-        "When input begins with >, bar enters command mode: prompt glyph \u276f, mono input text (DESIGN-SYSTEM \u00a76), fuzzy-matched command list rendered beneath the bar",
-        "v1 commands: today, upcoming, all, done, undo, redo, help (FR-19); \u2191/\u2193 move command selection, Enter executes; Esc exits command mode and clears the input to the empty string (capture mode)",
+        "When input begins with >, bar enters command mode: prompt glyph ❯, mono input text (DESIGN-SYSTEM §6), fuzzy-matched command list rendered beneath the bar",
+        "v1 commands: today, upcoming, all, done, undo, redo, help (FR-19); ↑/↓ move command selection, Enter executes; Esc exits command mode and clears the input to the empty string (capture mode)",
         ">help opens the cheatsheet overlay (delivered by US-017; until then it is a registered command whose handler is wired in US-017)",
         "Fuzzy match: subsequence, case-insensitive (>tdy matches today)",
         "Text not starting with > is NEVER treated as a command (FR-18)",
@@ -1314,7 +1314,7 @@
         {
           "id": "T-002",
           "title": "Implement src/lib/commands.ts registry",
-          "description": "Create src/lib/commands.ts: Command {id, label, run(ctx)} for today/upcoming/all/done (setView), undo/redo (dispatch), help (ctx.openCheatsheet \u2014 accepts a callback so US-017 can wire the real overlay; until then App passes a no-op). Export fuzzyMatch.",
+          "description": "Create src/lib/commands.ts: Command {id, label, run(ctx)} for today/upcoming/all/done (setView), undo/redo (dispatch), help (ctx.openCheatsheet — accepts a callback so US-017 can wire the real overlay; until then App passes a no-op). Export fuzzyMatch.",
           "filePaths": [
             "src/lib/commands.ts"
           ],
@@ -1322,7 +1322,7 @@
             "pnpm test -- --run src/lib/commands.test.ts"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
+          "notes": "testFirst: false — implementation of the tests written in T-001",
           "consumedBy": [
             "US-017"
           ],
@@ -1331,7 +1331,7 @@
         {
           "id": "T-003",
           "title": "Write failing component tests for command mode (TDD)",
-          "description": "Extend src/components/CommandBar.test.tsx: typing '>' flips to command mode (\u276f glyph, mono class); '>tdy' highlights today, Enter switches view; '>undo' Enter dispatches undo; \u2191/\u2193 move aria-activedescendant; Esc exits leaving empty input; plain text without > never opens the list (FR-18); list has role=listbox.",
+          "description": "Extend src/components/CommandBar.test.tsx: typing '>' flips to command mode (❯ glyph, mono class); '>tdy' highlights today, Enter switches view; '>undo' Enter dispatches undo; ↑/↓ move aria-activedescendant; Esc exits leaving empty input; plain text without > never opens the list (FR-18); list has role=listbox.",
           "filePaths": [
             "src/components/CommandBar.test.tsx"
           ],
@@ -1344,7 +1344,7 @@
         {
           "id": "T-004",
           "title": "Implement command mode in CommandBar; run story gates",
-          "description": "Extend src/components/CommandBar.tsx: detect leading '>' (FR-18), render fuzzy-filtered command list beneath the bar (mono, \u00a76), keyboard selection with aria-activedescendant, Enter executes via commands.ts, Esc clears to '' (FR-17 step 3). Run full story gates.",
+          "description": "Extend src/components/CommandBar.tsx: detect leading '>' (FR-18), render fuzzy-filtered command list beneath the bar (mono, §6), keyboard selection with aria-activedescendant, Enter executes via commands.ts, Esc clears to '' (FR-17 step 3). Run full story gates.",
           "filePaths": [
             "src/components/CommandBar.tsx"
           ],
@@ -1354,7 +1354,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-003",
+          "notes": "testFirst: false — implementation of the tests written in T-003",
           "wiring_verification": {
             "file": "src/components/CommandBar.tsx",
             "must_contain": [
@@ -1367,7 +1367,7 @@
         {
           "id": "T-005",
           "title": "Visual gate including command-mode-open state",
-          "description": "Create e2e/states-commandmode.spec.ts capturing the command-mode-open state ('>' typed, list visible) with toHaveScreenshot. Command mode is closed by default, so the route baseline is unchanged \u2014 the gate must pass against the existing baseline. Cite screenshots.",
+          "description": "Create e2e/states-commandmode.spec.ts capturing the command-mode-open state ('>' typed, list visible) with toHaveScreenshot. Command mode is closed by default, so the route baseline is unchanged — the gate must pass against the existing baseline. Cite screenshots.",
           "filePaths": [
             "e2e/states-commandmode.spec.ts"
           ],
@@ -1376,7 +1376,7 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 command-only verification task",
+          "notes": "testFirst: false — command-only verification task",
           "status": "passed"
         }
       ],
@@ -1410,11 +1410,11 @@
       "title": "Task list and task row",
       "description": "As a user, I want my tasks rendered as broadsheet rows with selection, completion, and inline editing.",
       "acceptanceCriteria": [
-        "src/components/TaskList.tsx + src/components/TaskRow.tsx [NEW]: rows per DESIGN-SYSTEM \u00a76 (surface bg, hairline border, 3px left rule: accent for priority 1, border otherwise; metadata in mono right-aligned, wrapping below title at 375)",
+        "src/components/TaskList.tsx + src/components/TaskRow.tsx [NEW]: rows per DESIGN-SYSTEM §6 (surface bg, hairline border, 3px left rule: accent for priority 1, border otherwise; metadata in mono right-aligned, wrapping below title at 375)",
         "Selection model: at most one selected row, accent-thickened left rule + print shadow; roving tabindex (selected row tabIndex 0, others -1) (FR-46)",
         "Mouse: hover reveals checkbox; click checkbox completes (strike-through draws at --motion-base, row settles muted); click title opens inline edit (input pre-filled, Enter saves via edit, Esc cancels)",
-        "Rollover rows render muted left rule + italic '\u2014 since {weekday}' annotation, never danger-colored (FR-24)",
-        "Empty list renders italic empty state: 'Nothing on deck \u2014 type to capture.' (DESIGN-SYSTEM \u00a76)",
+        "Rollover rows render muted left rule + italic '— since {weekday}' annotation, never danger-colored (FR-24)",
+        "Empty list renders italic empty state: 'Nothing on deck — type to capture.' (DESIGN-SYSTEM §6)",
         "Component tests: render sections, complete dispatches with strike state, inline edit save/cancel, empty state",
         "Visual gate passes including selected + rollover + empty states",
         "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
@@ -1433,7 +1433,7 @@
         {
           "id": "T-001",
           "title": "Write failing component tests for TaskRow (TDD)",
-          "description": "Create src/components/TaskRow.test.tsx: renders title (Newsreader), mono metadata (time, list); priority-1 row has accent left rule (class/style assertion); rollover prop renders italic '\u2014 since Mon' in muted (never --color-danger); checkbox click dispatches complete; title click opens inline edit pre-filled, Enter dispatches edit with new title, Esc cancels without dispatch.",
+          "description": "Create src/components/TaskRow.test.tsx: renders title (Newsreader), mono metadata (time, list); priority-1 row has accent left rule (class/style assertion); rollover prop renders italic '— since Mon' in muted (never --color-danger); checkbox click dispatches complete; title click opens inline edit pre-filled, Enter dispatches edit with new title, Esc cancels without dispatch.",
           "filePaths": [
             "src/components/TaskRow.test.tsx"
           ],
@@ -1446,7 +1446,7 @@
         {
           "id": "T-002",
           "title": "Implement TaskRow component",
-          "description": "Create src/components/TaskRow.tsx per DESIGN-SYSTEM \u00a76 task-row spec: surface bg, hairline border, 3px left rule (accent for priority 1 / border otherwise / muted for rollover), hover-revealed checkbox, strike-through completion animation at --motion-base, inline edit, mono metadata wrapping below title at 375 (\u00a77). Tokens only.",
+          "description": "Create src/components/TaskRow.tsx per DESIGN-SYSTEM §6 task-row spec: surface bg, hairline border, 3px left rule (accent for priority 1 / border otherwise / muted for rollover), hover-revealed checkbox, strike-through completion animation at --motion-base, inline edit, mono metadata wrapping below title at 375 (§7). Tokens only.",
           "filePaths": [
             "src/components/TaskRow.tsx"
           ],
@@ -1454,7 +1454,7 @@
             "pnpm test -- --run src/components/TaskRow.test.tsx"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
+          "notes": "testFirst: false — implementation of the tests written in T-001",
           "consumedBy": [
             "US-012",
             "US-013",
@@ -1466,7 +1466,7 @@
         {
           "id": "T-003",
           "title": "Implement TaskList with selection + roving tabindex (TDD pair in one task)",
-          "description": "Create src/components/TaskList.test.tsx then src/components/TaskList.tsx: renders rows from a sections prop {label, tasks[]} with mono uppercase section labels over hairline rules; at most one selected row (accent rule + print shadow); roving tabindex (selected 0, rest -1, FR-46); empty sections list renders the italic empty state 'Nothing on deck \u2014 type to capture.'; exposes onSelect/selection so US-010's keymap can drive it.",
+          "description": "Create src/components/TaskList.test.tsx then src/components/TaskList.tsx: renders rows from a sections prop {label, tasks[]} with mono uppercase section labels over hairline rules; at most one selected row (accent rule + print shadow); roving tabindex (selected 0, rest -1, FR-46); empty sections list renders the italic empty state 'Nothing on deck — type to capture.'; exposes onSelect/selection so US-010's keymap can drive it.",
           "filePaths": [
             "src/components/TaskList.test.tsx",
             "src/components/TaskList.tsx"
@@ -1486,7 +1486,7 @@
         {
           "id": "T-004",
           "title": "Wire TaskList into TodayView placeholder; run story gates",
-          "description": "Replace the placeholder body of src/views/TodayView.tsx (created by US-006): render TaskList with sections from todayItems(state.data, today) (import selectors from src/lib/selectors.ts created by US-005 \u2014 do NOT reimplement). This makes rows visible at / for the visual gate. US-013 later owns the full Today assembly. Compute today via dates.ts todayStr(new Date()) at the view boundary (injected-clock pattern; US-013 later swaps in useToday()).",
+          "description": "Replace the placeholder body of src/views/TodayView.tsx (created by US-006): render TaskList with sections from todayItems(state.data, today) (import selectors from src/lib/selectors.ts created by US-005 — do NOT reimplement). This makes rows visible at / for the visual gate. US-013 later owns the full Today assembly. Compute today via dates.ts todayStr(new Date()) at the view boundary (injected-clock pattern; US-013 later swaps in useToday()).",
           "filePaths": [
             "src/views/TodayView.tsx"
           ],
@@ -1496,7 +1496,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 wiring task verified by wiring_verification and component suites",
+          "notes": "testFirst: false — wiring task verified by wiring_verification and component suites",
           "wiring_verification": {
             "file": "src/views/TodayView.tsx",
             "must_contain": [
@@ -1519,7 +1519,7 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 command-only verification task",
+          "notes": "testFirst: false — command-only verification task",
           "status": "passed"
         }
       ],
@@ -1553,11 +1553,11 @@
       "title": "Keyboard system and focus model",
       "description": "As a user, I want one coherent keyboard layer so the bar and the list never fight over keys.",
       "acceptanceCriteria": [
-        "src/hooks/useKeymap.ts [NEW] implements the FR-15\u2026FR-17 focus model and Esc precedence exactly",
-        "Bar focused: printable keys type; \u2193 (or Esc when bar empty) moves focus to list; Enter captures",
-        "List focused: j/\u2193 next, k/\u2191 previous, x/Space complete, e/Enter inline edit, Del/Backspace delete, 1/2/3 snooze, g then t/u/a/d switch view, ? opens the cheatsheet (key registered here; overlay handler wired when US-017 lands); any other printable character moves focus to the bar AND inserts itself (FR-16)",
-        "Undo-key routing per FR-37: LIST focused \u2192 \u2318Z/Ctrl+Z always dispatches app undo (and \u2318\u21e7Z/Ctrl+Shift+Z app redo); BAR focused with empty input \u2192 app undo/redo; BAR focused with non-empty input \u2192 native text-field undo untouched. No focus/content combination leaves the key dead",
-        "Component tests: focus handoff bar\u2194list both directions, each list key dispatches its action, \u2318Z routing in all three contexts (list-focused, bar-empty, bar-non-empty)",
+        "src/hooks/useKeymap.ts [NEW] implements the FR-15…FR-17 focus model and Esc precedence exactly",
+        "Bar focused: printable keys type; ↓ (or Esc when bar empty) moves focus to list; Enter captures",
+        "List focused: j/↓ next, k/↑ previous, x/Space complete, e/Enter inline edit, Del/Backspace delete, 1/2/3 snooze, g then t/u/a/d switch view, ? opens the cheatsheet (key registered here; overlay handler wired when US-017 lands); any other printable character moves focus to the bar AND inserts itself (FR-16)",
+        "Undo-key routing per FR-37: LIST focused → ⌘Z/Ctrl+Z always dispatches app undo (and ⌘⇧Z/Ctrl+Shift+Z app redo); BAR focused with empty input → app undo/redo; BAR focused with non-empty input → native text-field undo untouched. No focus/content combination leaves the key dead",
+        "Component tests: focus handoff bar↔list both directions, each list key dispatches its action, ⌘Z routing in all three contexts (list-focused, bar-empty, bar-non-empty)",
         "Visual gate passes (focus-visible states)",
         "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
         "Typecheck and lint pass"
@@ -1575,7 +1575,7 @@
         {
           "id": "T-001",
           "title": "Write failing tests for useKeymap focus model and routing (TDD)",
-          "description": "Create src/hooks/useKeymap.test.tsx rendering a harness (bar input + list rows). Tests: ArrowDown from bar moves focus to list; Esc from EMPTY chip-less bar moves to list; Esc precedence order (FR-17) at each stage; in list j/k/x/Space/e/Enter/Del/1/2/3/g-then-t/u/a/d/? dispatch the right callbacks; unbound printable 'b' in list refocuses bar and inserts 'b' (FR-16); \u2318Z in all THREE contexts: list-focused dispatches undo regardless of bar content, bar-empty dispatches undo, bar-non-empty does NOT call preventDefault (native undo untouched) (FR-37); \u2318\u21e7Z redo mirrors. Snooze keys dispatch snooze with targets from dates.ts (snoozeTomorrow/snoozeNextWeek/snoozeWeekend).",
+          "description": "Create src/hooks/useKeymap.test.tsx rendering a harness (bar input + list rows). Tests: ArrowDown from bar moves focus to list; Esc from EMPTY chip-less bar moves to list; Esc precedence order (FR-17) at each stage; in list j/k/x/Space/e/Enter/Del/1/2/3/g-then-t/u/a/d/? dispatch the right callbacks; unbound printable 'b' in list refocuses bar and inserts 'b' (FR-16); ⌘Z in all THREE contexts: list-focused dispatches undo regardless of bar content, bar-empty dispatches undo, bar-non-empty does NOT call preventDefault (native undo untouched) (FR-37); ⌘⇧Z redo mirrors. Snooze keys dispatch snooze with targets from dates.ts (snoozeTomorrow/snoozeNextWeek/snoozeWeekend).",
           "filePaths": [
             "src/hooks/useKeymap.test.tsx"
           ],
@@ -1588,7 +1588,7 @@
         {
           "id": "T-002",
           "title": "Implement src/hooks/useKeymap.ts",
-          "description": "Implement the centralized keymap hook: context-priority (overlay > bar > list, FR-15), key tables per FR-16, Esc precedence chain (FR-17), \u2318Z/\u2318\u21e7Z routing by focus context (FR-37), 'g' two-key sequence with timeout, '?' opens-cheatsheet callback slot (no-op until US-017), snooze targets via src/lib/dates.ts helpers. Single document-level listener; never intercepts keys while an input other than the bar is focused (inline edit safety).",
+          "description": "Implement the centralized keymap hook: context-priority (overlay > bar > list, FR-15), key tables per FR-16, Esc precedence chain (FR-17), ⌘Z/⌘⇧Z routing by focus context (FR-37), 'g' two-key sequence with timeout, '?' opens-cheatsheet callback slot (no-op until US-017), snooze targets via src/lib/dates.ts helpers. Single document-level listener; never intercepts keys while an input other than the bar is focused (inline edit safety).",
           "filePaths": [
             "src/hooks/useKeymap.ts"
           ],
@@ -1596,7 +1596,7 @@
             "pnpm test -- --run src/hooks/useKeymap.test.tsx"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
+          "notes": "testFirst: false — implementation of the tests written in T-001",
           "consumedBy": [
             "US-012",
             "US-017"
@@ -1616,7 +1616,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 wiring task verified by wiring_verification and the T-001 suite",
+          "notes": "testFirst: false — wiring task verified by wiring_verification and the T-001 suite",
           "wiring_verification": {
             "file": "src/App.tsx",
             "must_contain": [
@@ -1628,7 +1628,7 @@
         {
           "id": "T-004",
           "title": "Visual gate: focus-visible states",
-          "description": "Create e2e/states-focus.spec.ts capturing keyboard-selected row (accent rule + print shadow) and focus-ring states with toHaveScreenshot. Default render unchanged \u2014 gate passes against existing baseline. Cite screenshots.",
+          "description": "Create e2e/states-focus.spec.ts capturing keyboard-selected row (accent rule + print shadow) and focus-ring states with toHaveScreenshot. Default render unchanged — gate passes against existing baseline. Cite screenshots.",
           "filePaths": [
             "e2e/states-focus.spec.ts"
           ],
@@ -1637,7 +1637,7 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 command-only verification task",
+          "notes": "testFirst: false — command-only verification task",
           "status": "passed"
         }
       ],
@@ -1662,7 +1662,7 @@
         "maxAttempts": 3,
         "failureLog": []
       },
-      "notes": "dependsOn US-011 is an App.tsx single-ownership serialization edge (006\u2192007\u2192011\u2192010\u2192016\u2192017), not a semantic need.",
+      "notes": "dependsOn US-011 is an App.tsx single-ownership serialization edge (006→007→011→010→016→017), not a semantic need.",
       "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
       "complexity": 100
     },
@@ -1671,10 +1671,10 @@
       "title": "Toast and undo wiring",
       "description": "As a user, I want quiet confirmation with an undo handle after every mutation.",
       "acceptanceCriteria": [
-        "src/components/Toast.tsx [NEW]: bottom-left, inverted ink (fg bg / bg text), print shadow, mono label + 'Undo \u2318Z' keycap; auto-dismisses after 4.8s; only the latest toast shows",
-        "Toast container is aria-live=polite; message text includes the action ('Completed', 'Deleted', 'Snoozed to \u2026', 'Captured', 'Scheduled')",
-        "Completing a recurring task toasts the next occurrence date ('Done \u2014 next Mon Jun 15')",
-        "Clicking Undo in the toast (or \u2318Z per FR-37) reverses the action; toast updates to 'Undone'",
+        "src/components/Toast.tsx [NEW]: bottom-left, inverted ink (fg bg / bg text), print shadow, mono label + 'Undo ⌘Z' keycap; auto-dismisses after 4.8s; only the latest toast shows",
+        "Toast container is aria-live=polite; message text includes the action ('Completed', 'Deleted', 'Snoozed to …', 'Captured', 'Scheduled')",
+        "Completing a recurring task toasts the next occurrence date ('Done — next Mon Jun 15')",
+        "Clicking Undo in the toast (or ⌘Z per FR-37) reverses the action; toast updates to 'Undone'",
         "Component tests: toast renders per action type, auto-dismiss timer (fake timers), Undo click dispatches undo, aria-live attribute present",
         "Visual gate passes including visible-toast state",
         "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
@@ -1704,7 +1704,7 @@
         {
           "id": "T-002",
           "title": "Implement Toast component and toast state",
-          "description": "Create src/components/Toast.tsx (presentation: inverted ink, print shadow, bottom-left, mono label, 'Undo \u2318Z' keycap pill per \u00a76) and a toast slice in src/state/AppContext.tsx: showToast(message) replacing prior, auto-clear timer 4.8s, message builders per action type including recurring next-date.",
+          "description": "Create src/components/Toast.tsx (presentation: inverted ink, print shadow, bottom-left, mono label, 'Undo ⌘Z' keycap pill per §6) and a toast slice in src/state/AppContext.tsx: showToast(message) replacing prior, auto-clear timer 4.8s, message builders per action type including recurring next-date.",
           "filePaths": [
             "src/components/Toast.tsx",
             "src/state/AppContext.tsx"
@@ -1713,7 +1713,7 @@
             "pnpm test -- --run src/components/Toast.test.tsx"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
+          "notes": "testFirst: false — implementation of the tests written in T-001",
           "consumedBy": [
             "US-012",
             "US-016"
@@ -1723,7 +1723,7 @@
         {
           "id": "T-003",
           "title": "Mount Toast in App.tsx and emit toasts from mutations; run story gates",
-          "description": "Mount <Toast /> in src/App.tsx; dispatch-side wiring so add/complete/delete/edit emit their toast (capture in CommandBar already dispatches add \u2014 route through a wrapped dispatch in AppContext so every mutation toasts). Undo click and \u2318Z produce 'Undone'. Run full story gates.",
+          "description": "Mount <Toast /> in src/App.tsx; dispatch-side wiring so add/complete/delete/edit emit their toast (capture in CommandBar already dispatches add — route through a wrapped dispatch in AppContext so every mutation toasts). Undo click and ⌘Z produce 'Undone'. Run full story gates.",
           "filePaths": [
             "src/App.tsx"
           ],
@@ -1733,7 +1733,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 wiring task verified by wiring_verification and the T-001 suite",
+          "notes": "testFirst: false — wiring task verified by wiring_verification and the T-001 suite",
           "wiring_verification": {
             "file": "src/App.tsx",
             "must_contain": [
@@ -1745,7 +1745,7 @@
         {
           "id": "T-004",
           "title": "Visual gate including visible-toast state",
-          "description": "Create e2e/states-toast.spec.ts: trigger a completion, capture the visible toast with toHaveScreenshot. Toast hidden by default \u2014 gate passes against existing baseline. Cite screenshots.",
+          "description": "Create e2e/states-toast.spec.ts: trigger a completion, capture the visible toast with toHaveScreenshot. Toast hidden by default — gate passes against existing baseline. Cite screenshots.",
           "filePaths": [
             "e2e/states-toast.spec.ts"
           ],
@@ -1754,7 +1754,7 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 command-only verification task",
+          "notes": "testFirst: false — command-only verification task",
           "status": "passed"
         }
       ],
@@ -1788,10 +1788,10 @@
       "title": "Snooze",
       "description": "As a user, I want one-key snooze so an overdue item leaves Today in under a second. (Depends on US-011: snooze surfaces its result via the toast.)",
       "acceptanceCriteria": [
-        "With a row selected: 1 sets dueDate to tomorrow, 2 to today+7, 3 to next Saturday strictly after today (FR-33\u2026FR-35; pressing 3 on a Saturday yields the following Saturday)",
+        "With a row selected: 1 sets dueDate to tomorrow, 2 to today+7, 3 to next Saturday strictly after today (FR-33…FR-35; pressing 3 on a Saturday yields the following Saturday)",
         "Snoozing a task with dueDate: null assigns the target date and the toast labels it 'Scheduled' (FR-35)",
         "Mouse parity: row overflow menu offers Tomorrow / Next week / Weekend",
-        "Each snooze shows the undo toast naming the new date (e.g. 'Snoozed to Sat Jun 13 \u2014 Undo \u2318Z')",
+        "Each snooze shows the undo toast naming the new date (e.g. 'Snoozed to Sat Jun 13 — Undo ⌘Z')",
         "Unit tests for the three date computations live with store tests, including weekend-on-weekend and 2 crossing a month boundary",
         "Component test: pressing 1 on selected row dispatches snooze with tomorrow's date",
         "Visual gate passes",
@@ -1810,7 +1810,7 @@
         {
           "id": "T-001",
           "title": "Write failing snooze-date tests in the store suite (TDD)",
-          "description": "Extend src/lib/store.test.ts: snooze action with snoozeTomorrow/snoozeNextWeek/snoozeWeekend targets from src/lib/dates.ts \u2014 tomorrow simple case; +7 crossing a month boundary (2026-06-29 \u2192 2026-07-06); weekend on Saturday 2026-06-13 yields 2026-06-20 (FR-33); snoozing dueDate:null task assigns the date (FR-35); snoozed task leaves todayItems rollover section (cross-check with selectors).",
+          "description": "Extend src/lib/store.test.ts: snooze action with snoozeTomorrow/snoozeNextWeek/snoozeWeekend targets from src/lib/dates.ts — tomorrow simple case; +7 crossing a month boundary (2026-06-29 → 2026-07-06); weekend on Saturday 2026-06-13 yields 2026-06-20 (FR-33); snoozing dueDate:null task assigns the date (FR-35); snoozed task leaves todayItems rollover section (cross-check with selectors).",
           "filePaths": [
             "src/lib/store.test.ts"
           ],
@@ -1837,7 +1837,7 @@
         {
           "id": "T-003",
           "title": "Implement overflow menu + snooze toast labels; run story gates",
-          "description": "Add the overflow menu to src/components/TaskRow.tsx (hover/focus reveal per \u00a76, mono items, tokens only) dispatching snooze with dates.ts targets; ensure the wrapped dispatch in AppContext emits 'Snoozed to <human date>' / 'Scheduled' toast text. Run full story gates.",
+          "description": "Add the overflow menu to src/components/TaskRow.tsx (hover/focus reveal per §6, mono items, tokens only) dispatching snooze with dates.ts targets; ensure the wrapped dispatch in AppContext emits 'Snoozed to <human date>' / 'Scheduled' toast text. Run full story gates.",
           "filePaths": [
             "src/components/TaskRow.tsx"
           ],
@@ -1847,7 +1847,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-001/T-002",
+          "notes": "testFirst: false — implementation of the tests written in T-001/T-002",
           "wiring_verification": {
             "file": "src/components/TaskRow.tsx",
             "must_contain": [
@@ -1860,7 +1860,7 @@
         {
           "id": "T-004",
           "title": "Visual gate including overflow-menu state",
-          "description": "Create e2e/states-snooze.spec.ts capturing the row overflow menu open with toHaveScreenshot. Menu hidden by default \u2014 gate passes against existing baseline. Cite screenshots.",
+          "description": "Create e2e/states-snooze.spec.ts capturing the row overflow menu open with toHaveScreenshot. Menu hidden by default — gate passes against existing baseline. Cite screenshots.",
           "filePaths": [
             "e2e/states-snooze.spec.ts"
           ],
@@ -1869,7 +1869,7 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 command-only verification task",
+          "notes": "testFirst: false — command-only verification task",
           "status": "passed"
         }
       ],
@@ -1926,7 +1926,7 @@
         {
           "id": "T-001",
           "title": "Write failing tests for useToday hook (TDD)",
-          "description": "Create src/hooks/useToday.test.tsx with fake timers: returns current local YYYY-MM-DD; recomputes on window focus event; arms a timeout for next local midnight and re-arms after firing; DST cases \u2014 armed across 2026-11-01 (25h day) and 2026-03-08 (23h day) it fires at local midnight, not 24h-after-arm.",
+          "description": "Create src/hooks/useToday.test.tsx with fake timers: returns current local YYYY-MM-DD; recomputes on window focus event; arms a timeout for next local midnight and re-arms after firing; DST cases — armed across 2026-11-01 (25h day) and 2026-03-08 (23h day) it fires at local midnight, not 24h-after-arm.",
           "filePaths": [
             "src/hooks/useToday.test.tsx"
           ],
@@ -1947,13 +1947,13 @@
             "pnpm test -- --run src/hooks/useToday.test.tsx"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
+          "notes": "testFirst: false — implementation of the tests written in T-001",
           "status": "passed"
         },
         {
           "id": "T-003",
           "title": "Assemble full TodayView with section labels and load reveal",
-          "description": "Complete src/views/TodayView.tsx: three FR-21 sections via todayItems(data, useToday()) with mono uppercase labels over hairline rules; load-reveal stagger \u2014 masthead settles first, each row gets animation-delay = index * 40ms within --motion-slow total, implemented via CSS in src/App.css using motion tokens (zero under prefers-reduced-motion since tokens collapse to 0ms).",
+          "description": "Complete src/views/TodayView.tsx: three FR-21 sections via todayItems(data, useToday()) with mono uppercase labels over hairline rules; load-reveal stagger — masthead settles first, each row gets animation-delay = index * 40ms within --motion-slow total, implemented via CSS in src/App.css using motion tokens (zero under prefers-reduced-motion since tokens collapse to 0ms).",
           "filePaths": [
             "src/views/TodayView.tsx",
             "src/App.css"
@@ -1963,7 +1963,7 @@
             "pnpm run typecheck"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 presentational assembly; behavior pinned by T-001 hook tests, T-004 e2e, and the visual gate",
+          "notes": "testFirst: false — presentational assembly; behavior pinned by T-001 hook tests, T-004 e2e, and the visual gate",
           "wiring_verification": {
             "file": "src/views/TodayView.tsx",
             "must_contain": [
@@ -1998,7 +1998,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 command-only verification task",
+          "notes": "testFirst: false — command-only verification task",
           "status": "passed"
         }
       ],
@@ -2063,7 +2063,7 @@
         {
           "id": "T-002",
           "title": "Implement UpcomingView",
-          "description": "Replace placeholder src/views/UpcomingView.tsx: render upcomingGroups(data, today) (import from src/lib/selectors.ts created by US-005 and TaskList/TaskRow created by US-009 \u2014 do NOT reimplement) with \u00a76 group headers; selection/snooze/complete flow through the same TaskList handlers as Today. Compute today via dates.ts todayStr(new Date()) at the view boundary (US-013's useToday() is a later, separate story \u2014 do not wait for it).",
+          "description": "Replace placeholder src/views/UpcomingView.tsx: render upcomingGroups(data, today) (import from src/lib/selectors.ts created by US-005 and TaskList/TaskRow created by US-009 — do NOT reimplement) with §6 group headers; selection/snooze/complete flow through the same TaskList handlers as Today. Compute today via dates.ts todayStr(new Date()) at the view boundary (US-013's useToday() is a later, separate story — do not wait for it).",
           "filePaths": [
             "src/views/UpcomingView.tsx"
           ],
@@ -2073,7 +2073,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
+          "notes": "testFirst: false — implementation of the tests written in T-001",
           "wiring_verification": {
             "file": "src/views/UpcomingView.tsx",
             "must_contain": [
@@ -2108,7 +2108,7 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 command-only verification task",
+          "notes": "testFirst: false — command-only verification task",
           "status": "passed"
         }
       ],
@@ -2140,9 +2140,9 @@
       "title": "All and Done views with live filter",
       "description": "As a user, I want a complete honest list and a browsable history, filterable by just typing.",
       "acceptanceCriteria": [
-        "All view lists every open task (dated then anytime, by dueDate then order); Done view lists completed tasks by completedAt descending, struck-through muted per DESIGN-SYSTEM \u00a78",
-        "In All view only, non-empty bar text (not starting with >) ALSO live-filters the list via allItems(filterText) while remaining valid capture input \u2014 Enter still captures it as a task and clears the filter (FR-20)",
-        "A mono hint 'filtering \u2014 Enter captures' appears under the bar while filtering",
+        "All view lists every open task (dated then anytime, by dueDate then order); Done view lists completed tasks by completedAt descending, struck-through muted per DESIGN-SYSTEM §8",
+        "In All view only, non-empty bar text (not starting with >) ALSO live-filters the list via allItems(filterText) while remaining valid capture input — Enter still captures it as a task and clears the filter (FR-20)",
+        "A mono hint 'filtering — Enter captures' appears under the bar while filtering",
         "uncomplete is reachable in Done view: x/checkbox restores a task to open (status open, completedAt null)",
         "Component/e2e tests: filter narrows visible rows; Enter during filter creates the task; Done uncomplete round-trips",
         "Visual gate passes for All-filtered and Done states",
@@ -2163,7 +2163,7 @@
         {
           "id": "T-001",
           "title": "Write failing component tests for AllView and DoneView (TDD)",
-          "description": "Create src/views/AllView.test.tsx and src/views/DoneView.test.tsx: All renders dated-then-anytime open tasks; with barText 'rep' only matching rows show plus the mono hint 'filtering \u2014 Enter captures'; barText starting '>' does NOT filter (FR-18 boundary); Done renders completedAt-descending struck-through rows; x/checkbox in Done dispatches uncomplete restoring open + completedAt null.",
+          "description": "Create src/views/AllView.test.tsx and src/views/DoneView.test.tsx: All renders dated-then-anytime open tasks; with barText 'rep' only matching rows show plus the mono hint 'filtering — Enter captures'; barText starting '>' does NOT filter (FR-18 boundary); Done renders completedAt-descending struck-through rows; x/checkbox in Done dispatches uncomplete restoring open + completedAt null.",
           "filePaths": [
             "src/views/AllView.test.tsx",
             "src/views/DoneView.test.tsx"
@@ -2177,7 +2177,7 @@
         {
           "id": "T-002",
           "title": "Implement AllView and DoneView",
-          "description": "Replace placeholder src/views/AllView.tsx and src/views/DoneView.tsx: AllView reads useApp().barText, filters via allItems(data, barText) when non-empty and not command-mode; renders the filter hint; DoneView via doneItems with \u00a78 struck-through muted rows and uncomplete affordance. Import selectors (US-005) and TaskList/TaskRow (US-009) \u2014 do NOT reimplement.",
+          "description": "Replace placeholder src/views/AllView.tsx and src/views/DoneView.tsx: AllView reads useApp().barText, filters via allItems(data, barText) when non-empty and not command-mode; renders the filter hint; DoneView via doneItems with §8 struck-through muted rows and uncomplete affordance. Import selectors (US-005) and TaskList/TaskRow (US-009) — do NOT reimplement.",
           "filePaths": [
             "src/views/AllView.tsx",
             "src/views/DoneView.tsx"
@@ -2188,7 +2188,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
+          "notes": "testFirst: false — implementation of the tests written in T-001",
           "wiring_verification": {
             "file": "src/views/AllView.tsx",
             "must_contain": [
@@ -2201,7 +2201,7 @@
         {
           "id": "T-003",
           "title": "Write e2e for filter-then-capture flow",
-          "description": "Create e2e/all-done.spec.ts: navigate to All (g a); type 'rep' \u2014 rows narrow and hint shows; press Enter \u2014 task 'rep' is created, filter clears, toast shows; switch to Done (g d); complete a task then uncomplete it from Done and verify it returns to All.",
+          "description": "Create e2e/all-done.spec.ts: navigate to All (g a); type 'rep' — rows narrow and hint shows; press Enter — task 'rep' is created, filter clears, toast shows; switch to Done (g d); complete a task then uncomplete it from Done and verify it returns to All.",
           "filePaths": [
             "e2e/all-done.spec.ts"
           ],
@@ -2223,7 +2223,7 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 command-only verification task",
+          "notes": "testFirst: false — command-only verification task",
           "status": "passed"
         }
       ],
@@ -2256,10 +2256,10 @@
       "description": "As a user, I want my data saved continuously and loudly told when it can't be.",
       "acceptanceCriteria": [
         "App state initializes from load() (recovery notice toast when recovered: true); every state change schedules a debounced (250ms) save()",
-        "save failure (quota/unavailable) sets a persistent dismissible banner under the masthead: danger border, mono text 'Changes aren't being saved \u2014 this browser's storage is unavailable.'; capture keeps working in memory (FR-41)",
+        "save failure (quota/unavailable) sets a persistent dismissible banner under the masthead: danger border, mono text 'Changes aren't being saved — this browser's storage is unavailable.'; capture keeps working in memory (FR-41)",
         "storage events for the app key dispatch externalReload: state replaced, undo/redo stacks cleared, toast 'List updated in another tab' (FR-43)",
         "beforeunload flushes any pending debounced save (FR-40)",
-        "Integration tests: mutation \u2192 debounced write lands (fake timers); quota-failing storage shows banner; storage event clears stacks and toasts",
+        "Integration tests: mutation → debounced write lands (fake timers); quota-failing storage shows banner; storage event clears stacks and toasts",
         "Visual gate passes including banner-visible state",
         "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
         "Typecheck and lint pass"
@@ -2276,7 +2276,7 @@
         {
           "id": "T-001",
           "title": "Write failing tests for usePersistence (TDD)",
-          "description": "Create src/hooks/usePersistence.test.tsx with fake timers and makeMemoryStorage: initial state from load() including recovered:true \u2192 recovery toast; mutation schedules ONE debounced save after 250ms (rapid mutations coalesce); save quota failure flips a persistent banner flag while state keeps mutating in memory; storage event for todo-quantum.v1 dispatches externalReload (stacks cleared \u2014 assert undo afterwards is a no-op) and toasts 'List updated in another tab'; beforeunload flushes the pending save.",
+          "description": "Create src/hooks/usePersistence.test.tsx with fake timers and makeMemoryStorage: initial state from load() including recovered:true → recovery toast; mutation schedules ONE debounced save after 250ms (rapid mutations coalesce); save quota failure flips a persistent banner flag while state keeps mutating in memory; storage event for todo-quantum.v1 dispatches externalReload (stacks cleared — assert undo afterwards is a no-op) and toasts 'List updated in another tab'; beforeunload flushes the pending save.",
           "filePaths": [
             "src/hooks/usePersistence.test.tsx"
           ],
@@ -2289,7 +2289,7 @@
         {
           "id": "T-002",
           "title": "Implement src/hooks/usePersistence.ts",
-          "description": "Implement the hook: load-on-init is ALREADY wired in AppContext (US-006) \u2014 this hook owns the rest: surface recovery toast when recovered:true, debounced 250ms save on state.data change (import save from src/lib/persistence.ts created by US-001 \u2014 do NOT reimplement), quota-failure \u2192 banner state + keep running, storage-event listener for the app key \u2192 externalReload + 'List updated in another tab' toast, beforeunload flush.",
+          "description": "Implement the hook: load-on-init is ALREADY wired in AppContext (US-006) — this hook owns the rest: surface recovery toast when recovered:true, debounced 250ms save on state.data change (import save from src/lib/persistence.ts created by US-001 — do NOT reimplement), quota-failure → banner state + keep running, storage-event listener for the app key → externalReload + 'List updated in another tab' toast, beforeunload flush.",
           "filePaths": [
             "src/hooks/usePersistence.ts"
           ],
@@ -2297,7 +2297,7 @@
             "pnpm test -- --run src/hooks/usePersistence.test.tsx"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
+          "notes": "testFirst: false — implementation of the tests written in T-001",
           "status": "passed"
         },
         {
@@ -2314,7 +2314,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 wiring + presentational task verified by wiring_verification and the T-001 suite",
+          "notes": "testFirst: false — wiring + presentational task verified by wiring_verification and the T-001 suite",
           "wiring_verification": {
             "file": "src/App.tsx",
             "must_contain": [
@@ -2327,7 +2327,7 @@
         {
           "id": "T-004",
           "title": "Visual gate including banner-visible state",
-          "description": "Create e2e/states-banner.spec.ts capturing the storage-banner state (inject a quota-failing storage stub via init script) with toHaveScreenshot. Banner hidden by default \u2014 gate passes against existing baseline. Cite screenshots.",
+          "description": "Create e2e/states-banner.spec.ts capturing the storage-banner state (inject a quota-failing storage stub via init script) with toHaveScreenshot. Banner hidden by default — gate passes against existing baseline. Cite screenshots.",
           "filePaths": [
             "e2e/states-banner.spec.ts"
           ],
@@ -2336,7 +2336,7 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 command-only verification task",
+          "notes": "testFirst: false — command-only verification task",
           "status": "passed"
         }
       ],
@@ -2368,7 +2368,7 @@
       "title": "Cheatsheet overlay",
       "description": "As a user, I want ? (or >help) to show every key so the keyboard layer is discoverable. (Depends on US-008 and US-010, which register the entry points.)",
       "acceptanceCriteria": [
-        "src/components/Cheatsheet.tsx [NEW]: overlay per DESIGN-SYSTEM \u00a76 \u2014 surface sheet over bg scrim at 80% opacity, double-rule header, two-column mono key table listing every US-010 binding",
+        "src/components/Cheatsheet.tsx [NEW]: overlay per DESIGN-SYSTEM §6 — surface sheet over bg scrim at 80% opacity, double-rule header, two-column mono key table listing every US-010 binding",
         "role=dialog + aria-modal=true; focus trapped inside; Esc closes (FR-17 precedence: highest); focus returns to the previously focused element on close (FR-46)",
         "Opens via ? in LIST context (US-010 binding) and via >help (US-008 command); both paths wired here",
         "Component tests: open via both paths, focus trap cycles, Esc closes and restores focus",
@@ -2389,7 +2389,7 @@
         {
           "id": "T-001",
           "title": "Write failing component tests for Cheatsheet (TDD)",
-          "description": "Create src/components/Cheatsheet.test.tsx: opens via the '?' keymap callback and via the >help command handler; role=dialog + aria-modal; Tab cycles inside (focus trap); Esc closes and focus returns to the previously focused element; key table lists every US-010 binding (assert presence of j, k, x, 1, 2, 3, g t, ?, \u2318Z rows).",
+          "description": "Create src/components/Cheatsheet.test.tsx: opens via the '?' keymap callback and via the >help command handler; role=dialog + aria-modal; Tab cycles inside (focus trap); Esc closes and focus returns to the previously focused element; key table lists every US-010 binding (assert presence of j, k, x, 1, 2, 3, g t, ?, ⌘Z rows).",
           "filePaths": [
             "src/components/Cheatsheet.test.tsx"
           ],
@@ -2402,7 +2402,7 @@
         {
           "id": "T-002",
           "title": "Implement Cheatsheet component",
-          "description": "Create src/components/Cheatsheet.tsx per \u00a76: bg scrim 80%, surface sheet, double-rule header echoing the masthead, two-column mono key table, focus trap + restore, Esc close (registered at top of FR-17 precedence). Tokens only.",
+          "description": "Create src/components/Cheatsheet.tsx per §6: bg scrim 80%, surface sheet, double-rule header echoing the masthead, two-column mono key table, focus trap + restore, Esc close (registered at top of FR-17 precedence). Tokens only.",
           "filePaths": [
             "src/components/Cheatsheet.tsx"
           ],
@@ -2410,13 +2410,13 @@
             "pnpm test -- --run src/components/Cheatsheet.test.tsx"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 implementation of the tests written in T-001",
+          "notes": "testFirst: false — implementation of the tests written in T-001",
           "status": "passed"
         },
         {
           "id": "T-003",
           "title": "Wire both entry points in App.tsx; run story gates",
-          "description": "Mount <Cheatsheet /> in src/App.tsx with open-state; pass the real open callback into useKeymap's '?' slot (US-010) and the commands.ts help handler (US-008) \u2014 replacing the no-ops. Run full story gates.",
+          "description": "Mount <Cheatsheet /> in src/App.tsx with open-state; pass the real open callback into useKeymap's '?' slot (US-010) and the commands.ts help handler (US-008) — replacing the no-ops. Run full story gates.",
           "filePaths": [
             "src/App.tsx"
           ],
@@ -2426,7 +2426,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 wiring task verified by wiring_verification and the T-001 suite",
+          "notes": "testFirst: false — wiring task verified by wiring_verification and the T-001 suite",
           "wiring_verification": {
             "file": "src/App.tsx",
             "must_contain": [
@@ -2438,7 +2438,7 @@
         {
           "id": "T-004",
           "title": "Visual gate including cheatsheet-open state",
-          "description": "Create e2e/states-cheatsheet.spec.ts capturing the open cheatsheet with toHaveScreenshot at 3 breakpoints. Hidden by default \u2014 gate passes against existing baseline. Cite screenshots.",
+          "description": "Create e2e/states-cheatsheet.spec.ts capturing the open cheatsheet with toHaveScreenshot at 3 breakpoints. Hidden by default — gate passes against existing baseline. Cite screenshots.",
           "filePaths": [
             "e2e/states-cheatsheet.spec.ts"
           ],
@@ -2447,7 +2447,7 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 command-only verification task",
+          "notes": "testFirst: false — command-only verification task",
           "status": "passed"
         }
       ],
@@ -2480,11 +2480,11 @@
       "description": "As the team, we want the headline goals enforced as machine-verifiable journeys so 'fast' is a regression-tested property.",
       "acceptanceCriteria": [
         "e2e/speed.spec.ts [NEW] passes via pnpm exec playwright test e2e/ (FR-48)",
-        "Capture proxy (G-1): from page load, keyboard-only \u2014 type canonical string, Enter \u2014 task row visible; zero non-typing interactions; time from Enter keyup to row visible < 200ms (Playwright timestamp assertion)",
-        "Zero-click Today (G-2): seeded storage \u2192 Today sections visible with no interaction",
-        "Triage proxy (G-3): 5 seeded rollover tasks cleared via only \u2193 x 1 2 3 keys in a single run; Today's rollover section empties",
-        "Undo journey: complete \u2192 \u2318Z \u2192 task restored open",
-        "Reload persistence: capture \u2192 reload \u2192 task present",
+        "Capture proxy (G-1): from page load, keyboard-only — type canonical string, Enter — task row visible; zero non-typing interactions; time from Enter keyup to row visible < 200ms (Playwright timestamp assertion)",
+        "Zero-click Today (G-2): seeded storage → Today sections visible with no interaction",
+        "Triage proxy (G-3): 5 seeded rollover tasks cleared via only ↓ x 1 2 3 keys in a single run; Today's rollover section empties",
+        "Undo journey: complete → ⌘Z → task restored open",
+        "Reload persistence: capture → reload → task present",
         "Dark theme smoke: data-theme=dark renders with dark tokens (bg computed style #1A1611)",
         "Typecheck and lint pass"
       ],
@@ -2504,7 +2504,7 @@
         {
           "id": "T-001",
           "title": "Write the speed-benchmark e2e suite",
-          "description": "Create e2e/speed.spec.ts with the six journeys from the ACs: capture (<200ms Enter-to-row via performance timestamps, keyboard only), zero-click Today (seeded), 5-task triage with \u2193 x 1 2 3 only, undo via \u2318Z, reload persistence, dark-theme smoke (set data-theme=dark, assert body background rgb(26,22,17)). Seed via localStorage key todo-quantum.v1.",
+          "description": "Create e2e/speed.spec.ts with the six journeys from the ACs: capture (<200ms Enter-to-row via performance timestamps, keyboard only), zero-click Today (seeded), 5-task triage with ↓ x 1 2 3 only, undo via ⌘Z, reload persistence, dark-theme smoke (set data-theme=dark, assert body background rgb(26,22,17)). Seed via localStorage key todo-quantum.v1.",
           "filePaths": [
             "e2e/speed.spec.ts"
           ],
@@ -2517,7 +2517,7 @@
         {
           "id": "T-002",
           "title": "Run the full gate suite as final evidence",
-          "description": "Run every configured gate end-to-end and record output as Iron Law evidence: typecheck, lint, unit with coverage \u2265 80, full e2e directory, visual gate. For the FR-48 Lighthouse load condition, configure lighthouserc.json with a puppeteerScript (or equivalent collect.settings) that seeds 100 tasks into localStorage key todo-quantum.v1 before auditing, then run lhci and assert performance \u2265 0.9 against the seeded route.",
+          "description": "Run every configured gate end-to-end and record output as Iron Law evidence: typecheck, lint, unit with coverage ≥ 80, full e2e directory, visual gate. For the FR-48 Lighthouse load condition, configure lighthouserc.json with a puppeteerScript (or equivalent collect.settings) that seeds 100 tasks into localStorage key todo-quantum.v1 before auditing, then run lhci and assert performance ≥ 0.9 against the seeded route.",
           "filePaths": [
             "lighthouserc.json"
           ],
@@ -2529,7 +2529,7 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "notes": "testFirst: false \u2014 command-only verification task, no source files",
+          "notes": "testFirst: false — command-only verification task, no source files",
           "status": "passed"
         }
       ],
@@ -2637,7 +2637,7 @@
         "e2e/shell.spec.ts",
         "playwright.config.ts"
       ],
-      "learnings": "playwright.config.ts now has webServer with reuseExistingServer:true \u2014 playwright manages the dev server for e2e. Visual baselines live at __screenshots__/verification/visual.spec.ts/ (snapshotPathTemplate), not verification/visual.spec.ts-snapshots. Lighthouse perf vs dev server is advisory (config || true)."
+      "learnings": "playwright.config.ts now has webServer with reuseExistingServer:true — playwright manages the dev server for e2e. Visual baselines live at __screenshots__/verification/visual.spec.ts/ (snapshotPathTemplate), not verification/visual.spec.ts-snapshots. Lighthouse perf vs dev server is advisory (config || true)."
     },
     {
       "timestamp": "2026-06-09T21:23:15Z",
@@ -2655,7 +2655,7 @@
         "src/App.tsx",
         "e2e/states-commandbar.spec.ts"
       ],
-      "learnings": "Component tests use per-file // @vitest-environment jsdom pragma. Node>=22 ships a disabled localStorage global that makes vitest populateGlobal skip jsdom Storage \u2014 src/test-setup.ts re-attaches it. Esc revert keeps the literal text in the bar and demotes the token from the parse (revertedTokens list). CommandBar styles colocated in CommandBar.css (App.css is owned by US-006/US-013). When re-blessing baselines, verify against a FRESH dev server and re-run the comparison."
+      "learnings": "Component tests use per-file // @vitest-environment jsdom pragma. Node>=22 ships a disabled localStorage global that makes vitest populateGlobal skip jsdom Storage — src/test-setup.ts re-attaches it. Esc revert keeps the literal text in the bar and demotes the token from the parse (revertedTokens list). CommandBar styles colocated in CommandBar.css (App.css is owned by US-006/US-013). When re-blessing baselines, verify against a FRESH dev server and re-run the comparison."
     },
     {
       "timestamp": "2026-06-09T21:27:07Z",
@@ -2688,7 +2688,7 @@
         "src/views/TodayView.tsx",
         "e2e/states-tasklist.spec.ts"
       ],
-      "learnings": "TaskList supports controlled (selectedId/onSelect) and uncontrolled selection for US-010 keymap. Title click opens inline edit with stopPropagation \u2014 e2e selecting a row must click the meta area. TaskRow/TaskList styles in TaskList.css."
+      "learnings": "TaskList supports controlled (selectedId/onSelect) and uncontrolled selection for US-010 keymap. Title click opens inline edit with stopPropagation — e2e selecting a row must click the meta area. TaskRow/TaskList styles in TaskList.css."
     },
     {
       "timestamp": "2026-06-09T21:41:03Z",
@@ -2704,7 +2704,7 @@
         "src/App.tsx",
         "e2e/states-toast.spec.ts"
       ],
-      "learnings": "useApp().dispatch is the WRAPPED dispatch (builds toast message from pre-reduce state via stateRef). Fake timers + user-event deadlock in vitest4/jsdom \u2014 use fireEvent + vi.useFakeTimers({toFake:[setTimeout,clearTimeout]}) for timer-driven component tests."
+      "learnings": "useApp().dispatch is the WRAPPED dispatch (builds toast message from pre-reduce state via stateRef). Fake timers + user-event deadlock in vitest4/jsdom — use fireEvent + vi.useFakeTimers({toFake:[setTimeout,clearTimeout]}) for timer-driven component tests."
     },
     {
       "timestamp": "2026-06-09T21:47:35Z",
@@ -2721,7 +2721,7 @@
         "src/views/TodayView.tsx",
         "e2e/states-focus.spec.ts"
       ],
-      "learnings": "Selection state + barRef live in AppContext (selectedTaskId/setSelectedTaskId/barRef) \u2014 sequential-mode deviation from declared filePaths, needed because US-010 cannot edit TodayView per ownership. US-013 must preserve TaskList selectedId/onSelect wiring. onEdit triggers TaskRow inline edit via DOM .task-row-title click. setBarText is Dispatch<SetStateAction<string>> for typeahead appends."
+      "learnings": "Selection state + barRef live in AppContext (selectedTaskId/setSelectedTaskId/barRef) — sequential-mode deviation from declared filePaths, needed because US-010 cannot edit TodayView per ownership. US-013 must preserve TaskList selectedId/onSelect wiring. onEdit triggers TaskRow inline edit via DOM .task-row-title click. setBarText is Dispatch<SetStateAction<string>> for typeahead appends."
     },
     {
       "timestamp": "2026-06-09T21:51:06Z",
@@ -2751,7 +2751,7 @@
         "src/App.css",
         "e2e/today.spec.ts"
       ],
-      "learnings": "Machine TZ is fixed CST (no DST) \u2014 DST-sensitive tests must pin process.env.TZ at top of test file before imports. Reveal classes added imperatively in useLayoutEffect survive React re-renders unless className prop changes; gate one-shot reveal with module-level flag."
+      "learnings": "Machine TZ is fixed CST (no DST) — DST-sensitive tests must pin process.env.TZ at top of test file before imports. Reveal classes added imperatively in useLayoutEffect survive React re-renders unless className prop changes; gate one-shot reveal with module-level flag."
     },
     {
       "timestamp": "2026-06-09T22:04:37.142615+00:00",
@@ -2765,14 +2765,14 @@
         "e2e/upcoming.spec.ts",
         "__screenshots__/e2e/upcoming.spec.ts/"
       ],
-      "learnings": "e2e screenshot baselines embed the live masthead date and relative seed dates \u2014 suite assumes same-day regeneration, consistent with prior states-* baselines."
+      "learnings": "e2e screenshot baselines embed the live masthead date and relative seed dates — suite assumes same-day regeneration, consistent with prior states-* baselines."
     },
     {
       "timestamp": "2026-06-09T22:12:26.667020+00:00",
       "iteration": 8,
       "storyId": "US-015",
       "action": "story_passed",
-      "details": "AllView partitions allItems(filterText) into Dated/Anytime TaskList sections; FR-20 live filter from shared barText (non-empty, not >-prefixed) with mono filter-hint; DoneView renders custom done rows (TaskRow checkbox is disabled when done) with checkbox + x-key uncomplete; 6 blessed baselines (all-filtered/done x 3 breakpoints). Footprint deviation surfaced: added .filter-hint to src/App.css (outside contract files; no conflict \u2014 App.css wave owner US-013 already merged).",
+      "details": "AllView partitions allItems(filterText) into Dated/Anytime TaskList sections; FR-20 live filter from shared barText (non-empty, not >-prefixed) with mono filter-hint; DoneView renders custom done rows (TaskRow checkbox is disabled when done) with checkbox + x-key uncomplete; 6 blessed baselines (all-filtered/done x 3 breakpoints). Footprint deviation surfaced: added .filter-hint to src/App.css (outside contract files; no conflict — App.css wave owner US-013 already merged).",
       "filesChanged": [
         "src/views/AllView.tsx",
         "src/views/DoneView.tsx",
@@ -2782,7 +2782,7 @@
         "e2e/all-done.spec.ts",
         "__screenshots__/e2e/all-done.spec.ts/"
       ],
-      "learnings": "useKeymap listens at document level so row-level React handlers fire first; DoneView x-reopen must stopPropagation or the keymap re-completes the row. TaskRow checkbox is disabled for done tasks \u2014 Done view needs its own row markup for uncomplete."
+      "learnings": "useKeymap listens at document level so row-level React handlers fire first; DoneView x-reopen must stopPropagation or the keymap re-completes the row. TaskRow checkbox is disabled for done tasks — Done view needs its own row markup for uncomplete."
     },
     {
       "timestamp": "2026-06-09T22:18:13.922356+00:00",
@@ -2799,7 +2799,7 @@
         "e2e/states-banner.spec.ts",
         "__screenshots__/e2e/states-banner.spec.ts/"
       ],
-      "learnings": "e2e quota simulation: addInitScript patching Storage.prototype.setItem to throw DOMException QuotaExceededError for the app key only \u2014 load still works, save fails. Two Playwright pages in one context share localStorage and fire real storage events."
+      "learnings": "e2e quota simulation: addInitScript patching Storage.prototype.setItem to throw DOMException QuotaExceededError for the app key only — load still works, save fails. Two Playwright pages in one context share localStorage and fire real storage events."
     },
     {
       "timestamp": "2026-06-09T22:28:39.516814+00:00",
@@ -2822,7 +2822,7 @@
       "iteration": 8,
       "storyId": "US-018",
       "action": "story_passed",
-      "details": "speed.spec.ts: G-1 capture <200ms via in-page keyup-to-row PerformanceObserver-style timer (measured well under 200ms), G-2 zero-click Today, G-3 triage with only down/x/1/2/3, undo journey, reload persistence, dark-theme smoke, 100-task render. FR-48 lighthouse: lighthouserc.json repointed to production build (pnpm run build && pnpm run preview, port 4173) -> perf 1.0 / a11y 1.0 / bp 1.0. Inline fix task: Google Fonts moved from render-blocking CSS @import (tokens.css) to async link in index.html (media=print onload swap + preconnect + noscript) \u2014 FCP 4.6s -> 1.2s. Also added local process declare in useToday.test.tsx (tsc -b build is the real typecheck; root tsc --noEmit checks nothing).",
+      "details": "speed.spec.ts: G-1 capture <200ms via in-page keyup-to-row PerformanceObserver-style timer (measured well under 200ms), G-2 zero-click Today, G-3 triage with only down/x/1/2/3, undo journey, reload persistence, dark-theme smoke, 100-task render. FR-48 lighthouse: lighthouserc.json repointed to production build (pnpm run build && pnpm run preview, port 4173) -> perf 1.0 / a11y 1.0 / bp 1.0. Inline fix task: Google Fonts moved from render-blocking CSS @import (tokens.css) to async link in index.html (media=print onload swap + preconnect + noscript) — FCP 4.6s -> 1.2s. Also added local process declare in useToday.test.tsx (tsc -b build is the real typecheck; root tsc --noEmit checks nothing).",
       "filesChanged": [
         "e2e/speed.spec.ts",
         "lighthouserc.json",
@@ -2830,17 +2830,17 @@
         "src/styles/tokens.css",
         "src/hooks/useToday.test.tsx"
       ],
-      "learnings": "Root tsconfig has files:[] so pnpm run typecheck (tsc --noEmit) validates nothing \u2014 the build (tsc -b) is the effective type gate. Lighthouse against vite dev server is meaningless (0.58); prod preview scored 1.0 after de-blocking fonts. lhci cannot seed localStorage without puppeteer; seeded-load perf is covered by a Playwright 100-task render test."
+      "learnings": "Root tsconfig has files:[] so pnpm run typecheck (tsc --noEmit) validates nothing — the build (tsc -b) is the effective type gate. Lighthouse against vite dev server is meaningless (0.58); prod preview scored 1.0 after de-blocking fonts. lhci cannot seed localStorage without puppeteer; seeded-load perf is covered by a Playwright 100-task render test."
     }
   ],
   "codebasePatterns": [
-    "All colors/spacing/type via CSS variables from DESIGN-SYSTEM.md \u2014 no literals in components",
+    "All colors/spacing/type via CSS variables from DESIGN-SYSTEM.md — no literals in components",
     "Every interactive element has a visible focus-visible style (2px accent ring, 2px offset)",
     "src/lib/ modules are framework-free: no React imports, clocks/storage/ids injected as parameters",
     "Unit tests use generator functions (makeTask, makeAppData, makeMemoryStorage), never beforeEach mutation",
     "Test names state concrete behavior: 'snoozing with key 1 sets dueDate to tomorrow', never 'works correctly'",
-    "No `any` in TypeScript \u2014 use real types or unknown",
-    "Date math uses local-date components from src/lib/dates.ts \u2014 never UTC ms arithmetic across days",
+    "No `any` in TypeScript — use real types or unknown",
+    "Date math uses local-date components from src/lib/dates.ts — never UTC ms arithmetic across days",
     "Same-wave stories own disjoint files: views live in src/views/<View>.tsx, components in src/components/, App.tsx is owned by exactly one in-flight story at a time",
     "Date helpers use ISO weekday numbering 1=Mon..7=Sun; all date math via local components (new Date(y,m-1,d+n,12))",
     "Parser: pass order recurrence->date->time->list->priority, first-wins per kind, word-level whole-token matching; chip displays: date \"Wed Jun 10\", time \"3:00 PM\", list \"#work\", priority \"P1\", recurrence source text",
@@ -2848,7 +2848,7 @@
     "UI: classes shell-column/masthead/view-tabs/view-tab/keycap/empty-state in App.css; tokens only; aria-current=page marks active tab; useApp() from src/state/AppContext",
     "Component tests: // @vitest-environment jsdom pragma + src/test-setup.ts localStorage shim; probe context state by rendering a JSON <pre> probe inside AppProvider",
     "TaskList sections prop: [{label, tasks, rollover?}]; empty sections omitted; all-empty renders empty-state line. TaskRow classes: task-row--p1/--rollover/--selected/--done",
-    "Toast: useApp().toast + showToast; wrapped dispatch emits Captured/Completed/Done \u2014 next <date>/Deleted/Snoozed to <date>/Scheduled/Saved/Reopened/Undone/Redone",
+    "Toast: useApp().toast + showToast; wrapped dispatch emits Captured/Completed/Done — next <date>/Deleted/Snoozed to <date>/Scheduled/Saved/Reopened/Undone/Redone",
     "useKeymap config: callbacks (onComplete/onEdit/onDelete/onSnooze/onUndo/onRedo/onTypeahead) + getRowIds reads DOM .task-row[data-task-id]; today injectable",
     "DST-sensitive unit tests pin process.env.TZ=America/New_York as first line of the test file; midnight math via new Date(y,m,d+1,0,0,0) local constructor, never +24h",
     "New components get their own CSS file next to the component (StorageBanner.css pattern), tokens only"
@@ -2898,14 +2898,14 @@
       {
         "type": "warning",
         "storyId": "US-018",
-        "detail": "fan-in 6 \u2014 final integration/benchmark story; expected terminal aggregation, no restructuring.",
+        "detail": "fan-in 6 — final integration/benchmark story; expected terminal aggregation, no restructuring.",
         "fix": "warning",
         "reverted": false
       },
       {
         "type": "warning",
         "storyId": "US-001",
-        "detail": "fan-out 4 \u2014 foundation types/persistence story; expected root, no restructuring.",
+        "detail": "fan-out 4 — foundation types/persistence story; expected root, no restructuring.",
         "fix": "warning",
         "reverted": false
       }
@@ -2916,5 +2916,74 @@
     "timeouts": [],
     "complexityScored": true,
     "complexityFormula": "min(100, task_count*10 + dependsOn_depth*15 + (has_security_tag ? 30 : 0) + filePaths_count*2)"
+  },
+  "reviews": {
+    "command-bar-todo": {
+      "deepReview": {
+        "feature_id": "command-bar-todo",
+        "base_sha": "7e7acaf",
+        "head_sha": "3cd2525ab8eb6203a62169b7621b7c0ded3e44e1",
+        "files_changed": 142,
+        "stories_included": [
+          "US-001",
+          "US-002",
+          "US-003",
+          "US-004",
+          "US-005",
+          "US-006",
+          "US-007",
+          "US-008",
+          "US-009",
+          "US-010",
+          "US-011",
+          "US-012",
+          "US-013",
+          "US-014",
+          "US-015",
+          "US-016",
+          "US-017",
+          "US-018"
+        ],
+        "timestamp": "2026-06-10T17:55:00Z",
+        "risk_score": 35,
+        "tier": "MEDIUM",
+        "reviewers_dispatched": [
+          "code-reviewer",
+          "test-engineer",
+          "silent-failure-hunter",
+          "cross-story-synthesizer",
+          "live-devtools-interactive"
+        ],
+        "report": "docs/reviews/command-bar-todo-deep-review.md",
+        "findings_summary": {
+          "critical": 2,
+          "high": 8,
+          "medium": 11,
+          "low": 10
+        },
+        "blockers": [
+          "F-001 corrupt-storage white-screen loop (persistence.ts isAppData)",
+          "F-002 unguarded localStorage SecurityError white-screen",
+          "F-003 command-palette arrows broken with non-empty list",
+          "F-004 stale chip-revert state corrupts later captures"
+        ],
+        "high_priority": [
+          "F-005",
+          "F-006",
+          "F-007",
+          "F-008",
+          "F-009",
+          "F-010"
+        ],
+        "conflicts": [],
+        "suppressed_count": 0,
+        "kudos": [
+          "DST-proof date math + fully round-tripped inverse-op undo",
+          "exemplary cross-story contract discipline (single-source keys/types/tokens, byte-identical copy)",
+          "honest test suite: no over-mocking, real failure injection, true Enter-to-paint measurement"
+        ],
+        "verdict": "REQUEST_CHANGES"
+      }
+    }
   }
 }
