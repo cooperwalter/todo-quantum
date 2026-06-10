@@ -262,7 +262,7 @@ describe('parse: recurrence tokens (FR-6)', () => {
   it("parses 'every monday' as weekly on Monday (byWeekday [1])", () => {
     const r = parse('Plan every monday', NOW);
     expect(r.recurrence).toEqual({ freq: 'weekly', interval: 1, byWeekday: [1], byMonthDay: null });
-    expect(r.dueDate).toBeNull();
+    expect(r.dueDate).toBe('2026-06-15');
     expect(r.title).toBe('Plan');
   });
 

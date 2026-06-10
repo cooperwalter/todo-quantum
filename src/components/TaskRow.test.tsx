@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TaskRow } from './TaskRow';
 import { AppProvider, useApp } from '../state/AppContext';
@@ -121,7 +121,7 @@ describe('TaskRow inline edit', () => {
 describe('TaskRow overflow snooze menu (US-012)', () => {
   function ToastProbe() {
     const { toast } = useApp();
-    return <span data-testid="toast-probe">{toast ?? ''}</span>;
+    return <span data-testid="toast-probe">{toast?.message ?? ''}</span>;
   }
 
   function renderRowWithToast(task: Task) {
@@ -174,5 +174,18 @@ describe('TaskRow overflow snooze menu (US-012)', () => {
     await user.click(screen.getByRole('button', { name: /task options/i }));
     await user.click(screen.getByRole('menuitem', { name: 'Next week' }));
     expect(screen.getByTestId('toast-probe').textContent).toBe('Scheduled');
+  });
+});
+
+describe('Review fixes: inline edit blur (F-015)', () => {
+  it('clicking away from an inline edit saves the draft instead of discarding it', async () => {
+    const user = userEvent.setup();
+    renderRow(makeTask());
+    await user.click(screen.getByText('Send report'));
+    const edit = screen.getByRole('textbox', { name: /edit task title/i });
+    await user.clear(edit);
+    await user.type(edit, 'Send quarterly report');
+    fireEvent.blur(edit);
+    expect(probedTasks()[0].title).toBe('Send quarterly report');
   });
 });

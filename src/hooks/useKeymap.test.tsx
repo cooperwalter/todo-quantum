@@ -226,3 +226,36 @@ describe('inline-edit safety', () => {
     expect(calls).toEqual([]);
   });
 });
+
+describe('Review fixes: g-sequence cancellation and command-mode guard (F-003, F-006)', () => {
+  it('a bound key cancels a pending g so a later bare t does not switch views', () => {
+    row('t1').focus();
+    fireEvent.keyDown(document.activeElement as Element, { key: 'g' });
+    fireEvent.keyDown(document.activeElement as Element, { key: 'j' });
+    fireEvent.keyDown(document.activeElement as Element, { key: 't' });
+    expect(calls.filter((c) => c.startsWith('view:'))).toEqual([]);
+  });
+
+  it("an unbound printable after g replays the swallowed g into the bar (typing 'gr...' keeps its g)", () => {
+    row('t1').focus();
+    fireEvent.keyDown(document.activeElement as Element, { key: 'g' });
+    fireEvent.keyDown(document.activeElement as Element, { key: 'r' });
+    expect(calls).toEqual(['typeahead:g', 'typeahead:r']);
+  });
+
+  it('g followed by a view key within the window still switches views', () => {
+    row('t1').focus();
+    fireEvent.keyDown(document.activeElement as Element, { key: 'g' });
+    fireEvent.keyDown(document.activeElement as Element, { key: 'u' });
+    expect(calls).toEqual(['view:upcoming']);
+  });
+
+  it('the keymap ignores every key while the bar is in command mode', () => {
+    bar().focus();
+    bar().value = '>t';
+    fireEvent.keyDown(bar(), { key: 'ArrowDown' });
+    fireEvent.keyDown(bar(), { key: 'Escape' });
+    expect(document.activeElement).toBe(bar());
+    expect(calls).toEqual([]);
+  });
+});

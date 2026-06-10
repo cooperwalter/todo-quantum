@@ -225,3 +225,55 @@ describe('CommandBar command mode (FR-18, FR-19)', () => {
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 });
+
+describe('Review fixes: command bar (F-003, F-004, F-005, F-013)', () => {
+  it("Enter on '>export' (no matching command) keeps the text and shows 'no matching command'", async () => {
+    const user = userEvent.setup();
+    renderBar();
+    const input = screen.getByRole('textbox') as HTMLInputElement;
+    await user.type(input, '>export{Enter}');
+    expect(input.value).toBe('>export');
+    expect(screen.getByText('no matching command')).toBeTruthy();
+    expect(probedTasks()).toEqual([]);
+  });
+
+  it('clearing the bar after a chip revert re-enables that token in the next capture', async () => {
+    const user = userEvent.setup();
+    renderBar();
+    const input = screen.getByRole('textbox') as HTMLInputElement;
+    await user.type(input, 'call mom tomorrow');
+    await user.keyboard('{Escape}');
+    expect(chipTexts()).toEqual([]);
+    await user.clear(input);
+    await user.type(input, 'dentist tomorrow');
+    expect(chipTexts()).toEqual(['tomorrow']);
+    await user.keyboard('{Enter}');
+    const tasks = probedTasks();
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].dueDate).toBe('2026-06-10');
+  });
+
+  it('Escape in command mode clears to empty and keeps focus in the bar (FR-17: one precedence step)', async () => {
+    const user = userEvent.setup();
+    renderBar();
+    const input = screen.getByRole('textbox') as HTMLInputElement;
+    await user.type(input, '>undo');
+    await user.keyboard('{Escape}');
+    expect(input.value).toBe('');
+    expect(document.activeElement).toBe(input);
+  });
+
+  it('command-mode navigation keys never propagate to document-level listeners', async () => {
+    const user = userEvent.setup();
+    const seen: string[] = [];
+    const listener = (e: KeyboardEvent) => {
+      seen.push(e.key);
+    };
+    renderBar();
+    await user.type(screen.getByRole('textbox'), '>t');
+    document.addEventListener('keydown', listener);
+    await user.keyboard('{ArrowDown}{ArrowUp}{Escape}');
+    document.removeEventListener('keydown', listener);
+    expect(seen).toEqual([]);
+  });
+});

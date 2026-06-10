@@ -76,6 +76,9 @@ export function useKeymap(config: UseKeymapConfig) {
       }
 
       if (inBar) {
+        // Command mode owns every key (FR-18/FR-19); CommandBar also stops
+        // propagation, but guard here so a future bypass can't steal focus.
+        if (bar.value.startsWith('>')) return;
         if (event.key === 'ArrowDown') {
           event.preventDefault();
           moveToList(cfg);
@@ -100,6 +103,21 @@ export function useKeymap(config: UseKeymapConfig) {
         event.preventDefault();
         cfg.setView(G_VIEWS[event.key]);
         return;
+      }
+      if (pendingG.current !== null && event.key !== 'g') {
+        // Any non-continuation key cancels the pending 'g' sequence; a later
+        // bare t/u/a/d must not switch views (FR-16).
+        clearTimeout(pendingG.current);
+        pendingG.current = null;
+        if (event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
+          // The user was typing a word starting with 'g' ("groceries") — the
+          // swallowed 'g' belongs in the bar ahead of this key.
+          event.preventDefault();
+          bar?.focus();
+          cfg.onTypeahead('g');
+          cfg.onTypeahead(event.key);
+          return;
+        }
       }
 
       switch (event.key) {

@@ -1,4 +1,5 @@
 import { addDays, isoWeekday, isoWeekStart, nextWeekdayAfter, todayStr } from './dates';
+import { nextOccurrence } from './recurrence';
 import type { Recurrence } from './types';
 
 export interface Chip {
@@ -325,6 +326,12 @@ export function parse(input: string, now: Date): ParseResult {
   } else {
     if (dateToken !== null) tokens.push(dateToken);
     if (timeToken !== null) tokens.push(timeToken);
+  }
+
+  // A recurrence without an explicit date schedules its first occurrence —
+  // "water plants every monday" belongs on next Monday, not in Anytime.
+  if (recurrence !== null && dueDate === null) {
+    dueDate = nextOccurrence(recurrence, today, today);
   }
 
   const titleWords = wordsArr.filter((_, i) => !used[i]).map((w) => w.text);

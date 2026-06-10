@@ -91,7 +91,7 @@ function mirrorSegments(input: string, chips: Chip[]): MirrorSegment[] {
 export function CommandBar({ now, openCheatsheet }: { now?: Date; openCheatsheet?: () => void }) {
   const { barText, setBarText, dispatch, setView, barRef } = useApp();
   const [reverted, setReverted] = useState<RevertedToken[]>([]);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCommand, setSelectedCommand] = useState(0);
 
   const commandMode = barText.startsWith('>');
@@ -109,31 +109,46 @@ export function CommandBar({ now, openCheatsheet }: { now?: Date; openCheatsheet
 
   function handleChange(value: string) {
     setBarText(value);
-    setError(false);
+    setError(null);
     setSelectedCommand(0);
+    // Reverted chips are scoped to the input they were reverted in — carrying
+    // them across captures silently strips valid chips from later text.
+    if (value === '') setReverted([]);
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (commandMode) {
+      // Command mode owns these keys end-to-end: stop propagation so the
+      // document-level keymap never sees them (React flushes our state update
+      // at #root before the event reaches document, so without this the
+      // keymap acts on the post-update bar and steals focus — FR-15/FR-17).
       if (event.key === 'ArrowDown') {
         event.preventDefault();
+        event.stopPropagation();
         setSelectedCommand((prev) => Math.min(prev + 1, commandMatches.length - 1));
       } else if (event.key === 'ArrowUp') {
         event.preventDefault();
+        event.stopPropagation();
         setSelectedCommand((prev) => Math.max(prev - 1, 0));
       } else if (event.key === 'Enter') {
+        event.stopPropagation();
         const command = commandMatches[activeCommand];
-        if (command !== undefined) {
-          command.run({
-            setView,
-            dispatch,
-            openCheatsheet: openCheatsheet ?? (() => {}),
-          });
+        if (command === undefined) {
+          setError('no matching command');
+          return;
         }
+        command.run({
+          setView,
+          dispatch,
+          openCheatsheet: openCheatsheet ?? (() => {}),
+        });
         setBarText('');
         setSelectedCommand(0);
       } else if (event.key === 'Escape') {
+        // FR-17: exiting command mode is ONE precedence step — clear the
+        // input, keep focus in the bar.
         event.preventDefault();
+        event.stopPropagation();
         setBarText('');
         setSelectedCommand(0);
       }
@@ -141,7 +156,7 @@ export function CommandBar({ now, openCheatsheet }: { now?: Date; openCheatsheet
     }
     if (event.key === 'Enter') {
       if (!parsed.valid) {
-        setError(true);
+        setError('nothing to capture');
         return;
       }
       dispatch({
@@ -161,10 +176,11 @@ export function CommandBar({ now, openCheatsheet }: { now?: Date; openCheatsheet
       });
       setBarText('');
       setReverted([]);
-      setError(false);
+      setError(null);
       barRef.current?.focus();
     } else if (event.key === 'Escape' && parsed.chips.length > 0) {
       event.preventDefault();
+      event.stopPropagation();
       const last = [...parsed.chips].sort((a, b) => a.start - b.start)[parsed.chips.length - 1];
       setReverted((prev) => [
         ...prev,
@@ -198,6 +214,8 @@ export function CommandBar({ now, openCheatsheet }: { now?: Date; openCheatsheet
           </div>
           <input
             ref={barRef}
+            id="capture-input"
+            name="capture"
             className="command-bar-input"
             type="text"
             value={barText}
@@ -239,7 +257,7 @@ export function CommandBar({ now, openCheatsheet }: { now?: Date; openCheatsheet
           ))}
         </ul>
       )}
-      {error && <p className="command-bar-error">nothing to capture</p>}
+      {error !== null && <p className="command-bar-error">{error}</p>}
     </div>
   );
 }

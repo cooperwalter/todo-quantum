@@ -103,7 +103,7 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
               setEditing(false);
             }
           }}
-          onBlur={() => setEditing(false)}
+          onBlur={saveEdit}
         />
       ) : (
         <span

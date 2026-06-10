@@ -161,6 +161,11 @@
 
   .view-tabs {
     overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .view-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .keycap {
