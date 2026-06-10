@@ -78,7 +78,7 @@ function Shell() {
   return (
     <div className="shell-column">
       <Masthead />
-      {saveFailed && <StorageBanner onDismiss={dismissSaveFailure} />}
+      {saveFailed !== false && <StorageBanner reason={saveFailed} onDismiss={dismissSaveFailure} />}
       <CommandBar openCheatsheet={() => setCheatsheetOpen(true)} />
       <ViewTabs />
       <main className="view-region">

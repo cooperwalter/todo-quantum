@@ -155,3 +155,46 @@ describe('Toast lifecycle', () => {
     expect(region).toBeTruthy();
   });
 });
+
+describe('Review fixes: honest toasts (F-007)', () => {
+  it("shows 'Nothing to undo' without an Undo button when undo is pressed on an empty stack", () => {
+    renderToast();
+    click('do-undo');
+    expect(screen.getByText('Nothing to undo')).toBeTruthy();
+    expect(document.querySelector('.toast-undo')).toBeNull();
+  });
+
+  it("shows 'Undone' without an Undo button after a real undo", () => {
+    renderToast();
+    click('do-complete');
+    click('do-undo');
+    expect(screen.getByText('Undone')).toBeTruthy();
+    expect(document.querySelector('.toast-undo')).toBeNull();
+  });
+
+  it('info toasts raised via showToast have no Undo button', () => {
+    function InfoProbe() {
+      const { showToast } = useApp();
+      return <button onClick={() => showToast('List updated in another tab')}>do-info</button>;
+    }
+    window.localStorage.setItem('todo-quantum.v1', JSON.stringify({ schemaVersion: 1, tasks: [] }));
+    render(
+      <AppProvider>
+        <Toast />
+        <InfoProbe />
+      </AppProvider>,
+    );
+    act(() => {
+      fireEvent.click(screen.getByText('do-info'));
+    });
+    expect(screen.getByText('List updated in another tab')).toBeTruthy();
+    expect(document.querySelector('.toast-undo')).toBeNull();
+  });
+
+  it('mutation toasts still offer the Undo button', () => {
+    renderToast();
+    click('do-complete');
+    expect(screen.getByText('Completed')).toBeTruthy();
+    expect(document.querySelector('.toast-undo')).toBeTruthy();
+  });
+});

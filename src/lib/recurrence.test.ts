@@ -115,3 +115,17 @@ describe('nextOccurrence: completion semantics', () => {
     expect(nextOccurrence(rec, '2026-06-09', '2026-06-09')).toBe('2026-06-16');
   });
 });
+
+describe('Review fixes: corrupt recurrence guards (F-008)', () => {
+  it('throws on interval 0 instead of looping forever', () => {
+    expect(() =>
+      nextOccurrence({ freq: 'daily', interval: 0, byWeekday: null, byMonthDay: null }, '2026-06-09', '2026-06-09'),
+    ).toThrow(/invalid recurrence interval/);
+  });
+
+  it('throws on an empty byWeekday array instead of looping forever', () => {
+    expect(() =>
+      nextOccurrence({ freq: 'weekly', interval: 1, byWeekday: [], byMonthDay: null }, '2026-06-09', '2026-06-09'),
+    ).toThrow(/byWeekday/);
+  });
+});

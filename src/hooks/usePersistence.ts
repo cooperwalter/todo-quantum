@@ -4,34 +4,53 @@ import { useApp } from '../state/AppContext';
 import type { AppData, StorageLike } from '../lib/types';
 
 const SAVE_DEBOUNCE_MS = 250;
+const SAVE_RETRY_MS = 5000;
+
+export type SaveFailure = false | 'quota' | 'unavailable';
 
 export interface UsePersistenceResult {
-  saveFailed: boolean;
+  saveFailed: SaveFailure;
   dismissSaveFailure: () => void;
 }
 
-export function usePersistence(storage: StorageLike = window.localStorage): UsePersistenceResult {
-  const { state, dispatch, recovered, showToast } = useApp();
-  const [saveFailed, setSaveFailed] = useState(false);
+export function usePersistence(storageOverride?: StorageLike): UsePersistenceResult {
+  const { state, dispatch, recovered, showToast, storage, storageUnavailable } = useApp();
+  const [saveFailed, setSaveFailed] = useState<SaveFailure>(
+    storageUnavailable ? 'unavailable' : false,
+  );
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingData = useRef<AppData | null>(null);
-  const storageRef = useRef(storage);
+  const storageRef = useRef(storageOverride ?? storage);
   const mounted = useRef(false);
 
   useEffect(() => {
-    storageRef.current = storage;
-  }, [storage]);
+    storageRef.current = storageOverride ?? storage;
+  }, [storageOverride, storage]);
 
-  const flush = useCallback(() => {
+  const flushRef = useRef<() => boolean>(() => true);
+
+  const flush = useCallback((): boolean => {
     if (timer.current !== null) {
       clearTimeout(timer.current);
       timer.current = null;
     }
-    if (pendingData.current === null) return;
+    if (pendingData.current === null) return true;
     const result = save(storageRef.current, pendingData.current);
-    pendingData.current = null;
-    setSaveFailed(!result.ok);
+    if (result.ok) {
+      pendingData.current = null;
+      setSaveFailed(false);
+      return true;
+    }
+    // Keep the unsaved payload and retry: a quota error can clear (user frees
+    // space, another tab trims) and the change must not be silently dropped.
+    setSaveFailed(result.reason);
+    timer.current = setTimeout(() => flushRef.current(), SAVE_RETRY_MS);
+    return false;
   }, []);
+
+  useEffect(() => {
+    flushRef.current = flush;
+  }, [flush]);
 
   useEffect(() => {
     if (recovered) showToast('Saved data was unreadable — starting fresh');
@@ -50,20 +69,34 @@ export function usePersistence(storage: StorageLike = window.localStorage): UseP
 
   useEffect(() => {
     function onStorage(event: StorageEvent) {
-      if (event.key !== STORAGE_KEY || event.newValue === null) return;
+      // key === null means storage.clear() in another tab; newValue === null
+      // means our key was removed. Both are external writes this tab must
+      // honor (FR-43) — ignoring them resurrects deleted data on the next save.
+      if (event.key !== null && event.key !== STORAGE_KEY) return;
       const result = load(storageRef.current);
       dispatch({ type: 'externalReload', data: result.data });
       pendingData.current = null;
-      showToast('List updated in another tab');
+      showToast(
+        result.recovered
+          ? 'Saved data was unreadable — starting fresh'
+          : 'List updated in another tab',
+      );
     }
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
   }, [dispatch, showToast]);
 
   useEffect(() => {
-    window.addEventListener('beforeunload', flush);
+    function onBeforeUnload(event: BeforeUnloadEvent) {
+      if (!flush()) {
+        // FR-40's flush guarantee failed — surface the browser's leave
+        // confirmation rather than silently dropping the final change.
+        event.preventDefault();
+      }
+    }
+    window.addEventListener('beforeunload', onBeforeUnload);
     return () => {
-      window.removeEventListener('beforeunload', flush);
+      window.removeEventListener('beforeunload', onBeforeUnload);
       flush();
     };
   }, [flush]);

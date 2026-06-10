@@ -57,10 +57,10 @@ function Harness({ storage }: { storage: StorageLike }) {
   const { state, dispatch, toast } = useApp();
   return (
     <div>
-      {saveFailed && <StorageBanner onDismiss={dismissSaveFailure} />}
+      {saveFailed !== false && <StorageBanner reason={saveFailed} onDismiss={dismissSaveFailure} />}
       <pre data-testid="tasks">{JSON.stringify(state.data.tasks)}</pre>
       <pre data-testid="undo-depth">{state.undoStack.length}</pre>
-      <pre data-testid="toast">{toast ?? ''}</pre>
+      <pre data-testid="toast">{toast?.message ?? ''}</pre>
       <button
         onClick={() =>
           dispatch({
@@ -141,7 +141,7 @@ describe('usePersistence', () => {
     });
     const banner = document.querySelector('.storage-banner');
     expect(banner?.textContent).toContain(
-      "Changes aren't being saved — this browser's storage is unavailable.",
+      "Changes aren't being saved — this browser's storage is full.",
     );
   });
 
@@ -228,5 +228,63 @@ describe('usePersistence', () => {
     expect(screen.getByTestId('toast').textContent).toBe(
       'Saved data was unreadable — starting fresh',
     );
+  });
+});
+
+describe('Review fixes: persistence resilience (F-010, F-016, F-017)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 10, 13, 0, 0));
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
+
+  it('a storage event with newValue null (key deleted in another tab) reloads and toasts', () => {
+    const storage = makeMemoryStorage();
+    renderHarness(storage);
+    fireEvent.click(screen.getByText('do-add'));
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    storage.removeItem(STORAGE_KEY);
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY, newValue: null }));
+    });
+    expect(JSON.parse(screen.getByTestId('tasks').textContent ?? '[]')).toEqual([]);
+    expect(screen.getByTestId('toast').textContent).toBe('List updated in another tab');
+  });
+
+  it('a failed save keeps the payload and retries 5s later, succeeding once storage recovers', () => {
+    let failing = true;
+    const inner = makeMemoryStorage();
+    const storage: StorageLike = {
+      getItem: (k) => inner.getItem(k),
+      setItem: (k, v) => {
+        if (failing) {
+          const err = new Error('full');
+          err.name = 'QuotaExceededError';
+          throw err;
+        }
+        inner.setItem(k, v);
+      },
+      removeItem: (k) => inner.removeItem(k),
+    };
+    renderHarness(storage);
+    fireEvent.click(screen.getByText('do-add'));
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    expect(document.querySelector('.storage-banner')).toBeTruthy();
+    expect(inner.getItem(STORAGE_KEY)).toBeNull();
+    failing = false;
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(inner.getItem(STORAGE_KEY)).not.toBeNull();
+    expect(document.querySelector('.storage-banner')).toBeNull();
   });
 });

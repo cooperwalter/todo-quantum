@@ -7,7 +7,10 @@ const BREAKPOINTS: [string, number][] = [
   ['desktop', 1280],
 ];
 
-const BANNER_COPY = "Changes aren't being saved — this browser's storage is unavailable.";
+// The injected failure is a QuotaExceededError, so the banner must show the
+// quota-specific copy (deep-review F-010: reason threading).
+const BANNER_COPY =
+  "Changes aren't being saved — this browser's storage is full. Delete done tasks or clear site data to free space.";
 
 function breakStorageWrites(page: Page) {
   return page.addInitScript(() => {

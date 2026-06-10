@@ -58,6 +58,12 @@ function nextMonthly(rec: Recurrence, anchor: string, start: string): string {
 }
 
 export function nextOccurrence(rec: Recurrence, anchor: string, today: string): string {
+  if (!Number.isInteger(rec.interval) || rec.interval < 1) {
+    throw new Error(`invalid recurrence interval: ${rec.interval}`);
+  }
+  if (rec.byWeekday !== null && rec.byWeekday.length === 0) {
+    throw new Error('invalid recurrence: byWeekday must be null or non-empty');
+  }
   const start = compareDates(anchor, today) >= 0 ? anchor : today;
   switch (rec.freq) {
     case 'daily':
