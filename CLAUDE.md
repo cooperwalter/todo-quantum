@@ -43,20 +43,20 @@ baseline. A baseline you never looked at is not a baseline.
 
 ## Approval rules (brainstorm/spec/plan walkthroughs)
 
-Never ask the user to approve content they cannot see. When presenting a design
-section, PRD section, or plan for approval:
+Never ask the user to approve content they cannot see — and never make them read
+it inside a question widget. The pattern:
 
-1. Print the **full section text** as a normal message the user will read — not
-   only inside your thinking, and not only as a file write.
-2. THEN ask the approval question. If you use a question tool, the question's
-   description/preview must carry the section content (or a faithful summary of
-   it) — the tool UI shows only the question, so "Section 1 — Overview: does it
-   look right?" with no visible overview is an empty approval.
-3. Format the in-question summary for scanning, never as prose: one decision per
-   line, as short `Label: choice` bullets (e.g. `- Storage: single versioned JSON
-   doc in localStorage`). No semicolon-chained run-on paragraphs, no bolding the
-   whole block. If the tool supports an option preview, put the full section
-   there and keep the question text to one line.
+1. Present the section as a normal, well-formatted markdown **message**: a `##`
+   heading, a short lead sentence, then `- Label: choice` bullets for the
+   decisions. Scale length to complexity — a few sentences when simple, 200–300
+   words max when nuanced. Visible output, not thinking, not only a file write.
+2. THEN ask a lightweight approval question in the same turn. One line, pointing
+   at what's above ("Section 2 — UX (shown above): approve?"), with options like
+   Approved / Needs changes. Do NOT cram the section content into the question
+   text or option descriptions — it lives in the message directly above.
+3. After all sections are approved and the doc is written, ask the user to
+   review the **written file** before proceeding ("Design written to `<path>` —
+   please review it before we continue to the next stage").
 4. An approval given without the content on screen is not an approval. Re-present
    and re-ask.
 
