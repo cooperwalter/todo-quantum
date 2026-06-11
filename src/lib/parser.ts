@@ -62,9 +62,11 @@ function daysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
 }
 
-export function formatDateDisplay(date: string): string {
-  const [, m, d] = date.split('-').map(Number);
-  return `${WEEKDAY_SHORT[isoWeekday(date) - 1]} ${MONTH_SHORT[m - 1]} ${d}`;
+export function formatDateDisplay(date: string, now?: Date): string {
+  const [y, m, d] = date.split('-').map(Number);
+  const base = `${WEEKDAY_SHORT[isoWeekday(date) - 1]} ${MONTH_SHORT[m - 1]} ${d}`;
+  if (now !== undefined && y !== now.getFullYear()) return `${base}, ${y}`;
+  return base;
 }
 
 export function formatTimeDisplay(time: string): string {
@@ -110,11 +112,15 @@ function matchDateAt(wordsArr: Word[], i: number, used: boolean[], today: string
   }
 
   if (MONTH_NAMES[w.lower] !== undefined && nextFree && /^\d{1,2}$/.test(next.lower)) {
+    const explicit = matchExplicitYear(wordsArr, i, used, MONTH_NAMES[w.lower], Number(next.lower));
+    if (explicit !== null) return explicit;
     const date = resolveMonthDay(MONTH_NAMES[w.lower], Number(next.lower), today);
     if (date !== null) return { date, firstWord: i, lastWord: i + 1 };
   }
 
   if (/^\d{1,2}$/.test(w.lower) && nextFree && MONTH_NAMES[next.lower] !== undefined) {
+    const explicit = matchExplicitYear(wordsArr, i, used, MONTH_NAMES[next.lower], Number(w.lower));
+    if (explicit !== null) return explicit;
     const date = resolveMonthDay(MONTH_NAMES[next.lower], Number(w.lower), today);
     if (date !== null) return { date, firstWord: i, lastWord: i + 1 };
   }
@@ -128,6 +134,22 @@ function matchDateAt(wordsArr: Word[], i: number, used: boolean[], today: string
   }
 
   return null;
+}
+
+function matchExplicitYear(
+  wordsArr: Word[],
+  i: number,
+  used: boolean[],
+  month: number,
+  day: number,
+): DateMatch | null {
+  const yearWord = wordsArr[i + 2];
+  if (yearWord === undefined || used[i + 2]) return null;
+  if (!/^\d{4}$/.test(yearWord.lower)) return null;
+  const year = Number(yearWord.lower);
+  if (year < 1970 || year > 2100) return null;
+  if (day < 1 || day > daysInMonth(year, month)) return null;
+  return { date: `${year}-${pad2(month)}-${pad2(day)}`, firstWord: i, lastWord: i + 2 };
 }
 
 function resolveMonthDay(month: number, day: number, today: string): string | null {
@@ -270,7 +292,7 @@ export function parse(input: string, now: Date): ParseResult {
         kind: 'date',
         firstWord: match.firstWord,
         lastWord: match.lastWord,
-        display: formatDateDisplay(match.date),
+        display: formatDateDisplay(match.date, now),
       };
       break;
     }

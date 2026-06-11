@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parse } from './parser';
+import { formatDateDisplay, parse } from './parser';
 
 // 2026-06-09 is a Tuesday.
 const NOW = new Date(2026, 5, 9, 10, 0, 0);
@@ -339,5 +339,117 @@ describe('parse: canonical example (US-002 AC)', () => {
     expect(r.chips).toHaveLength(1);
     expect(r.chips[0].kind).toBe('recurrence');
     expect(input.slice(r.chips[0].start, r.chips[0].end)).toBe('every 2 weeks');
+  });
+});
+
+// 2026-06-10 is a Wednesday.
+const NOW_JUN_10 = new Date(2026, 5, 10, 10, 0, 0);
+
+describe('parse: explicit-year dates (US-101, FR-104)', () => {
+  it("parses '<monthname> <day> <year>' to that exact past date with no roll-forward ('jun 3 2026' at 2026-06-10 -> 2026-06-03)", () => {
+    const input = 'pay rent jun 3 2026';
+    const r = parse(input, NOW_JUN_10);
+    expect(r.dueDate).toBe('2026-06-03');
+    expect(r.title).toBe('pay rent');
+    expect(r.chips).toHaveLength(1);
+    expect(r.chips[0].kind).toBe('date');
+    expect(input.slice(r.chips[0].start, r.chips[0].end)).toBe('jun 3 2026');
+  });
+
+  it("parses '<day> <monthname> <year>' to that exact past date ('3 jun 2026' -> 2026-06-03) with the chip covering all three words", () => {
+    const input = 'pay rent 3 jun 2026';
+    const r = parse(input, NOW_JUN_10);
+    expect(r.dueDate).toBe('2026-06-03');
+    expect(r.title).toBe('pay rent');
+    expect(r.chips).toHaveLength(1);
+    expect(input.slice(r.chips[0].start, r.chips[0].end)).toBe('3 jun 2026');
+  });
+
+  it("parses an explicit future year with no roll-forward logic ('jun 3 2030' -> 2030-06-03)", () => {
+    expect(parse('renew domain jun 3 2030', NOW_JUN_10).dueDate).toBe('2030-06-03');
+  });
+
+  it("accepts the lower year boundary ('mar 1 1970' -> 1970-03-01)", () => {
+    expect(parse('archive mar 1 1970', NOW_JUN_10).dueDate).toBe('1970-03-01');
+  });
+
+  it("accepts the upper year boundary ('mar 1 2100' -> 2100-03-01)", () => {
+    expect(parse('archive mar 1 2100', NOW_JUN_10).dueDate).toBe('2100-03-01');
+  });
+
+  it("keeps a year below 1970 literal: 'jun 3 1969' rolls 'jun 3' forward and leaves '1969' in the title", () => {
+    const r = parse('pay rent jun 3 1969', NOW_JUN_10);
+    expect(r.dueDate).toBe('2027-06-03');
+    expect(r.title).toBe('pay rent 1969');
+  });
+
+  it("keeps a year above 2100 literal: 'jun 3 2101' rolls 'jun 3' forward and leaves '2101' in the title", () => {
+    const r = parse('pay rent jun 3 2101', NOW_JUN_10);
+    expect(r.dueDate).toBe('2027-06-03');
+    expect(r.title).toBe('pay rent 2101');
+  });
+
+  it("keeps a non-4-digit trailing number literal: 'jun 3 26' rolls 'jun 3' forward and leaves '26' in the title", () => {
+    const r = parse('pay rent jun 3 26', NOW_JUN_10);
+    expect(r.dueDate).toBe('2027-06-03');
+    expect(r.title).toBe('pay rent 26');
+  });
+
+  it("parses 'feb 29 <leap year>' as that real day ('feb 29 2028' -> 2028-02-29)", () => {
+    expect(parse('audit feb 29 2028', NOW_JUN_10).dueDate).toBe('2028-02-29');
+  });
+
+  it("keeps 'feb 29 <non-leap year>' fully literal ('feb 29 2027' is not a real calendar day)", () => {
+    const r = parse('audit feb 29 2027', NOW_JUN_10);
+    expect(r.dueDate).toBeNull();
+    expect(r.title).toBe('audit feb 29 2027');
+    expect(r.chips).toHaveLength(0);
+  });
+
+  it("still rolls a no-year '<monthname> <day>' already passed this year into next year ('jun 3' at 2026-06-10 -> 2027-06-03)", () => {
+    const r = parse('pay rent jun 3', NOW_JUN_10);
+    expect(r.dueDate).toBe('2027-06-03');
+    expect(r.title).toBe('pay rent');
+  });
+
+  it('merges an explicit-year date with an adjacent time into one chip covering all four words', () => {
+    const input = 'pay rent jun 3 2030 3pm';
+    const r = parse(input, NOW_JUN_10);
+    expect(r.dueDate).toBe('2030-06-03');
+    expect(r.dueTime).toBe('15:00');
+    expect(r.chips).toHaveLength(1);
+    expect(input.slice(r.chips[0].start, r.chips[0].end)).toBe('jun 3 2030 3pm');
+  });
+});
+
+describe('parse: year-aware chip display (US-101 AC-4)', () => {
+  it("renders an explicit-year chip without the year when the resolved year equals now's year ('jun 3 2026' at 2026 -> 'Wed Jun 3')", () => {
+    const r = parse('pay rent jun 3 2026', NOW_JUN_10);
+    expect(r.chips[0].display).toBe('Wed Jun 3');
+  });
+
+  it("renders an explicit-year chip with the year when the resolved year differs from now's year ('jun 3 2030' -> 'Mon Jun 3, 2030')", () => {
+    const r = parse('renew domain jun 3 2030', NOW_JUN_10);
+    expect(r.chips[0].display).toBe('Mon Jun 3, 2030');
+  });
+
+  it("renders a no-year date that rolled forward into next year with the year ('jan 5' at 2026-06-10 -> 'Tue Jan 5, 2027')", () => {
+    const r = parse('renew jan 5', NOW_JUN_10);
+    expect(r.dueDate).toBe('2027-01-05');
+    expect(r.chips[0].display).toBe('Tue Jan 5, 2027');
+  });
+});
+
+describe('formatDateDisplay: optional now parameter (US-101 AC-4)', () => {
+  it("appends ', YYYY' when the date's year differs from now's year (formatDateDisplay('2027-06-03', now in 2026) -> 'Thu Jun 3, 2027')", () => {
+    expect(formatDateDisplay('2027-06-03', NOW_JUN_10)).toBe('Thu Jun 3, 2027');
+  });
+
+  it("omits the year when the date's year equals now's year (formatDateDisplay('2026-06-12', now in 2026) -> 'Fri Jun 12')", () => {
+    expect(formatDateDisplay('2026-06-12', NOW_JUN_10)).toBe('Fri Jun 12');
+  });
+
+  it("never shows the year when called without a now argument (formatDateDisplay('2027-06-03') -> 'Thu Jun 3')", () => {
+    expect(formatDateDisplay('2027-06-03')).toBe('Thu Jun 3');
   });
 });
