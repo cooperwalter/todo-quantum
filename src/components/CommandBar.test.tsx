@@ -50,6 +50,13 @@ describe('CommandBar chips', () => {
     await user.type(screen.getByRole('textbox'), 'Pay May invoice');
     expect(chipTexts()).toEqual([]);
   });
+
+  it('captures the LAST of two same-kind date tokens (last-wins, friday then monday -> monday chip)', async () => {
+    const user = userEvent.setup();
+    renderBar();
+    await user.type(screen.getByRole('textbox'), 'pay rent friday monday');
+    expect(chipTexts()).toEqual(['monday']);
+  });
 });
 
 describe('CommandBar Enter (FR-12, FR-13)', () => {

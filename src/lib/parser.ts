@@ -2,6 +2,11 @@ import { addDays, isoWeekday, isoWeekStart, nextWeekdayAfter, todayStr } from '.
 import { nextOccurrence } from './recurrence';
 import type { Recurrence } from './types';
 
+export interface Range {
+  start: number;
+  end: number;
+}
+
 export interface Chip {
   start: number;
   end: number;
@@ -18,6 +23,7 @@ export interface ParseResult {
   priority: 1 | 2 | 3 | null;
   recurrence: Recurrence | null;
   chips: Chip[];
+  displaced: Range[];
 }
 
 interface Word {
@@ -249,11 +255,34 @@ function matchRecurrenceAt(wordsArr: Word[], i: number, used: boolean[]): Recurr
   return null;
 }
 
-export function parse(input: string, now: Date): ParseResult {
+function wordInReverted(w: Word, reverted: Range[]): boolean {
+  for (const r of reverted) {
+    if (w.start < r.end && w.end > r.start) return true;
+  }
+  return false;
+}
+
+function tokenRange(wordsArr: Word[], t: Token): Range {
+  return { start: wordsArr[t.firstWord].start, end: wordsArr[t.lastWord].end };
+}
+
+export function parse(input: string, now: Date, reverted: Range[] = []): ParseResult {
   const today = todayStr(now);
   const wordsArr = splitWords(input);
+  // `skip` words are unavailable to matchers: either they fall inside a reverted
+  // range or they have already been consumed by a matched token. `used` is the
+  // subset consumed by tokens — the only words excluded from the title. Reverted
+  // words are skipped by matchers yet stay as literal title text.
+  const skip: boolean[] = wordsArr.map((w) => wordInReverted(w, reverted));
   const used: boolean[] = wordsArr.map(() => false);
+  const consume = (from: number, to: number): void => {
+    for (let j = from; j <= to; j++) {
+      skip[j] = true;
+      used[j] = true;
+    }
+  };
   const tokens: Token[] = [];
+  const displaced: Range[] = [];
 
   let dueDate: string | null = null;
   let dueTime: string | null = null;
@@ -263,71 +292,117 @@ export function parse(input: string, now: Date): ParseResult {
   let dateToken: Token | null = null;
   let timeToken: Token | null = null;
 
+  const recurrenceOcc: Array<{ token: Token; recurrence: Recurrence }> = [];
   for (let i = 0; i < wordsArr.length; i++) {
-    if (used[i]) continue;
-    const match = matchRecurrenceAt(wordsArr, i, used);
+    if (skip[i]) continue;
+    const match = matchRecurrenceAt(wordsArr, i, skip);
     if (match !== null) {
-      recurrence = match.recurrence;
-      for (let j = match.firstWord; j <= match.lastWord; j++) used[j] = true;
-      tokens.push({
-        kind: 'recurrence',
-        firstWord: match.firstWord,
-        lastWord: match.lastWord,
-        display: wordsArr
-          .slice(match.firstWord, match.lastWord + 1)
-          .map((w) => w.lower)
-          .join(' '),
+      consume(match.firstWord, match.lastWord);
+      recurrenceOcc.push({
+        token: {
+          kind: 'recurrence',
+          firstWord: match.firstWord,
+          lastWord: match.lastWord,
+          display: wordsArr
+            .slice(match.firstWord, match.lastWord + 1)
+            .map((w) => w.lower)
+            .join(' '),
+        },
+        recurrence: match.recurrence,
       });
-      break;
+      i = match.lastWord;
+    }
+  }
+  if (recurrenceOcc.length > 0) {
+    const last = recurrenceOcc[recurrenceOcc.length - 1];
+    recurrence = last.recurrence;
+    tokens.push(last.token);
+    for (const earlier of recurrenceOcc.slice(0, -1)) {
+      displaced.push(tokenRange(wordsArr, earlier.token));
     }
   }
 
+  const dateOcc: Array<{ token: Token; date: string }> = [];
   for (let i = 0; i < wordsArr.length; i++) {
-    if (used[i]) continue;
-    const match = matchDateAt(wordsArr, i, used, today);
+    if (skip[i]) continue;
+    const match = matchDateAt(wordsArr, i, skip, today);
     if (match !== null) {
-      dueDate = match.date;
-      for (let j = match.firstWord; j <= match.lastWord; j++) used[j] = true;
-      dateToken = {
-        kind: 'date',
-        firstWord: match.firstWord,
-        lastWord: match.lastWord,
-        display: formatDateDisplay(match.date, now),
-      };
-      break;
+      consume(match.firstWord, match.lastWord);
+      dateOcc.push({
+        token: {
+          kind: 'date',
+          firstWord: match.firstWord,
+          lastWord: match.lastWord,
+          display: formatDateDisplay(match.date, now),
+        },
+        date: match.date,
+      });
+      i = match.lastWord;
+    }
+  }
+  if (dateOcc.length > 0) {
+    const last = dateOcc[dateOcc.length - 1];
+    dueDate = last.date;
+    dateToken = last.token;
+    for (const earlier of dateOcc.slice(0, -1)) {
+      displaced.push(tokenRange(wordsArr, earlier.token));
     }
   }
 
+  const timeOcc: Array<{ token: Token; time: string }> = [];
   for (let i = 0; i < wordsArr.length; i++) {
-    if (used[i]) continue;
+    if (skip[i]) continue;
     const match = matchTime(wordsArr[i].lower);
     if (match !== null && (!match.needsDate || dueDate !== null)) {
-      dueTime = match.time;
-      used[i] = true;
-      timeToken = { kind: 'time', firstWord: i, lastWord: i, display: formatTimeDisplay(match.time) };
-      break;
+      consume(i, i);
+      timeOcc.push({
+        token: { kind: 'time', firstWord: i, lastWord: i, display: formatTimeDisplay(match.time) },
+        time: match.time,
+      });
+    }
+  }
+  if (timeOcc.length > 0) {
+    const last = timeOcc[timeOcc.length - 1];
+    dueTime = last.time;
+    timeToken = last.token;
+    for (const earlier of timeOcc.slice(0, -1)) {
+      displaced.push(tokenRange(wordsArr, earlier.token));
     }
   }
 
+  const listOcc: Token[] = [];
   for (let i = 0; i < wordsArr.length; i++) {
-    if (used[i]) continue;
+    if (skip[i]) continue;
     const m = /^#(\w{1,32})$/.exec(wordsArr[i].text);
     if (m !== null) {
-      list = m[1];
-      used[i] = true;
-      tokens.push({ kind: 'list', firstWord: i, lastWord: i, display: `#${m[1]}` });
-      break;
+      consume(i, i);
+      listOcc.push({ kind: 'list', firstWord: i, lastWord: i, display: `#${m[1]}` });
+    }
+  }
+  if (listOcc.length > 0) {
+    const last = listOcc[listOcc.length - 1];
+    list = /^#(\w{1,32})$/.exec(wordsArr[last.firstWord].text)![1];
+    tokens.push(last);
+    for (const earlier of listOcc.slice(0, -1)) {
+      displaced.push(tokenRange(wordsArr, earlier));
     }
   }
 
+  const priorityOcc: Token[] = [];
   for (let i = 0; i < wordsArr.length; i++) {
-    if (used[i]) continue;
+    if (skip[i]) continue;
     const m = /^!p([123])$/.exec(wordsArr[i].lower);
     if (m !== null) {
-      priority = Number(m[1]) as 1 | 2 | 3;
-      used[i] = true;
-      tokens.push({ kind: 'priority', firstWord: i, lastWord: i, display: `P${m[1]}` });
-      break;
+      consume(i, i);
+      priorityOcc.push({ kind: 'priority', firstWord: i, lastWord: i, display: `P${m[1]}` });
+    }
+  }
+  if (priorityOcc.length > 0) {
+    const last = priorityOcc[priorityOcc.length - 1];
+    priority = Number(/^!p([123])$/.exec(wordsArr[last.firstWord].lower)![1]) as 1 | 2 | 3;
+    tokens.push(last);
+    for (const earlier of priorityOcc.slice(0, -1)) {
+      displaced.push(tokenRange(wordsArr, earlier));
     }
   }
 
@@ -368,6 +443,8 @@ export function parse(input: string, now: Date): ParseResult {
     }))
     .sort((a, b) => a.start - b.start);
 
+  displaced.sort((a, b) => a.start - b.start);
+
   return {
     valid: title.length > 0,
     title,
@@ -377,5 +454,6 @@ export function parse(input: string, now: Date): ParseResult {
     priority,
     recurrence,
     chips,
+    displaced,
   };
 }

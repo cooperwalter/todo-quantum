@@ -168,10 +168,13 @@ describe('parse: list tokens (FR-4)', () => {
     expect(r.title).toBe('Send report');
   });
 
-  it('keeps later # tokens literal when a list is already set (first wins)', () => {
-    const r = parse('a #work b #home', NOW);
-    expect(r.list).toBe('work');
-    expect(r.title).toBe('a b #home');
+  it("keeps the LAST #list when two are present and displaces the earlier one (last wins, '#work' then '#home' -> home)", () => {
+    const input = 'a #work b #home';
+    const r = parse(input, NOW);
+    expect(r.list).toBe('home');
+    expect(r.title).toBe('a b');
+    expect(r.displaced).toHaveLength(1);
+    expect(input.slice(r.displaced[0].start, r.displaced[0].end)).toBe('#work');
   });
 
   it('keeps a # token longer than 32 word characters literal', () => {
@@ -212,10 +215,13 @@ describe('parse: priority tokens (FR-5)', () => {
     expect(r.title).toBe('Fix !urgent');
   });
 
-  it('keeps a second priority token literal (first wins)', () => {
-    const r = parse('Fix !p1 also !p2', NOW);
-    expect(r.priority).toBe(1);
-    expect(r.title).toBe('Fix also !p2');
+  it('keeps the LAST priority when two are present and displaces the earlier one (last wins, !p1 then !p2 -> 2)', () => {
+    const input = 'Fix !p1 also !p2';
+    const r = parse(input, NOW);
+    expect(r.priority).toBe(2);
+    expect(r.title).toBe('Fix also');
+    expect(r.displaced).toHaveLength(1);
+    expect(input.slice(r.displaced[0].start, r.displaced[0].end)).toBe('!p1');
   });
 });
 
@@ -279,17 +285,150 @@ describe('parse: recurrence tokens (FR-6)', () => {
   });
 });
 
-describe('parse: same-kind conflicts (FR-9)', () => {
-  it('keeps a second date token literal (first wins)', () => {
-    const r = parse('Ship tomorrow friday', NOW);
-    expect(r.dueDate).toBe('2026-06-10');
-    expect(r.title).toBe('Ship friday');
+describe('parse: same-kind last-wins with displaced ranges (US-102, FR-102 supersedes FR-9)', () => {
+  it('keeps the LAST date token and displaces the earlier one (tomorrow then friday -> Friday)', () => {
+    const input = 'Ship tomorrow friday';
+    const r = parse(input, NOW);
+    expect(r.dueDate).toBe('2026-06-12');
+    expect(r.title).toBe('Ship');
+    expect(r.displaced).toHaveLength(1);
+    expect(input.slice(r.displaced[0].start, r.displaced[0].end)).toBe('tomorrow');
   });
 
-  it('keeps a second time token literal (first wins)', () => {
-    const r = parse('Call tomorrow 3pm 4pm', NOW);
-    expect(r.dueTime).toBe('15:00');
-    expect(r.title).toBe('Call 4pm');
+  it("'pay rent friday monday' yields the Monday date, a chip on 'monday', friday's range in displaced, and title 'pay rent'", () => {
+    const input = 'pay rent friday monday';
+    const r = parse(input, NOW);
+    expect(r.dueDate).toBe('2026-06-15');
+    expect(r.title).toBe('pay rent');
+    expect(r.chips).toHaveLength(1);
+    expect(r.chips[0].kind).toBe('date');
+    expect(input.slice(r.chips[0].start, r.chips[0].end)).toBe('monday');
+    expect(r.displaced).toHaveLength(1);
+    expect(input.slice(r.displaced[0].start, r.displaced[0].end)).toBe('friday');
+  });
+
+  it('keeps the LAST time token and displaces the earlier one (3pm then 4pm -> 16:00)', () => {
+    const input = 'Call tomorrow 3pm 4pm';
+    const r = parse(input, NOW);
+    expect(r.dueTime).toBe('16:00');
+    expect(r.title).toBe('Call');
+    expect(r.displaced).toHaveLength(1);
+    expect(input.slice(r.displaced[0].start, r.displaced[0].end)).toBe('3pm');
+  });
+
+  it("displaces pre-merge: 'dinner tomorrow 3pm 4pm' keeps the date, time -> 16:00, displaced is ONLY the 3pm range", () => {
+    const input = 'dinner tomorrow 3pm 4pm';
+    const r = parse(input, NOW);
+    expect(r.dueDate).toBe('2026-06-10');
+    expect(r.dueTime).toBe('16:00');
+    expect(r.title).toBe('dinner');
+    expect(r.displaced).toHaveLength(1);
+    expect(input.slice(r.displaced[0].start, r.displaced[0].end)).toBe('3pm');
+    expect(r.displaced[0].start).toBe(input.indexOf('3pm'));
+  });
+
+  it('applies last-wins to recurrence independently (daily then weekly -> weekly, daily displaced)', () => {
+    const input = 'sync daily weekly';
+    const r = parse(input, NOW);
+    expect(r.recurrence).toEqual({ freq: 'weekly', interval: 1, byWeekday: null, byMonthDay: null });
+    expect(r.title).toBe('sync');
+    expect(r.displaced).toHaveLength(1);
+    expect(input.slice(r.displaced[0].start, r.displaced[0].end)).toBe('daily');
+  });
+
+  it('displaces each kind independently when duplicate #list, !p, and recurrence all appear', () => {
+    const input = 'a #work #home !p1 !p3 daily weekly';
+    const r = parse(input, NOW);
+    expect(r.list).toBe('home');
+    expect(r.priority).toBe(3);
+    expect(r.recurrence).toEqual({ freq: 'weekly', interval: 1, byWeekday: null, byMonthDay: null });
+    expect(r.title).toBe('a');
+    const displacedTexts = r.displaced.map((d) => input.slice(d.start, d.end)).sort();
+    expect(displacedTexts).toEqual(['#work', '!p1', 'daily'].sort());
+  });
+
+  it('reports an empty displaced array when no kind is duplicated', () => {
+    const r = parse('Send report tomorrow 3pm #work !p1', NOW);
+    expect(r.displaced).toEqual([]);
+  });
+
+  it('displaces three same-kind tokens down to the last, recording both earlier ranges', () => {
+    const input = 'note #a #b #c';
+    const r = parse(input, NOW);
+    expect(r.list).toBe('c');
+    expect(r.title).toBe('note');
+    const displacedTexts = r.displaced.map((d) => input.slice(d.start, d.end)).sort();
+    expect(displacedTexts).toEqual(['#a', '#b']);
+  });
+});
+
+describe('parse: reverted ranges make tokens unmatchable (US-102, FR-101)', () => {
+  it("with reverted covering 'tomorrow' in 'Email #invoices tomorrow friday' -> Friday date, displaced empty, 'tomorrow' stays in title", () => {
+    const input = 'Email #invoices tomorrow friday';
+    const start = input.indexOf('tomorrow');
+    const r = parse(input, NOW, [{ start, end: start + 'tomorrow'.length }]);
+    expect(r.dueDate).toBe('2026-06-12');
+    expect(r.title).toBe('Email tomorrow');
+    expect(r.list).toBe('invoices');
+    expect(r.displaced).toEqual([]);
+  });
+
+  it('skips a reverted #list so the next same-kind token wins without displacement', () => {
+    const input = 'a #work b #home';
+    const start = input.indexOf('#work');
+    const r = parse(input, NOW, [{ start, end: start + '#work'.length }]);
+    expect(r.list).toBe('home');
+    expect(r.title).toBe('a #work b');
+    expect(r.displaced).toEqual([]);
+  });
+
+  it('keeps every token literal when all of them fall inside reverted ranges', () => {
+    const input = 'plan tomorrow';
+    const start = input.indexOf('tomorrow');
+    const r = parse(input, NOW, [{ start, end: start + 'tomorrow'.length }]);
+    expect(r.dueDate).toBeNull();
+    expect(r.title).toBe('plan tomorrow');
+    expect(r.chips).toEqual([]);
+    expect(r.displaced).toEqual([]);
+  });
+
+  it('treats a two-arg call as having no reverted ranges (backward compatible)', () => {
+    const r = parse('Send report tomorrow', NOW);
+    expect(r.dueDate).toBe('2026-06-10');
+  });
+
+  it('ignores an empty reverted array exactly like the two-arg form', () => {
+    const r = parse('Send report tomorrow', NOW, []);
+    expect(r.dueDate).toBe('2026-06-10');
+  });
+});
+
+describe('parse: last-wins edge and scale cases (US-102)', () => {
+  it('returns empty displaced for empty input', () => {
+    const r = parse('', NOW);
+    expect(r.displaced).toEqual([]);
+  });
+
+  it('returns empty displaced for whitespace-only input', () => {
+    const r = parse('   ', NOW);
+    expect(r.displaced).toEqual([]);
+  });
+
+  it("'Pay May invoice' stays literal with empty displaced (ambiguity anchor unchanged)", () => {
+    const r = parse('Pay May invoice', NOW);
+    expect(r.chips).toHaveLength(0);
+    expect(r.title).toBe('Pay May invoice');
+    expect(r.dueDate).toBeNull();
+    expect(r.displaced).toEqual([]);
+  });
+
+  it('keeps only the last of 50 duplicate #list tokens, displacing the first 49 (scale)', () => {
+    const tags = Array.from({ length: 50 }, (_, i) => `#t${i}`);
+    const input = `bulk ${tags.join(' ')}`;
+    const r = parse(input, NOW);
+    expect(r.list).toBe('t49');
+    expect(r.title).toBe('bulk');
+    expect(r.displaced).toHaveLength(49);
   });
 });
 
