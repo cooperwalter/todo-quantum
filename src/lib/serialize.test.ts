@@ -1,5 +1,3 @@
-process.env.TZ = 'America/New_York';
-
 import { describe, expect, it } from 'vitest';
 import { serializeTask } from './serialize';
 import { parse } from './parser';
