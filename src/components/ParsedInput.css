@@ -43,6 +43,13 @@
   border-bottom: 2px solid var(--color-accent);
 }
 
+/* Displaced (about-to-be-overwritten) tokens render as ordinary mirror text —
+   no chip styling — so the live field looks unchanged until the seal removes
+   them. Class is a structural hook only; it deliberately adds no visual styling. */
+.command-bar-demoted {
+  color: inherit;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
