@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-edit-token-parsing.md",
   "designPath": "docs/plans/2026-06-10-edit-token-parsing-design.md",
   "createdAt": "2026-06-10T22:51:29Z",
-  "updatedAt": "2026-06-11T17:04:28.408205+00:00",
+  "updatedAt": "2026-06-11T17:16:20.211739+00:00",
   "userIntent": {
     "text": "when editing an existing todo, typing things like #atag and tomorrow, etc, should function like when adding a new todo",
     "timestamp": "2026-06-10T22:51:29Z",
@@ -313,7 +313,7 @@
         "Typecheck/lint passes"
       ],
       "priority": 4,
-      "status": "pending",
+      "status": "passed",
       "dependsOn": [
         "US-102"
       ],
@@ -330,7 +330,7 @@
             "pnpm exec vitest run src/lib/serialize.test.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -345,7 +345,7 @@
             "pnpm run lint"
           ],
           "testFirst": true,
-          "status": "pending",
+          "status": "passed",
           "consumedBy": [
             "US-106"
           ]
@@ -362,19 +362,19 @@
             "pnpm exec vitest run --coverage"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-11T17:16:20.211739+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-11T17:16:20.211739+00:00"
         }
       },
       "retries": {
@@ -382,7 +382,8 @@
         "maxAttempts": 3,
         "failureLog": []
       },
-      "notes": ""
+      "notes": "",
+      "startedAt": null
     },
     {
       "id": "US-104",
@@ -401,7 +402,7 @@
         "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
       ],
       "priority": 5,
-      "status": "pending",
+      "status": "failed",
       "dependsOn": [
         "US-102"
       ],
@@ -490,11 +491,25 @@
         }
       },
       "retries": {
-        "attempts": 0,
+        "attempts": 2,
         "maxAttempts": 4,
-        "failureLog": []
+        "failureLog": [
+          {
+            "attempt": 1,
+            "timestamp": "2026-06-11T17:12:54.946381+00:00",
+            "phase": "worktree_base_mismatch",
+            "error": "Worktree branched from 762af0b (old main, command-bar-todo state) instead of ql/edit-token-parsing tip; parser lacked Range/reverted/displaced (US-102 contract). Agent correctly refused to fabricate contract and reset clean. Environmental race in concurrent worktree creation, not an agent fault. Re-dispatching solo."
+          },
+          {
+            "attempt": 2,
+            "timestamp": "2026-06-11T17:15:00.576032+00:00",
+            "phase": "worktree_base_mismatch",
+            "error": "Solo re-spawn ALSO branched from 762af0b (old main) while US-103 worktree was active/locked. Hypothesis: new isolation worktree falls back to default branch when another worktree is active. Holding US-104 until US-103 merges and its worktree is removed, then retry with no active worktrees."
+          }
+        ]
       },
-      "notes": "Plan-review sizing note: implementation task is a large unit; maxAttempts raised to 4."
+      "notes": "Plan-review sizing note: implementation task is a large unit; maxAttempts raised to 4.",
+      "startedAt": null
     },
     {
       "id": "US-105",
@@ -982,6 +997,18 @@
         "src/components/CommandBar.test.tsx"
       ],
       "learnings": "CommandBar.tsx unchanged \u2014 its applyReverts spreads {...result} so the new displaced field flows through automatically. prdSha c9d6908 reconciles via compute_prd_sha (normalized), not raw shasum. Worktree merges MUST run from project root \u2014 Bash cwd persists and can drift into a worktree, making git merge a silent no-op (already-up-to-date) against the wrong branch."
+    },
+    {
+      "timestamp": "2026-06-11T17:16:20.211739+00:00",
+      "iteration": 3,
+      "storyId": "US-103",
+      "action": "story_passed",
+      "details": "serializeTask(task,now): canonical token order title-date-time-recurrence-list-priority; bare <mon> <day> only when it round-trips else explicit year; byMonthDay excluded; revertedRanges from title parse chips+displaced. Merged dacb179 (FF). Gates: typecheck 0, lint 0, 3431/3431 unit (3024-case round-trip grid), coverage 93.96% (serialize.ts 95.94%).",
+      "filesChanged": [
+        "src/lib/serialize.ts",
+        "src/lib/serialize.test.ts"
+      ],
+      "learnings": "Agent worktree isolation branched from main (762af0b) not the feature tip; US-103 agent self-corrected via git reset --hard onto d7493f3. This is the reliable remediation pattern for the worktree-base bug. Times serialize to am/pm because parser flags 24h H:MM as needsDate=true."
     }
   ],
   "codebasePatterns": [
