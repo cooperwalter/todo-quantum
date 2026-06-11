@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TaskRow } from './TaskRow';
 import { AppProvider, useApp } from '../state/AppContext';
+import * as serializeModule from '../lib/serialize';
 import type { Task } from '../lib/types';
 
 function makeTask(overrides: Partial<Task> = {}): Task {
@@ -86,31 +87,37 @@ describe('TaskRow completion', () => {
   });
 });
 
+// A metadata-free task serializes to exactly its title, so these title-only
+// regression tests stay deterministic without a frozen clock.
+function makePlainTask(overrides: Partial<Task> = {}): Task {
+  return makeTask({ dueDate: null, dueTime: null, list: null, ...overrides });
+}
+
 describe('TaskRow inline edit', () => {
   it('opens a pre-filled inline edit input when the title is clicked', async () => {
     const user = userEvent.setup();
-    renderRow(makeTask());
+    renderRow(makePlainTask());
     await user.click(screen.getByText('Send report'));
-    const edit = screen.getByRole('textbox', { name: /edit task title/i });
+    const edit = screen.getByRole('textbox', { name: /edit task/i });
     expect((edit as HTMLInputElement).value).toBe('Send report');
   });
 
   it('Enter saves the edited title via the edit action', async () => {
     const user = userEvent.setup();
-    renderRow(makeTask());
+    renderRow(makePlainTask());
     await user.click(screen.getByText('Send report'));
-    const edit = screen.getByRole('textbox', { name: /edit task title/i });
+    const edit = screen.getByRole('textbox', { name: /edit task/i });
     await user.clear(edit);
     await user.type(edit, 'Send the Q2 report{Enter}');
     expect(probedTasks()[0].title).toBe('Send the Q2 report');
-    expect(screen.queryByRole('textbox', { name: /edit task title/i })).toBeNull();
+    expect(screen.queryByRole('textbox', { name: /edit task/i })).toBeNull();
   });
 
   it('Esc cancels the inline edit without dispatching', async () => {
     const user = userEvent.setup();
-    renderRow(makeTask());
+    renderRow(makePlainTask());
     await user.click(screen.getByText('Send report'));
-    const edit = screen.getByRole('textbox', { name: /edit task title/i });
+    const edit = screen.getByRole('textbox', { name: /edit task/i });
     await user.clear(edit);
     await user.type(edit, 'Changed{Escape}');
     expect(probedTasks()[0].title).toBe('Send report');
@@ -130,12 +137,158 @@ describe('TaskRow keyboard-first surface (US-107)', () => {
 describe('Review fixes: inline edit blur (F-015)', () => {
   it('clicking away from an inline edit saves the draft instead of discarding it', async () => {
     const user = userEvent.setup();
-    renderRow(makeTask());
+    renderRow(makePlainTask());
     await user.click(screen.getByText('Send report'));
-    const edit = screen.getByRole('textbox', { name: /edit task title/i });
+    const edit = screen.getByRole('textbox', { name: /edit task/i });
     await user.clear(edit);
     await user.type(edit, 'Send quarterly report');
     fireEvent.blur(edit);
     expect(probedTasks()[0].title).toBe('Send quarterly report');
+  });
+});
+
+describe('TaskRow token edit integration (US-106)', () => {
+  // Freeze the clock so the edit session's serializeTask/parse use a fixed `now`.
+  // 2026-06-10 is a Wednesday; the default task is due 2026-06-09 (yesterday) at 3pm.
+  const FROZEN = new Date(2026, 5, 10, 12, 0, 0);
+
+  function setupUser() {
+    return userEvent.setup();
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(FROZEN);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  function editInput(): HTMLInputElement {
+    return screen.getByRole('textbox', { name: /edit task/i }) as HTMLInputElement;
+  }
+
+  function chipTexts(): string[] {
+    return Array.from(document.querySelectorAll('.command-bar-chip')).map((el) => el.textContent ?? '');
+  }
+
+  function announcementText(): string {
+    return document.getElementById('command-bar-announcement')?.textContent ?? '';
+  }
+
+  it('opens the editor on a metadata task seeded with serialized text and chip mirror', async () => {
+    const user = setupUser();
+    renderRow(makeTask());
+    await user.click(screen.getByText('Send report'));
+    expect(editInput().value).toBe('Send report yesterday 3pm #work');
+    expect(chipTexts()).toContain('#work');
+    expect(chipTexts().some((t) => /3pm/i.test(t))).toBe(true);
+  });
+
+  it('renders the chip announcement live region with baseline chips at mount', async () => {
+    const user = setupUser();
+    renderRow(makeTask());
+    await user.click(screen.getByText('Send report'));
+    const region = document.getElementById('command-bar-announcement');
+    expect(region).not.toBeNull();
+    expect(region?.className).toContain('visually-hidden');
+    expect(announcementText()).toContain('list #work');
+  });
+
+  it('updates the chip announcement when a new token is typed during the edit', async () => {
+    const user = setupUser();
+    renderRow(makeTask());
+    await user.click(screen.getByText('Send report'));
+    await user.type(editInput(), ' !p1');
+    expect(announcementText()).toContain('priority P1');
+  });
+
+  it('Enter saves every changed field in a single edit action when a token is added', async () => {
+    const user = setupUser();
+    renderRow(makeTask());
+    await user.click(screen.getByText('Send report'));
+    await user.type(editInput(), ' !p1{Enter}');
+    const saved = probedTasks()[0];
+    expect(saved.priority).toBe(1);
+    expect(saved.title).toBe('Send report');
+    expect(saved.list).toBe('work');
+    expect(saved.dueDate).toBe('2026-06-09');
+  });
+
+  it('erasing the #work token saves the list cleared to null', async () => {
+    const user = setupUser();
+    renderRow(makeTask());
+    await user.click(screen.getByText('Send report'));
+    const edit = editInput();
+    await user.clear(edit);
+    await user.type(edit, 'Send report yesterday 3pm{Enter}');
+    const saved = probedTasks()[0];
+    expect(saved.list).toBeNull();
+    expect(saved.title).toBe('Send report');
+  });
+
+  it('blur saves the edit exactly like Enter', async () => {
+    const user = setupUser();
+    renderRow(makeTask());
+    await user.click(screen.getByText('Send report'));
+    await user.type(editInput(), ' !p2');
+    fireEvent.blur(editInput());
+    expect(probedTasks()[0].priority).toBe(2);
+  });
+
+  it('blur with an empty extracted title cancels instead of saving', async () => {
+    const user = setupUser();
+    renderRow(makeTask());
+    await user.click(screen.getByText('Send report'));
+    const edit = editInput();
+    await user.clear(edit);
+    await user.type(edit, '#work');
+    fireEvent.blur(edit);
+    expect(probedTasks()[0].title).toBe('Send report');
+    expect(screen.getByText('Send report')).toBeTruthy();
+  });
+
+  it('Enter with an empty extracted title blocks save and shows inline feedback', async () => {
+    const user = setupUser();
+    renderRow(makeTask());
+    await user.click(screen.getByText('Send report'));
+    const edit = editInput();
+    await user.clear(edit);
+    await user.type(edit, '#work{Enter}');
+    expect(probedTasks()[0].title).toBe('Send report');
+    expect(screen.getByRole('textbox', { name: /edit task/i })).toBeTruthy();
+    expect(document.querySelector('.task-row-edit-error')?.textContent).toMatch(/title/i);
+  });
+
+  it('falls back to title-only editing with a console error when serialized text does not round-trip', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(serializeModule, 'serializeTask').mockReturnValue({
+      text: 'totally different text that loses fields',
+      revertedRanges: [],
+    });
+    const user = setupUser();
+    renderRow(makeTask());
+    await user.click(screen.getByText('Send report'));
+    const edit = editInput();
+    expect(edit.value).toBe('Send report');
+    expect(document.querySelectorAll('.command-bar-chip').length).toBe(0);
+    expect(consoleError).toHaveBeenCalled();
+    await user.clear(edit);
+    await user.type(edit, 'Renamed only{Enter}');
+    const saved = probedTasks()[0];
+    expect(saved.title).toBe('Renamed only');
+    expect(saved.list).toBe('work');
+  });
+
+  it('does not open the editor when Enter or a title click lands on a done task (FR-120)', async () => {
+    const user = setupUser();
+    renderRow(makeTask({ status: 'done', completedAt: '2026-06-10T09:00:00.000Z' }));
+    await user.click(screen.getByText('Send report'));
+    expect(screen.queryByRole('textbox', { name: /edit task/i })).toBeNull();
+    const row = document.querySelector('.task-row') as HTMLElement;
+    fireEvent.keyDown(row, { key: 'Enter' });
+    expect(screen.queryByRole('textbox', { name: /edit task/i })).toBeNull();
   });
 });

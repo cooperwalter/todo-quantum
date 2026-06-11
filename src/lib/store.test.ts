@@ -157,6 +157,67 @@ describe('edit', () => {
     expect(next).toEqual(state);
     expect(next.undoStack).toHaveLength(0);
   });
+
+  it('applies a single multi-field edit changing dueDate, list, priority, and title at once', () => {
+    const task = makeTask({
+      title: 'Old title',
+      dueDate: '2026-06-09',
+      list: 'work',
+      priority: 1,
+    });
+    const next = reducer(makeState([task]), {
+      type: 'edit',
+      id: task.id,
+      changes: { title: 'New title', dueDate: '2026-06-12', list: null, priority: 3 },
+    });
+    const edited = next.data.tasks.find((t) => t.id === task.id);
+    expect(edited?.title).toBe('New title');
+    expect(edited?.dueDate).toBe('2026-06-12');
+    expect(edited?.list).toBeNull();
+    expect(edited?.priority).toBe(3);
+  });
+
+  it('restores dueDate, list, priority, and title together with one undo after a multi-field edit', () => {
+    const task = makeTask({
+      title: 'Old title',
+      dueDate: '2026-06-09',
+      list: 'work',
+      priority: 1,
+    });
+    const state = makeState([task]);
+    const afterEdit = reducer(state, {
+      type: 'edit',
+      id: task.id,
+      changes: { title: 'New title', dueDate: '2026-06-12', list: null, priority: 3 },
+    });
+    const afterUndo = reducer(afterEdit, { type: 'undo' });
+    expect(afterUndo.data).toEqual(state.data);
+  });
+
+  it('restores a cleared list (list:null) on undo of a multi-field edit', () => {
+    const task = makeTask({ title: 'Pay rent', list: 'home', priority: 2 });
+    const state = makeState([task]);
+    const afterEdit = reducer(state, {
+      type: 'edit',
+      id: task.id,
+      changes: { title: 'Pay the rent', list: null, priority: 1 },
+    });
+    const afterUndoTask = reducer(afterEdit, { type: 'undo' }).data.tasks.find((t) => t.id === task.id);
+    expect(afterUndoTask?.list).toBe('home');
+    expect(afterUndoTask?.priority).toBe(2);
+    expect(afterUndoTask?.title).toBe('Pay rent');
+  });
+
+  it('leaves state unchanged and pushes no inverse for a multi-field edit on a missing id', () => {
+    const state = makeState([makeTask()]);
+    const next = reducer(state, {
+      type: 'edit',
+      id: 'ghost',
+      changes: { title: 'x', dueDate: '2026-06-12', list: null, priority: 2 },
+    });
+    expect(next).toEqual(state);
+    expect(next.undoStack).toHaveLength(0);
+  });
 });
 
 describe('delete', () => {

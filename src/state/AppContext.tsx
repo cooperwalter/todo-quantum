@@ -62,7 +62,7 @@ function toastFor(action: Action, state: StoreState): ToastState | null {
     }
     case 'edit': {
       if (!data.tasks.some((t) => t.id === action.id)) return null;
-      return { message: 'Saved', undoable: true };
+      return { message: 'Task updated', undoable: true };
     }
     case 'delete':
       return data.tasks.some((t) => t.id === action.id)

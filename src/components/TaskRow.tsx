@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import './TaskList.css';
 import { isoWeekday, todayStr } from '../lib/dates';
-import { formatTimeDisplay } from '../lib/parser';
+import { formatTimeDisplay, parse } from '../lib/parser';
+import type { ParseResult } from '../lib/parser';
+import { serializeTask } from '../lib/serialize';
+import { ParsedInput } from './ParsedInput';
 import { useApp } from '../state/AppContext';
 import type { Task } from '../lib/types';
 
@@ -15,10 +18,40 @@ export interface TaskRowProps {
   onSelect?: (id: string) => void;
 }
 
+// The task fields the editor round-trips through the parser. Order matters only
+// for the round-trip comparison loop below.
+const PARSED_FIELDS = ['title', 'dueDate', 'dueTime', 'list', 'priority', 'recurrence'] as const;
+
+// True when the parse of the serialized text reproduces every parsed field of the
+// task. A mismatch means the serializer emitted text the parser reads differently,
+// so we must not present token chips the user could accidentally mangle.
+function roundTrips(task: Task, result: ParseResult): boolean {
+  for (const field of PARSED_FIELDS) {
+    const expected = task[field];
+    const actual = result[field];
+    if (field === 'recurrence') {
+      if (JSON.stringify(expected) !== JSON.stringify(actual)) return false;
+    } else if (expected !== actual) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function TaskRow({ task, rollover = false, selected = false, tabIndex = -1, onSelect }: TaskRowProps) {
   const { dispatch } = useApp();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task.title);
+  const [editError, setEditError] = useState<string | null>(null);
+  // Frozen clock for the edit session: the same Date drives serializeTask, the
+  // ParsedInput `now` prop, and the save-time parse. Captured at openEdit.
+  const [frozen, setFrozen] = useState<Date>(() => new Date());
+  // The ranges the serializer reverted so the title survives a round-trip; fed to
+  // ParsedInput so its baseline parse matches what serializeTask intended.
+  const [initialReverts, setInitialReverts] = useState<{ start: number; end: number }[]>([]);
+  // When the serialized text does not round-trip, fall back to plain title-only
+  // editing (parse disabled) so the user never sees misleading chips.
+  const [parseEnabled, setParseEnabled] = useState(true);
 
   function complete() {
     dispatch({
@@ -31,16 +64,86 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
   }
 
   function openEdit() {
-    setDraft(task.title);
+    if (task.status !== 'open') return;
+    const now = new Date();
+    const { text, revertedRanges } = serializeTask(task, now);
+    const reparsed = parse(text, now, revertedRanges);
+    setFrozen(now);
+    setEditError(null);
+    if (roundTrips(task, reparsed)) {
+      setInitialReverts(revertedRanges);
+      setDraft(text);
+      setParseEnabled(true);
+    } else {
+      console.error(
+        `serializeTask round-trip mismatch for task ${task.id}; falling back to title-only editing`,
+      );
+      setInitialReverts([]);
+      setDraft(task.title);
+      setParseEnabled(false);
+    }
     setEditing(true);
   }
 
-  function saveEdit() {
+  function closeEdit() {
+    setEditing(false);
+    setEditError(null);
+  }
+
+  // Diff a ParseResult against the task into the minimal set of changed fields,
+  // using null for cleared ones, and dispatch a SINGLE edit action.
+  function saveParsed(result: ParseResult) {
+    const title = result.title.trim();
+    if (title.length === 0) {
+      setEditError('Enter a task title');
+      return;
+    }
+    const changes: Partial<Omit<Task, 'id'>> = {};
+    if (title !== task.title) changes.title = title;
+    if (result.dueDate !== task.dueDate) changes.dueDate = result.dueDate;
+    if (result.dueTime !== task.dueTime) changes.dueTime = result.dueTime;
+    if (result.list !== task.list) changes.list = result.list;
+    if (result.priority !== task.priority) changes.priority = result.priority;
+    if (JSON.stringify(result.recurrence) !== JSON.stringify(task.recurrence)) {
+      changes.recurrence = result.recurrence;
+    }
+    if (Object.keys(changes).length > 0) {
+      dispatch({ type: 'edit', id: task.id, changes });
+    }
+    closeEdit();
+  }
+
+  // Title-only save for the round-trip-fallback path: only the title can change.
+  function saveTitleOnly() {
     const title = draft.trim();
-    if (title.length > 0 && title !== task.title) {
+    if (title.length === 0) {
+      setEditError('Enter a task title');
+      return;
+    }
+    if (title !== task.title) {
       dispatch({ type: 'edit', id: task.id, changes: { title } });
     }
-    setEditing(false);
+    closeEdit();
+  }
+
+  // Blur resolves the current draft through the same parse, then decides: an empty
+  // extracted title cancels (discard), otherwise it saves exactly like Enter.
+  function handleBlur() {
+    if (!editing) return;
+    if (!parseEnabled) {
+      if (draft.trim().length === 0) {
+        closeEdit();
+        return;
+      }
+      saveTitleOnly();
+      return;
+    }
+    const result = parse(draft, frozen, initialReverts);
+    if (result.title.trim().length === 0) {
+      closeEdit();
+      return;
+    }
+    saveParsed(result);
   }
 
   const classes = [
@@ -74,31 +177,36 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
         disabled={task.status === 'done'}
       />
       {editing ? (
-        <input
-          className="task-row-edit"
-          type="text"
-          value={draft}
-          aria-label="Edit task title"
-          autoFocus
-          onChange={(e) => setDraft(e.target.value)}
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.stopPropagation();
-              saveEdit();
-            } else if (e.key === 'Escape') {
-              e.stopPropagation();
-              setEditing(false);
-            }
-          }}
-          onBlur={saveEdit}
-        />
+        <div className="task-row-edit" onClick={(e) => e.stopPropagation()}>
+          <ParsedInput
+            value={draft}
+            onChange={(value) => {
+              setDraft(value);
+              setEditError(null);
+            }}
+            now={frozen}
+            initialReverts={initialReverts}
+            parseEnabled={parseEnabled}
+            onSubmit={parseEnabled ? saveParsed : () => saveTitleOnly()}
+            onCancel={closeEdit}
+            ariaLabel="Edit task"
+            inputProps={{
+              autoFocus: true,
+              onBlur: handleBlur,
+            }}
+          />
+          {editError !== null && (
+            <p className="task-row-edit-error" role="alert">
+              {editError}
+            </p>
+          )}
+        </div>
       ) : (
         <span
           className="task-row-title"
           onClick={(e) => {
             e.stopPropagation();
-            if (task.status === 'open') openEdit();
+            openEdit();
           }}
         >
           {task.title}
