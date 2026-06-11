@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-edit-token-parsing.md",
   "designPath": "docs/plans/2026-06-10-edit-token-parsing-design.md",
   "createdAt": "2026-06-10T22:51:29Z",
-  "updatedAt": "2026-06-11T17:59:22.134327+00:00",
+  "updatedAt": "2026-06-11T18:16:45.329414+00:00",
   "userIntent": {
     "text": "when editing an existing todo, typing things like #atag and tomorrow, etc, should function like when adding a new todo",
     "timestamp": "2026-06-10T22:51:29Z",
@@ -752,7 +752,7 @@
         "Full suite green: typecheck, lint, unit, e2e"
       ],
       "priority": 8,
-      "status": "pending",
+      "status": "passed",
       "dependsOn": [
         "US-105",
         "US-106",
@@ -771,7 +771,7 @@
             "pnpm exec playwright test e2e/edit-tokens.spec.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -786,7 +786,7 @@
             "pnpm exec playwright test e2e/states-edit.spec.ts"
           ],
           "testFirst": false,
-          "status": "pending",
+          "status": "passed",
           "notes": "testFirst: false \u2014 visual-state capture and baseline blessing, no production logic"
         },
         {
@@ -802,20 +802,20 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "status": "pending",
+          "status": "passed",
           "notes": "testFirst: false \u2014 verification-only task"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-11T18:16:45.329414+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-11T18:16:45.329414+00:00"
         }
       },
       "retries": {
@@ -823,7 +823,8 @@
         "maxAttempts": 3,
         "failureLog": []
       },
-      "notes": ""
+      "notes": "",
+      "startedAt": null
     }
   ],
   "fileConflicts": [
@@ -1054,6 +1055,20 @@
         "src/state/AppContext.tsx"
       ],
       "learnings": "Frozen edit-session clock (one Date for serializeTask + ParsedInput now + save-parse) is the round-trip-stability anchor. TaskRow edit tests freeze time via vi.useFakeTimers({toFake:[Date]}) + setSystemTime to avoid userEvent hangs. A metadata task now serializes to multi-token text (Send report yesterday 3pm #work), so pre-existing title-only inline-edit tests switched to makePlainTask."
+    },
+    {
+      "timestamp": "2026-06-11T18:16:45.329414+00:00",
+      "iteration": 6,
+      "storyId": "US-108",
+      "action": "story_passed",
+      "details": "E2E edit/add journeys (edit-tokens.spec.ts: seal-away friday->monday, erase #work->null, Cmd+Z restores both; add-bar single Monday chip) + edit-mode visual state (states-edit.spec.ts at 375/768/1280, PNGs Read & confirmed vs DESIGN-SYSTEM). Merged fc06ebd. Agent reported STORY_FAILED only due to an out-of-scope pre-existing date-flake in upcoming.spec.ts mobile baseline (clock rolled 06-10->06-11); orchestrator re-blessed it (5371088) after reading the PNG (date text only). Full e2e now 77/77.",
+      "filesChanged": [
+        "e2e/edit-tokens.spec.ts",
+        "e2e/states-edit.spec.ts",
+        "__screenshots__/e2e/states-edit.spec.ts/",
+        "__screenshots__/e2e/upcoming.spec.ts/upcoming-grouped-mobile.png"
+      ],
+      "learnings": "Date-relative screenshot baselines (upcoming.spec.ts uses plusDays from real new Date()) go stale at midnight rollover \u2014 a latent suite-wide flake; no e2e spec pins a browser clock. Recommend pinning page.clock for any date-text screenshot spec in a future hardening pass."
     }
   ],
   "codebasePatterns": [
