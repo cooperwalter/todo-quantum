@@ -1,0 +1,406 @@
+{
+  "storyId": "US-105",
+  "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+  "acs": [
+    "While a displacing token is unsealed (not followed by whitespace and field not submitted), the displaced range renders demoted (plain text); nothing is deleted from value",
+    "Typing 'satchel' character-by-character into a field with an existing date chip never removes that chip's text; the chip re-activates when 'sat' stops being the parse",
+    "When the displacing token seals (space typed after it, or submit), the displaced range is removed from value via onChange; the seam collapses to a single space; trailing/leading trim happens only in the extracted title, never in the live field",
+    "Caret rule: removals left of the caret shift the caret offset down by the removed length (visually stationary); removals right of the caret leave it untouched",
+    "Fixpoint: immediately after a displacement removal, re-parse with the same reverted ranges yields displaced: [] (asserted in component tests)",
+    "Session chip defined as: a chip whose (kind, parsed value) pair is absent from the baseline ParseResult of the mount-time value with initialReverts. Esc with >=1 session chip reverts the most recent one; Esc with none calls onCancel",
+    "In CommandBar (no onCancel change): Esc behavior for chips is unchanged from the user's perspective; submit on Enter removes any unsealed-displaced ranges before capture",
+    "Component tests in src/components/ParsedInput.test.tsx cover: seal-on-space, seal-on-submit, transient prefix (satchel), caret offset both sides, fixpoint, session-chip discrimination (in-place friday->monday is revertible; untouched baseline chip is not)",
+    "Typecheck/lint passes",
+    "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
+  ],
+  "contracts": {
+    "design_tokens": {
+      "color-accent": {
+        "value": "--color-accent",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-fg": {
+        "value": "--color-fg",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "space-scale": {
+        "value": "[4,8,12,16,24,32,48,64,96]"
+      },
+      "type-display": {
+        "value": "--type-display",
+        "pattern": "^--type-[a-z0-9]+$"
+      }
+    },
+    "routes": {
+      "home": {
+        "value": "/",
+        "pattern": "^/"
+      }
+    },
+    "storage_keys": {
+      "app_data": {
+        "value": "todo-quantum.v1",
+        "pattern": "^todo-quantum\\."
+      },
+      "recovery_prefix": {
+        "value": "todo-quantum.recovery.",
+        "pattern": "^todo-quantum\\.recovery\\."
+      }
+    },
+    "commands": {
+      "palette_set": {
+        "value": "today|upcoming|all|done|undo|redo|help"
+      }
+    },
+    "keybindings": {
+      "snooze_tomorrow": {
+        "value": "1"
+      },
+      "snooze_next_week": {
+        "value": "2"
+      },
+      "snooze_weekend": {
+        "value": "3"
+      },
+      "complete": {
+        "value": "x"
+      },
+      "cheatsheet": {
+        "value": "?"
+      }
+    },
+    "shared_types": {
+      "task": {
+        "value": "Task",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/types.ts",
+        "shape": {
+          "properties": [
+            {
+              "name": "id",
+              "type": "string"
+            },
+            {
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "name": "status",
+              "type": "'open' | 'done'"
+            },
+            {
+              "name": "dueDate",
+              "type": "string | null"
+            },
+            {
+              "name": "dueTime",
+              "type": "string | null"
+            },
+            {
+              "name": "list",
+              "type": "string | null"
+            },
+            {
+              "name": "priority",
+              "type": "1 | 2 | 3 | null"
+            },
+            {
+              "name": "recurrence",
+              "type": "Recurrence | null"
+            },
+            {
+              "name": "createdAt",
+              "type": "string"
+            },
+            {
+              "name": "completedAt",
+              "type": "string | null"
+            },
+            {
+              "name": "order",
+              "type": "number"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface Task {\n  id: string;\n  title: string;\n  status: 'open' | 'done';\n  dueDate: string | null;\n  dueTime: string | null;\n  list: string | null;\n  priority: 1 | 2 | 3 | null;\n  recurrence: Recurrence | null;\n  createdAt: string;\n  completedAt: string | null;\n  order: number;\n}"
+      },
+      "recurrence": {
+        "value": "Recurrence",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/types.ts",
+        "shape": {
+          "properties": [
+            {
+              "name": "freq",
+              "type": "'daily' | 'weekly' | 'monthly'"
+            },
+            {
+              "name": "interval",
+              "type": "number"
+            },
+            {
+              "name": "byWeekday",
+              "type": "number[] | null"
+            },
+            {
+              "name": "byMonthDay",
+              "type": "number | null"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface Recurrence {\n  freq: 'daily' | 'weekly' | 'monthly';\n  interval: number;\n  byWeekday: number[] | null;\n  byMonthDay: number | null;\n}"
+      },
+      "app_data": {
+        "value": "AppData",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/types.ts",
+        "shape": {
+          "properties": [
+            {
+              "name": "schemaVersion",
+              "type": "1"
+            },
+            {
+              "name": "tasks",
+              "type": "Task[]"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface AppData {\n  schemaVersion: 1;\n  tasks: Task[];\n}"
+      },
+      "chip": {
+        "value": "Chip",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/parser.ts",
+        "shape": {
+          "properties": [
+            {
+              "name": "start",
+              "type": "number"
+            },
+            {
+              "name": "end",
+              "type": "number"
+            },
+            {
+              "name": "kind",
+              "type": "'date' | 'time' | 'list' | 'priority' | 'recurrence'"
+            },
+            {
+              "name": "display",
+              "type": "string"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface Chip {\n  start: number;\n  end: number;\n  kind: 'date' | 'time' | 'list' | 'priority' | 'recurrence';\n  display: string;\n}"
+      },
+      "parse_result": {
+        "value": "ParseResult",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/parser.ts",
+        "owner": "US-102",
+        "consumers": [
+          "US-103",
+          "US-104",
+          "US-105",
+          "US-106"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "valid",
+              "type": "boolean"
+            },
+            {
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "name": "dueDate",
+              "type": "string | null"
+            },
+            {
+              "name": "dueTime",
+              "type": "string | null"
+            },
+            {
+              "name": "list",
+              "type": "string | null"
+            },
+            {
+              "name": "priority",
+              "type": "1 | 2 | 3 | null"
+            },
+            {
+              "name": "recurrence",
+              "type": "Recurrence | null"
+            },
+            {
+              "name": "chips",
+              "type": "Chip[]"
+            },
+            {
+              "name": "displaced",
+              "type": "Range[]"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface ParseResult {\n  valid: boolean;\n  title: string;\n  dueDate: string | null;\n  dueTime: string | null;\n  list: string | null;\n  priority: 1 | 2 | 3 | null;\n  recurrence: Recurrence | null;\n  chips: Chip[];\n  displaced: Range[];\n}"
+      },
+      "range": {
+        "value": "Range",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/parser.ts",
+        "owner": "US-102",
+        "consumers": [
+          "US-103",
+          "US-104",
+          "US-105",
+          "US-106"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "start",
+              "type": "number"
+            },
+            {
+              "name": "end",
+              "type": "number"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface Range {\n  start: number;\n  end: number;\n}"
+      },
+      "serialize_result": {
+        "value": "SerializeResult",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/serialize.ts",
+        "owner": "US-103",
+        "consumers": [
+          "US-106"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "text",
+              "type": "string"
+            },
+            {
+              "name": "revertedRanges",
+              "type": "Range[]"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface SerializeResult {\n  text: string;\n  revertedRanges: Range[];\n}"
+      },
+      "parsed_input_props": {
+        "value": "ParsedInputProps",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/components/ParsedInput.tsx",
+        "owner": "US-104",
+        "consumers": [
+          "US-105",
+          "US-106"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "value",
+              "type": "string"
+            },
+            {
+              "name": "onChange",
+              "type": "(value: string) => void"
+            },
+            {
+              "name": "onSubmit",
+              "type": "(result: ParseResult) => void"
+            },
+            {
+              "name": "onCancel",
+              "type": "(() => void) | undefined"
+            },
+            {
+              "name": "parseEnabled",
+              "type": "boolean"
+            },
+            {
+              "name": "initialReverts",
+              "type": "Range[] | undefined"
+            },
+            {
+              "name": "now",
+              "type": "Date | undefined"
+            },
+            {
+              "name": "inputRef",
+              "type": "React.Ref<HTMLInputElement> | undefined"
+            },
+            {
+              "name": "onKeyDown",
+              "type": "((e: React.KeyboardEvent<HTMLInputElement>) => boolean) | undefined"
+            },
+            {
+              "name": "inputProps",
+              "type": "React.InputHTMLAttributes<HTMLInputElement> | undefined"
+            },
+            {
+              "name": "ariaLabel",
+              "type": "string"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface ParsedInputProps {\n  value: string;\n  onChange: (value: string) => void;\n  onSubmit: (result: ParseResult) => void;\n  onCancel?: () => void;\n  parseEnabled: boolean;\n  initialReverts?: Range[];\n  now?: Date;\n  inputRef?: React.Ref<HTMLInputElement>;\n  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => boolean;\n  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;\n  ariaLabel: string;\n}"
+      }
+    },
+    "parsing_rules": {
+      "token_precedence": {
+        "value": "pass order recurrence->date->time->list->priority; LAST-wins per kind (supersedes first-wins / old FR-9); earlier same-kind token ranges reported in ParseResult.displaced; chip AND displaced ranges are both excluded from title; tokens inside reverted ranges match nothing"
+      },
+      "sealing": {
+        "value": "displaced text is removed from the field only when the displacing token is sealed (followed by whitespace, or on submit); until sealed it renders demoted; seam collapses to a single space; live field is never trimmed"
+      },
+      "serializer_token_order": {
+        "value": "title, date, time, recurrence, list, priority"
+      },
+      "date_serialization": {
+        "value": "yesterday/today/tomorrow at now-1/now/now+1; '<mon> <day>' within next 12 months; '<mon> <day> <year>' otherwise; chip display shows year when date year != now year"
+      },
+      "esc_two_tier": {
+        "value": "Esc reverts the most recent session chip ((kind, parsed value) absent from mount-time baseline parse); with no session chips Esc invokes onCancel (edit: cancel; bar: existing behavior)"
+      }
+    },
+    "css_classes": {
+      "chip_class": {
+        "value": "command-bar-chip",
+        "notes": "class name intentionally unchanged when chip CSS moves to ParsedInput.css in US-104, keeping the visual baseline stable"
+      }
+    }
+  },
+  "files": [
+    "src/components/ParsedInput.test.tsx",
+    "src/components/ParsedInput.tsx"
+  ],
+  "expectedTests": [
+    "pnpm exec vitest run src/components/ParsedInput.test.tsx",
+    "pnpm exec vitest run src/components/ParsedInput.test.tsx",
+    "pnpm exec vitest run src/components/ParsedInput.test.tsx",
+    "pnpm exec vitest run src/components/CommandBar.test.tsx"
+  ],
+  "otherCommands": [
+    "pnpm run typecheck",
+    "pnpm run lint",
+    "bash verification/run-visual-gate.sh /"
+  ],
+  "plannedBy": "ql-plan",
+  "plannedAt": "2026-06-10T22:57:52Z"
+}

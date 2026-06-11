@@ -2,3 +2,6 @@ timestamp,stage,source_path,count,critical,high,medium,low
 2026-06-09T18:43:02Z,design,docs/plans/2026-06-09-command-bar-todo-design.md,15,1,5,0,9
 2026-06-09T20:24:03Z,prd,tasks/prd-command-bar-todo.md,14,0,1,6,7
 2026-06-09T20:45:18Z,plan,quantum.json,12,1,3,5,3
+2026-06-10T22:23:16Z,design,docs/plans/2026-06-10-edit-token-parsing-design.md,11,2,0,0,0
+2026-06-10T22:39:37Z,prd,tasks/prd-edit-token-parsing.md,7,0,0,0,0
+2026-06-10T22:58:25Z,plan,quantum.json,5,0,0,0,0

@@ -1,210 +1,964 @@
 {
   "project": ".",
-  "branchName": "ql/command-bar-todo",
-  "description": "Command-bar todo app (Morning Edition): local-first, keyboard-first, NL quick-add, gentle rollover",
-  "prdPath": "tasks/prd-command-bar-todo.md",
-  "designPath": "docs/plans/2026-06-09-command-bar-todo-design.md",
-  "createdAt": "2026-06-09T20:28:04Z",
-  "updatedAt": "2026-06-09T22:43:29.989459+00:00",
+  "branchName": "ql/edit-token-parsing",
+  "description": "Token parsing in edit (edit/add symmetry): round-trip serialized edit field, last-wins chip overwrite in both flows, overflow menu removal",
+  "prdPath": "tasks/prd-edit-token-parsing.md",
+  "designPath": "docs/plans/2026-06-10-edit-token-parsing-design.md",
+  "createdAt": "2026-06-10T22:51:29Z",
+  "updatedAt": "2026-06-10T22:57:51Z",
+  "userIntent": {
+    "text": "when editing an existing todo, typing things like #atag and tomorrow, etc, should function like when adding a new todo",
+    "timestamp": "2026-06-10T22:51:29Z",
+    "source_message_id": null
+  },
+  "userClarifications": [
+    {
+      "question": "Edit-token-parsing feature: overwrite semantics",
+      "answer": "adding a new chip should overwrite the related chip to its left (verbatim user message); applies to both add and edit; old text removed once the new token seals",
+      "stage": "brainstorm",
+      "timestamp": "2026-06-10T22:35:27Z"
+    },
+    {
+      "question": "Edit-token-parsing feature: three-dots menu",
+      "answer": "Also, as part of this, we will remove the three dots menu. All changes will be made via the keyboard ideally (verbatim user message); snooze becomes keyboard-only 1/2/3",
+      "stage": "brainstorm",
+      "timestamp": "2026-06-10T22:35:27Z"
+    },
+    {
+      "question": "Edit blur behavior",
+      "answer": "Save on blur (keeps current onBlur=saveEdit behavior); blur with empty extracted title cancels",
+      "stage": "spec",
+      "timestamp": "2026-06-10T22:35:27Z"
+    },
+    {
+      "question": "Round-trip mismatch at edit-open",
+      "answer": "Fall back to title-only edit with parsing disabled and a console error; never corrupt task data",
+      "stage": "spec",
+      "timestamp": "2026-06-10T22:35:27Z"
+    },
+    {
+      "question": "Whitespace at displaced-text removal seam",
+      "answer": "Collapse to a single space; live field never trimmed; trim only in extracted title",
+      "stage": "spec",
+      "timestamp": "2026-06-10T22:35:27Z"
+    },
+    {
+      "question": "Editing done tasks",
+      "answer": "Out of scope; open tasks only",
+      "stage": "spec",
+      "timestamp": "2026-06-10T22:35:27Z"
+    }
+  ],
   "coverageThreshold": 80,
-  "staleThresholdMinutes": 20,
+  "stories": [
+    {
+      "id": "US-101",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 24,
+      "title": "Parser — explicit-year dates",
+      "description": "As a user editing a rolled-over task, I want past dates like `jun 3 2026` to parse to that exact date so that opening an edit never silently rewrites my due date to next year.",
+      "acceptanceCriteria": [
+        "parse('pay rent jun 3 2026', now) with now = 2026-06-10 yields dueDate: '2026-06-03' (no roll-forward) and a date chip covering 'jun 3 2026'",
+        "Both '<monthname> <day> <year>' and '<day> <monthname> <year>' forms parse; 4-digit years only; years outside 1970-2100 stay literal",
+        "Without a year, existing roll-forward behavior is unchanged ('jun 3' at 2026-06-10 -> 2027-06-03) — existing tests still pass",
+        "Chip display includes the year whenever the resolved date's year differs from now's year (covers explicit-year dates AND no-year dates that roll forward into next year): formatDateDisplay gains an optional now parameter — formatDateDisplay('2027-06-03', now) with now in 2026 renders 'Thu Jun 3, 2027'; same-year dates render without the year, unchanged",
+        "Unit tests in src/lib/parser.test.ts cover both word orders, year-boundary values, and the no-year regression",
+        "Typecheck/lint passes"
+      ],
+      "priority": 1,
+      "status": "pending",
+      "dependsOn": [],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Write failing tests for explicit-year date parsing and year-aware chip display",
+          "description": "In src/lib/parser.test.ts add tests: 'jun 3 2026' and '3 jun 2026' at now=2026-06-10 parse to dueDate 2026-06-03 with chip covering all three words; year 1969 and 2101 stay literal (date parses year-less or not at all per existing anchor rules); 'jun 3' (no year) still rolls forward to 2027-06-03; formatDateDisplay('2027-06-03', now) renders 'Thu Jun 3, 2027' while formatDateDisplay('2026-06-12', now) stays 'Fri Jun 12'. Include edge-case tests: boundary values (null fields, empty string), scale (1/10/100 tokens or tasks where applicable), and collision scenarios. Run tests, confirm the new ones fail (red).",
+          "filePaths": [
+            "src/lib/parser.test.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/parser.test.ts"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        },
+        {
+          "id": "T-002",
+          "title": "Implement explicit-year matching in matchDateAt and year-aware formatDateDisplay",
+          "description": "In src/lib/parser.ts extend matchDateAt(): after a '<monthname> <day>' or '<day> <monthname>' match, look ahead one word for a 4-digit year in 1970-2100; if present, consume it and use that exact year with no roll-forward. Add optional second parameter now?: Date to formatDateDisplay; when provided and the date's year !== now's year, append ', YYYY' to the display. Update parse() to pass now into formatDateDisplay for date chips. All tests from T-001 green; no existing test modified.",
+          "filePaths": [
+            "src/lib/parser.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/parser.test.ts",
+            "pnpm run typecheck",
+            "pnpm run lint"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        },
+        "codeQuality": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": ""
+    },
+    {
+      "id": "US-107",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 40,
+      "title": "Remove the overflow menu; keyboard-first row",
+      "description": "As a keyboard-first user, I want the three-dots menu gone so that the row is clean and every mutation has a single, predictable path.",
+      "acceptanceCriteria": [
+        "src/components/TaskRow.tsx no longer renders the '⋯' button or role=\"menu\"; menuOpen state is deleted",
+        "task-row-overflow* and task-row-menu* CSS rules are deleted from src/components/TaskList.css (where they live today); grep -rn \"task-row-overflow\\|task-row-menu\" src/ returns nothing",
+        "Snooze via keys 1/2/3 still works (existing keymap untouched); the '?' cheatsheet rows for snooze keys are unchanged (already present in src/components/Cheatsheet.tsx)",
+        "Overflow-menu tests are deleted from src/components/TaskRow.test.tsx; e2e/states-snooze.spec.ts is rewritten to exercise keyboard snooze only",
+        "Mouse paths that remain: checkbox completes, title click opens edit — both still covered by tests",
+        "Zero axe violations on the task list after removal",
+        "Typecheck/lint passes",
+        "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
+      ],
+      "priority": 2,
+      "status": "pending",
+      "dependsOn": [],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Delete the overflow button, menu, state, and CSS",
+          "description": "In src/components/TaskRow.tsx remove the menuOpen useState, the task-row-overflow <span>, the '⋯' <button>, and the role=\"menu\" block (lines ~120-154). Remove the now-unused snoozeOptions/snoozeTo code ONLY if nothing else references it (keyboard snooze lives in useKeymap, not TaskRow — verify with grep before deleting). Delete task-row-overflow* and task-row-menu* rules from src/components/TaskList.css. Verify: grep -rn 'task-row-overflow\\|task-row-menu' src/ returns nothing.",
+          "filePaths": [
+            "src/components/TaskRow.tsx",
+            "src/components/TaskList.css"
+          ],
+          "commands": [
+            "bash -c \"! grep -rn 'task-row-overflow\\\\|task-row-menu' src/\"",
+            "pnpm run typecheck",
+            "pnpm run lint"
+          ],
+          "testFirst": false,
+          "status": "pending",
+          "notes": "testFirst: false — pure deletion of UI affordance; behavior coverage updated in T-002"
+        },
+        {
+          "id": "T-002",
+          "title": "Update unit tests and rewrite the snooze states e2e spec for keyboard-only",
+          "description": "In src/components/TaskRow.test.tsx delete tests that click the '⋯' button or assert menu items; keep/ensure tests that checkbox-click completes and title-click opens edit. Rewrite e2e/states-snooze.spec.ts: seed an overdue task, select it with j, press 1, assert dueDate moved to tomorrow (row re-renders under Today/Upcoming accordingly), screenshot the post-snooze state; delete the snooze-menu-open-desktop.png baseline.",
+          "filePaths": [
+            "src/components/TaskRow.test.tsx",
+            "e2e/states-snooze.spec.ts",
+            "e2e/states-snooze.spec.ts-snapshots/"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/TaskRow.test.tsx",
+            "pnpm exec playwright test e2e/states-snooze.spec.ts"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        },
+        {
+          "id": "T-003",
+          "title": "Run the visual gate and re-bless the row baseline",
+          "description": "Run bash verification/run-visual-gate.sh / — the root-route baseline will diff (hover affordance removed). Regenerate with --update-snapshots, OPEN the new PNGs and visually confirm against DESIGN-SYSTEM.md before blessing. Axe must report zero violations.",
+          "filePaths": [
+            "verification/visual.spec.ts-snapshots/"
+          ],
+          "commands": [
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "status": "pending",
+          "notes": "testFirst: false — visual-gate verification task, no production logic"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        },
+        "codeQuality": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": ""
+    },
+    {
+      "id": "US-102",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 51,
+      "title": "Parser — last-wins with displaced ranges and reverted-ranges input",
+      "description": "As a user, I want typing a second date/list/priority/recurrence token to replace the earlier one so that the chip to the left is overwritten, in add and edit alike. CONTRACT-BREAKING: changes ParseResult (adds displaced) and supersedes the recorded first-wins parsing contract; consumers (US-103/104/105/106) all depend on this story.",
+      "acceptanceCriteria": [
+        "parse signature becomes parse(input: string, now: Date, reverted?: Array<{start: number; end: number}>); existing two-arg calls compile unchanged",
+        "ParseResult gains displaced: Array<{ start: number; end: number }> listing earlier same-kind token ranges superseded by a later token",
+        "parse('pay rent friday monday', now) yields the Monday date, a chip on 'monday', displaced containing the range of 'friday', and title === 'pay rent' — displaced ranges are excluded from the title exactly like chip ranges",
+        "Last-wins applies per kind to date, time, list, priority, and recurrence independently",
+        "Displacement compares pre-merge tokens: parse('dinner tomorrow 3pm 4pm', now) keeps the date, time becomes '16:00', and displaced contains only the '3pm' range",
+        "Tokens inside reverted ranges are never matched: with reverted covering 'tomorrow' in 'Email #invoices tomorrow friday', the result has the Friday date, displaced is empty, and 'tomorrow' remains in the title",
+        "FR-9 of tasks/prd-command-bar-todo.md (first-wins) is explicitly superseded; every existing first-wins test in src/lib/parser.test.ts is rewritten to assert last-wins + displacement",
+        "Date-anchor ambiguity tests ('Pay May invoice' stays literal) still pass unchanged",
+        "All non-duplicate-token grammar tests (anchored dates, yesterday/today/tomorrow, times, #list <=32 word chars, !p1-!p3, recurrence forms) pass unmodified — FR-105 invariance",
+        "Typecheck/lint passes"
+      ],
+      "priority": 3,
+      "status": "pending",
+      "dependsOn": [
+        "US-101"
+      ],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Write failing tests for last-wins, displaced ranges, title exclusion, and reverted input",
+          "description": "In src/lib/parser.test.ts: rewrite every first-wins duplicate-token test to assert last-wins (later token wins, earlier range in displaced); add: 'pay rent friday monday' -> Monday + displaced friday-range + title 'pay rent'; per-kind independence (duplicate #list, !p, recurrence each displace independently); pre-merge time displacement ('dinner tomorrow 3pm 4pm' -> dueTime 16:00, displaced only 3pm); reverted ranges make tokens unmatchable (covering 'tomorrow' in 'Email #invoices tomorrow friday' -> Friday date, displaced empty, 'tomorrow' in title); ambiguity anchors unchanged ('Pay May invoice'). Include edge-case tests: boundary values (null fields, empty string), scale (1/10/100 tokens or tasks where applicable), and collision scenarios. Confirm new tests fail. Do NOT weaken or delete any non-duplicate-token grammar test (FR-105 invariance) — only first-wins duplicate-token assertions may be rewritten.",
+          "filePaths": [
+            "src/lib/parser.test.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/parser.test.ts"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        },
+        {
+          "id": "T-002",
+          "title": "Implement Range export, reverted param, last-wins scan, displaced computation, title exclusion",
+          "description": "In src/lib/parser.ts: export interface Range { start: number; end: number } (contract). Change parse to accept optional reverted?: Range[]; words overlapping any reverted range are skipped by ALL matchers. Replace first-match-break loops: scan the whole input collecting every token occurrence per kind, keep the LAST occurrence of each kind, record earlier same-kind occurrences' ranges in displaced (computed on pre-merge tokens, before date+time chip merging). Exclude both chip ranges AND displaced ranges from title extraction. ParseResult gains displaced: Range[].",
+          "filePaths": [
+            "src/lib/parser.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/parser.test.ts",
+            "pnpm run typecheck",
+            "pnpm run lint"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        },
+        {
+          "id": "T-003",
+          "title": "Reconcile CommandBar call sites and assertions with last-wins parsing",
+          "description": "src/components/CommandBar.tsx compiles unchanged (optional param, extra field ignored) — verify, don't modify its logic. In src/components/CommandBar.test.tsx update any test asserting a second same-kind token stays literal to assert the new last-wins capture (title excludes displaced text). Run the full unit suite to catch any other first-wins assumption.",
+          "filePaths": [
+            "src/components/CommandBar.test.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/CommandBar.test.tsx",
+            "pnpm exec vitest run",
+            "pnpm run typecheck"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        },
+        "codeQuality": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 4,
+        "failureLog": []
+      },
+      "notes": "Plan-review sizing note: implementation task is a large unit; maxAttempts raised to 4.",
+      "contractBreaking": true
+    },
+    {
+      "id": "US-103",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 66,
+      "title": "Serializer — serializeTask with round-trip property",
+      "description": "As a user opening edit, I want the task reconstructed as the text I would have typed so that everything about the task is editable as text.",
+      "acceptanceCriteria": [
+        "New file src/lib/serialize.ts (NEW) exports serializeTask(task: Task, now: Date): { text: string; revertedRanges: Array<{start: number; end: number}> }",
+        "Token order in the output is exactly: title, date, time, recurrence, list, priority",
+        "Date forms: yesterday/today/tomorrow when dueDate = now-1/now/now+1; 'jun 12' when within the next 12 months; 'jun 3 2026' (explicit year) otherwise. Time forms: '3pm' / '3:30pm'. Recurrence: 'every day', 'every 2 weeks', 'every monday', 'every month'. List: '#work'. Priority: '!p1'",
+        "revertedRanges covers every substring of the title that would otherwise parse as a token (verified: serializing a task titled 'Plan tomorrow standup' returns ranges such that parsing with them keeps 'tomorrow' in the title and dueDate unchanged)",
+        "Round-trip property test in src/lib/serialize.test.ts (NEW): for a generated grid of tasks (each field present/absent x dates in {now-1, now, now+1, now+30d, now-370d, now+370d} x times x recurrences from the grammar), parse(text, now, revertedRanges) reproduces every field and the exact title. Recurrence.byMonthDay is excluded from the domain (no grammar form exists; serializer ignores it)",
+        "Typecheck/lint passes"
+      ],
+      "priority": 4,
+      "status": "pending",
+      "dependsOn": [
+        "US-102"
+      ],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Write failing tests for serializeTask forms and token order",
+          "description": "Create src/lib/serialize.test.ts (NEW) with generator makeTask. Test each date form (yesterday/today/tomorrow/jun 12/jun 3 2026 for the -370d and +370d cases), time forms, every recurrence grammar form, list, priority, and the exact token order title-date-time-recurrence-list-priority with single-space separation. Test title-literal detection: 'Plan tomorrow standup' yields revertedRanges covering 'tomorrow'. Include edge-case tests: boundary values (null fields, empty string), scale (1/10/100 tokens or tasks where applicable), and collision scenarios.",
+          "filePaths": [
+            "src/lib/serialize.test.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/serialize.test.ts"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        },
+        {
+          "id": "T-002",
+          "title": "Implement serializeTask",
+          "description": "Create src/lib/serialize.ts (NEW): pure module, no React. export interface SerializeResult { text: string; revertedRanges: Range[] } (contract) and serializeTask(task, now). Build token strings per the forms in the ACs, join in canonical order. Compute revertedRanges by parsing the bare title with parse(title, now) and converting every chip/displaced range found there into a reverted range (offset 0 — title is the prefix). Reuse date helpers from src/lib/dates.ts and month names consistent with parser.ts.",
+          "filePaths": [
+            "src/lib/serialize.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/serialize.test.ts",
+            "pnpm run typecheck",
+            "pnpm run lint"
+          ],
+          "testFirst": true,
+          "status": "pending",
+          "consumedBy": [
+            "US-106"
+          ]
+        },
+        {
+          "id": "T-003",
+          "title": "Add the round-trip property grid",
+          "description": "In src/lib/serialize.test.ts add the property sweep: generate the task grid from the AC (field present/absent x the six date offsets x times x grammar recurrences, byMonthDay excluded), and for each assert parse(serializeTask(t, now).text, now, .revertedRanges) reproduces dueDate, dueTime, list, priority, recurrence, and exact title. Also sweep adversarial titles containing token-like words ('Email #invoices tomorrow', 'call mom 3pm sharp').",
+          "filePaths": [
+            "src/lib/serialize.test.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/serialize.test.ts",
+            "pnpm exec vitest run --coverage"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        },
+        "codeQuality": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": ""
+    },
+    {
+      "id": "US-104",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 80,
+      "title": "Extract controlled ParsedInput from CommandBar (no behavior change)",
+      "description": "As a developer, I want the parse/mirror/revert input extracted into one shared component so that add and edit cannot drift apart.",
+      "acceptanceCriteria": [
+        "New file src/components/ParsedInput.tsx (NEW) owning: the transparent input + chip-mirror overlay (mirrorSegments), live re-parse, revert state (relocated applyReverts logic now passing reverted ranges into parse), and the ARIA chip announcement",
+        "Controlled contract: value, onChange, onSubmit(result: ParseResult), onCancel?, parseEnabled, initialReverts?, now?, inputRef?, onKeyDown? (caller-first; returning true consumes the key), inputProps?, ariaLabel",
+        "CommandBar renders ParsedInput for the capture path; command mode ('>'), its list ARIA (aria-activedescendant, aria-controls), barRef attachment, and useKeymap typeahead via setBarText all still work",
+        "Chip CSS moves from src/components/CommandBar.css to a shared stylesheet src/components/ParsedInput.css (NEW); rendered chip appearance is unchanged (visual gate diff within tolerance)",
+        "All existing tests in src/components/CommandBar.test.tsx pass (updated imports only, not behavior); new src/components/ParsedInput.test.tsx (NEW) covers chips render, Esc revert, submit, and announcement text",
+        "e2e e2e/states-commandbar.spec.ts and e2e/states-commandmode.spec.ts pass unmodified",
+        "Typecheck/lint passes",
+        "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
+      ],
+      "priority": 5,
+      "status": "pending",
+      "dependsOn": [
+        "US-102"
+      ],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Create ParsedInput component and stylesheet",
+          "description": "Create src/components/ParsedInput.tsx (NEW) implementing the contracts.parsed_input_props interface exactly. Move from CommandBar.tsx: mirrorSegments, the transparent <input> + mirror overlay markup, live re-parse (useMemo on value/now/reverts), revert state — now passed INTO parse as the third arg instead of post-processing — Esc-revert handling, and the aria-describedby announcement. now prop defaults to live clock via a ref captured per parse. Create src/components/ParsedInput.css (NEW) and move the chip styles from CommandBar.css verbatim — class names unchanged (contracts.css_classes.chip_class).",
+          "filePaths": [
+            "src/components/ParsedInput.tsx",
+            "src/components/ParsedInput.css"
+          ],
+          "commands": [
+            "pnpm run typecheck"
+          ],
+          "testFirst": false,
+          "status": "pending",
+          "notes": "testFirst: false — extraction/move of existing covered behavior; component tests land in T-003 before any new behavior",
+          "consumedBy": [
+            "US-105",
+            "US-106"
+          ]
+        },
+        {
+          "id": "T-002",
+          "title": "Rewire CommandBar onto ParsedInput",
+          "description": "Refactor src/components/CommandBar.tsx to render <ParsedInput> for the capture path: pass barText/setBarText as value/onChange, barRef as inputRef, command-mode key handling via onKeyDown (returns true when command mode consumes the key), combobox ARIA via inputProps, parseEnabled={!commandMode}. Remove the moved machinery and chip CSS from CommandBar.tsx/CommandBar.css. Behavior must be pixel- and key-identical.",
+          "filePaths": [
+            "src/components/CommandBar.tsx",
+            "src/components/CommandBar.css"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/CommandBar.test.tsx",
+            "pnpm run typecheck",
+            "pnpm run lint"
+          ],
+          "testFirst": false,
+          "status": "pending",
+          "notes": "testFirst: false — refactor gated by the existing CommandBar.test.tsx suite passing unmodified (except imports)",
+          "wiring_verification": {
+            "file": "src/components/CommandBar.tsx",
+            "must_contain": [
+              "import { ParsedInput }",
+              "<ParsedInput"
+            ]
+          }
+        },
+        {
+          "id": "T-003",
+          "title": "Add ParsedInput component tests",
+          "description": "Create src/components/ParsedInput.test.tsx (NEW) with @vitest-environment jsdom pragma: chips render for 'report tomorrow #work !p1'; Esc demotes the last chip and the announcement updates; Enter calls onSubmit with the ParseResult; initialReverts suppress chipping of covered ranges; onKeyDown returning true consumes the key (input value unchanged).",
+          "filePaths": [
+            "src/components/ParsedInput.test.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/ParsedInput.test.tsx"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        },
+        {
+          "id": "T-004",
+          "title": "Prove zero behavior change",
+          "description": "Run the e2e specs unmodified and the visual gate; the root-route baseline must diff within tolerance WITHOUT --update-snapshots (no pixel change expected).",
+          "filePaths": [],
+          "commands": [
+            "pnpm exec playwright test e2e/states-commandbar.spec.ts e2e/states-commandmode.spec.ts",
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "status": "pending",
+          "notes": "testFirst: false — verification-only task"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        },
+        "codeQuality": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 4,
+        "failureLog": []
+      },
+      "notes": "Plan-review sizing note: implementation task is a large unit; maxAttempts raised to 4."
+    },
+    {
+      "id": "US-105",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 93,
+      "title": "Sealed displacement, session chips, and Esc two-tier in ParsedInput",
+      "description": "As a user, I want a newly typed token to overwrite the same-kind chip to its left — without ever losing text to half-typed words — so that correcting metadata is one gesture.",
+      "acceptanceCriteria": [
+        "While a displacing token is unsealed (not followed by whitespace and field not submitted), the displaced range renders demoted (plain text); nothing is deleted from value",
+        "Typing 'satchel' character-by-character into a field with an existing date chip never removes that chip's text; the chip re-activates when 'sat' stops being the parse",
+        "When the displacing token seals (space typed after it, or submit), the displaced range is removed from value via onChange; the seam collapses to a single space; trailing/leading trim happens only in the extracted title, never in the live field",
+        "Caret rule: removals left of the caret shift the caret offset down by the removed length (visually stationary); removals right of the caret leave it untouched",
+        "Fixpoint: immediately after a displacement removal, re-parse with the same reverted ranges yields displaced: [] (asserted in component tests)",
+        "Session chip defined as: a chip whose (kind, parsed value) pair is absent from the baseline ParseResult of the mount-time value with initialReverts. Esc with >=1 session chip reverts the most recent one; Esc with none calls onCancel",
+        "In CommandBar (no onCancel change): Esc behavior for chips is unchanged from the user's perspective; submit on Enter removes any unsealed-displaced ranges before capture",
+        "Component tests in src/components/ParsedInput.test.tsx cover: seal-on-space, seal-on-submit, transient prefix (satchel), caret offset both sides, fixpoint, session-chip discrimination (in-place friday->monday is revertible; untouched baseline chip is not)",
+        "Typecheck/lint passes",
+        "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
+      ],
+      "priority": 6,
+      "status": "pending",
+      "dependsOn": [
+        "US-104"
+      ],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Write failing tests for sealing, transient prefixes, caret, and fixpoint",
+          "description": "In src/components/ParsedInput.test.tsx: type 'satchel' char-by-char against a value containing a date chip — value never loses the old date text at any keystroke; 'monday' then space removes the displaced 'friday' text and collapses the seam to one space; submit before sealing also removes it; caret offset math asserted via input.selectionStart for removals left and right of the caret; after removal, parse(value, now, reverts).displaced is empty. Include edge-case tests: boundary values (null fields, empty string), scale (1/10/100 tokens or tasks where applicable), and collision scenarios. Confirm red.",
+          "filePaths": [
+            "src/components/ParsedInput.test.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/ParsedInput.test.tsx"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        },
+        {
+          "id": "T-002",
+          "title": "Implement sealed displacement removal",
+          "description": "In src/components/ParsedInput.tsx: render displaced ranges as demoted plain text in the mirror; on each parse, detect displaced ranges whose displacing token is sealed (a whitespace char follows the LAST same-kind token, or submit is in progress) and rewrite value: delete sealed displaced ranges, collapse whitespace runs at each seam to one space, never trim the field, adjust selectionStart/End per the caret rule (use requestAnimationFrame-free synchronous setSelectionRange after controlled update). Submit path strips remaining displaced ranges from the outgoing value before onSubmit re-parse.",
+          "filePaths": [
+            "src/components/ParsedInput.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/ParsedInput.test.tsx",
+            "pnpm run typecheck",
+            "pnpm run lint"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        },
+        {
+          "id": "T-003",
+          "title": "Implement session-chip baseline and Esc two-tier",
+          "description": "In src/components/ParsedInput.tsx: capture baseline = parse(value-at-mount, now, initialReverts) once. A chip is a session chip iff its (kind, parsed value) is absent from baseline chips. Esc: if any session chip exists, revert the most recent one (add its range to reverts, announce); else call onCancel if provided. Write tests first within this task: in-place friday->monday edit is Esc-revertible; untouched baseline chip is not; Esc with no session chips fires onCancel; CommandBar usage (no baseline chips at mount, empty initial value) behaves exactly as before.",
+          "filePaths": [
+            "src/components/ParsedInput.tsx",
+            "src/components/ParsedInput.test.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/ParsedInput.test.tsx",
+            "pnpm exec vitest run src/components/CommandBar.test.tsx"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        },
+        {
+          "id": "T-004",
+          "title": "Visual gate for the add bar with last-wins overwrite",
+          "description": "Run the visual gate; bar appearance unchanged (demoted text renders as plain text). Manually verify in browser: type 'call mom friday monday ' in the bar — friday text disappears on seal, Monday chip remains.",
+          "filePaths": [],
+          "commands": [
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "status": "pending",
+          "notes": "testFirst: false — verification-only task"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        },
+        "codeQuality": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 4,
+        "failureLog": []
+      },
+      "notes": "Plan-review sizing note: implementation task is a large unit; maxAttempts raised to 4."
+    },
+    {
+      "id": "US-106",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 100,
+      "title": "TaskRow edit integration — serialize, frozen clock, diff-save, fallback",
+      "description": "As a user, I want to press Enter (or click a title) and edit the whole task as text so that changing a date or list is as fast as typing it.",
+      "acceptanceCriteria": [
+        "openEdit() (open tasks only) seeds draft state from serializeTask(task, now) — value = text, initialReverts = revertedRanges — and freezes now for the session (passed as the now prop; every re-parse and the save-parse use it)",
+        "Round-trip guard at open: if parse(text, now, revertedRanges) does not reproduce the task's fields exactly, log a console error and fall back to title-only editing (current behavior: plain value = task.title, parseEnabled = false; save updates title only)",
+        "Save (Enter or blur) diffs the ParseResult against the task and dispatches a single edit action containing every changed field, with null for cleared ones (erasing #work text -> list: null)",
+        "Blur saves exactly like Enter; blur with an empty extracted title cancels instead of saving; Enter with an empty extracted title blocks save with the same inline feedback as add",
+        "Esc with no session chips cancels the edit (discard); with session chips it reverts per US-105",
+        "Toast for a parsed edit reads 'Task updated' with the undo affordance; one undo restores all changed fields at once — unit test in src/lib/store.test.ts asserts a multi-field edit inverse (date + list + priority + title changed, then undone, including null-clears)",
+        "If the task id no longer exists at save time (multi-tab deletion), the edit action is a no-op (existing reducer behavior; regression-tested)",
+        "Tests in src/components/TaskRow.test.tsx cover: chips present at open, token edit saves all fields, deletion clears fields, fallback path, blur-save, empty-title blur-cancel, and done-task guard (Enter / title click on a done row does not open the editor — verifies FR-120)",
+        "The chip ARIA announcement live region is present and updates in edit usage, identical to add (FR-115) — asserted in TaskRow tests",
+        "Typecheck/lint passes",
+        "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
+      ],
+      "priority": 7,
+      "status": "pending",
+      "dependsOn": [
+        "US-103",
+        "US-105",
+        "US-107"
+      ],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Write failing store tests for multi-field edit inverse",
+          "description": "In src/lib/store.test.ts: dispatch one edit action changing dueDate, list, priority, and title (including list: null clear); assert one undo restores all four to their prior values; assert edit on a missing id is a no-op (state unchanged, no inverse pushed). Carved out per PRD §7 density note — no UI dependency.",
+          "filePaths": [
+            "src/lib/store.test.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/store.test.ts"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        },
+        {
+          "id": "T-002",
+          "title": "Write failing TaskRow edit tests",
+          "description": "In src/components/TaskRow.test.tsx: edit-open on a task with metadata shows the serialized text with chips; typing a date token and saving dispatches edit with all changed fields; erasing '#work' saves list: null; round-trip-mismatch fallback (mock serializeTask to emit non-round-tripping text) opens title-only with console.error; blur saves; blur with empty extracted title cancels; Enter with empty title blocks with inline feedback; Enter/title-click on a done row does not open the editor (FR-120). Import serializeTask from src/lib/serialize.ts (created by US-103) and ParsedInput (created by US-104) — do NOT create inline replacements. Also assert the chip ARIA announcement live region is present and updates in the edit usage (with initialReverts and baseline chips at mount) — FR-115 parity.",
+          "filePaths": [
+            "src/components/TaskRow.test.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/TaskRow.test.tsx"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        },
+        {
+          "id": "T-003",
+          "title": "Implement TaskRow edit integration",
+          "description": "In src/components/TaskRow.tsx: openEdit() (guarded to status==='open') computes const frozen = now; const { text, revertedRanges } = serializeTask(task, frozen); runs the round-trip guard (compare parse(text, frozen, revertedRanges) fields to task; on mismatch console.error + title-only mode). Replace the plain edit <input> with <ParsedInput value/onChange (local draft), now={frozen}, initialReverts, parseEnabled, onSubmit=saveParsed, onCancel=closeEdit, ariaLabel>. saveParsed diffs ParseResult vs task into Partial<Task> with nulls for cleared fields and dispatches one edit action; empty title blocks (Enter) or cancels (blur). Wire blur-save via onBlur calling the same submit path.",
+          "filePaths": [
+            "src/components/TaskRow.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/TaskRow.test.tsx",
+            "pnpm run typecheck",
+            "pnpm run lint"
+          ],
+          "testFirst": true,
+          "status": "pending",
+          "wiring_verification": {
+            "file": "src/components/TaskRow.tsx",
+            "must_contain": [
+              "import { serializeTask }",
+              "import { ParsedInput }",
+              "<ParsedInput"
+            ]
+          }
+        },
+        {
+          "id": "T-004",
+          "title": "Update edit toast copy to 'Task updated'",
+          "description": "In src/state/AppContext.tsx change the toastFor copy for the edit action from its current text to 'Task updated' (undo affordance unchanged). Update any test asserting the old copy (grep shows src/hooks/usePersistence.test.tsx references 'Saved'; verify and update if it asserts the edit toast).",
+          "filePaths": [
+            "src/state/AppContext.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/hooks/usePersistence.test.tsx",
+            "pnpm exec vitest run",
+            "pnpm run typecheck"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        },
+        {
+          "id": "T-005",
+          "title": "Visual gate with edit open",
+          "description": "Run bash verification/run-visual-gate.sh / and manually verify in browser: Enter on a row shows chips in the row-width editor; typing 'monday ' replaces a friday chip's text.",
+          "filePaths": [],
+          "commands": [
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "status": "pending",
+          "notes": "testFirst: false — verification-only task"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        },
+        "codeQuality": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": ""
+    },
+    {
+      "id": "US-108",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 100,
+      "title": "E2E journeys and visual baseline update",
+      "description": "As a maintainer, I want end-to-end proof of the edit/add symmetry so that regressions in the full flow are caught.",
+      "acceptanceCriteria": [
+        "New e2e/edit-tokens.spec.ts (NEW): create 'Send report friday 3pm #work' -> Enter to edit -> field shows serialized text with chips -> type ' monday ' (friday's text disappears after seal) -> erase '#work' -> Enter -> row shows Monday and no list -> Cmd+Z restores date and list together",
+        "Add-bar journey in the same spec: type 'call mom friday monday' -> only a Monday chip remains after seal -> Enter -> task due Monday",
+        "Edit-fallback journey is NOT e2e-tested (requires injecting a serializer bug); covered at unit level (US-106)",
+        "Visual gate passes: bash verification/run-visual-gate.sh / with baselines updated for (a) the row without '⋯' and (b) a new edit-mode-open state at 375/768/1280; new baselines rendered and visually confirmed against DESIGN-SYSTEM.md before blessing",
+        "Zero axe violations at every configured breakpoint; Lighthouse meets lens.config.json thresholds",
+        "Full suite green: typecheck, lint, unit, e2e"
+      ],
+      "priority": 8,
+      "status": "pending",
+      "dependsOn": [
+        "US-105",
+        "US-106",
+        "US-107"
+      ],
+      "storyType": "test",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Write the edit and add-bar e2e journeys",
+          "description": "Create e2e/edit-tokens.spec.ts (NEW) following the states-*.spec.ts seeding pattern: journey 1 — capture 'Send report friday 3pm #work', Enter on the row, assert serialized text + chips visible, type ' monday ' and assert friday text gone after the space, select-and-delete '#work', Enter, assert row shows the Monday date and no #work pill, press Meta+z, assert both restored. Journey 2 — type 'call mom friday monday ' in the bar, assert single Monday chip, Enter, assert the task's date.",
+          "filePaths": [
+            "e2e/edit-tokens.spec.ts"
+          ],
+          "commands": [
+            "pnpm exec playwright test e2e/edit-tokens.spec.ts"
+          ],
+          "testFirst": true,
+          "status": "pending"
+        },
+        {
+          "id": "T-002",
+          "title": "Add the edit-mode-open visual state and re-bless baselines",
+          "description": "Create e2e/states-edit.spec.ts (NEW) mirroring the states pattern: seed a task with full metadata, open edit, freeze animations, screenshot at 375/768/1280. Run the visual gate; regenerate baselines that legitimately changed (row without '⋯', new edit state) with --update-snapshots, OPEN every new PNG and confirm against DESIGN-SYSTEM.md before blessing. Axe zero violations at all breakpoints; Lighthouse >= thresholds.",
+          "filePaths": [
+            "e2e/states-edit.spec.ts",
+            "verification/visual.spec.ts-snapshots/"
+          ],
+          "commands": [
+            "bash verification/run-visual-gate.sh /",
+            "pnpm exec playwright test e2e/states-edit.spec.ts"
+          ],
+          "testFirst": false,
+          "status": "pending",
+          "notes": "testFirst: false — visual-state capture and baseline blessing, no production logic"
+        },
+        {
+          "id": "T-003",
+          "title": "Full-suite green run",
+          "description": "Run every gate fresh and read the output (Iron Law): typecheck, lint, unit with coverage >= 80, full e2e, visual gate.",
+          "filePaths": [],
+          "commands": [
+            "pnpm run typecheck",
+            "pnpm run lint",
+            "pnpm exec vitest run --coverage",
+            "pnpm exec playwright test e2e/",
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "status": "pending",
+          "notes": "testFirst: false — verification-only task"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        },
+        "codeQuality": {
+          "status": "pending",
+          "issues": [],
+          "reviewedAt": null
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": ""
+    }
+  ],
   "fileConflicts": [
     {
-      "file": "src/App.css",
+      "file": "src/lib/parser.test.ts",
       "stories": [
-        "US-006",
-        "US-013"
+        "US-101",
+        "US-102"
       ],
-      "waveAssignments": [
-        4,
-        8
+      "waves": [
+        1,
+        2
       ],
-      "severity": "none",
-      "resolution": "dependency-ordered: every story pair is connected by a dependsOn path; single-owner-per-wave chain holds"
+      "severity": "low",
+      "note": "Dependency-ordered (US-102 dependsOn US-101); intentional sequential parser rewrite"
     },
     {
-      "file": "src/App.tsx",
+      "file": "src/lib/parser.ts",
       "stories": [
-        "US-006",
-        "US-007",
-        "US-011",
-        "US-010",
-        "US-016",
-        "US-017"
+        "US-101",
+        "US-102"
       ],
-      "waveAssignments": [
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
+      "waves": [
+        1,
+        2
       ],
-      "severity": "none",
-      "resolution": "dependency-ordered: every story pair is connected by a dependsOn path; single-owner-per-wave chain holds"
+      "severity": "low",
+      "note": "Dependency-ordered (US-102 dependsOn US-101); intentional sequential parser rewrite"
     },
     {
-      "file": "src/components/CommandBar.test.tsx",
+      "file": "src/components/ParsedInput.tsx",
       "stories": [
-        "US-007",
-        "US-008"
+        "US-104",
+        "US-105"
       ],
-      "waveAssignments": [
-        5,
-        6
+      "waves": [
+        3,
+        4
       ],
-      "severity": "none",
-      "resolution": "dependency-ordered: every story pair is connected by a dependsOn path; single-owner-per-wave chain holds"
+      "severity": "low",
+      "note": "Dependency-ordered (US-105 dependsOn US-104); extraction then new behavior"
     },
     {
-      "file": "src/components/CommandBar.tsx",
+      "file": "src/components/ParsedInput.test.tsx",
       "stories": [
-        "US-007",
-        "US-008"
+        "US-104",
+        "US-105"
       ],
-      "waveAssignments": [
-        5,
-        6
+      "waves": [
+        3,
+        4
       ],
-      "severity": "none",
-      "resolution": "dependency-ordered: every story pair is connected by a dependsOn path; single-owner-per-wave chain holds"
-    },
-    {
-      "file": "src/components/TaskRow.test.tsx",
-      "stories": [
-        "US-009",
-        "US-012"
-      ],
-      "waveAssignments": [
-        6,
-        8
-      ],
-      "severity": "none",
-      "resolution": "dependency-ordered: every story pair is connected by a dependsOn path; single-owner-per-wave chain holds"
+      "severity": "low",
+      "note": "Dependency-ordered (US-105 dependsOn US-104)"
     },
     {
       "file": "src/components/TaskRow.tsx",
       "stories": [
-        "US-009",
-        "US-012"
+        "US-107",
+        "US-106"
       ],
-      "waveAssignments": [
-        6,
-        8
+      "waves": [
+        1,
+        5
       ],
-      "severity": "none",
-      "resolution": "dependency-ordered: every story pair is connected by a dependsOn path; single-owner-per-wave chain holds"
+      "severity": "low",
+      "note": "Dependency-ordered (US-106 dependsOn US-107); menu removal lands before edit integration"
     },
     {
-      "file": "src/hooks/useKeymap.test.tsx",
+      "file": "src/components/TaskRow.test.tsx",
       "stories": [
-        "US-010",
-        "US-012"
+        "US-107",
+        "US-106"
       ],
-      "waveAssignments": [
-        7,
-        8
+      "waves": [
+        1,
+        5
       ],
-      "severity": "none",
-      "resolution": "dependency-ordered: every story pair is connected by a dependsOn path; single-owner-per-wave chain holds"
+      "severity": "low",
+      "note": "Dependency-ordered (US-106 dependsOn US-107)"
     },
     {
-      "file": "src/lib/store.test.ts",
+      "file": "verification/visual.spec.ts-snapshots/",
       "stories": [
-        "US-004",
-        "US-012"
+        "US-107",
+        "US-108"
       ],
-      "waveAssignments": [
-        3,
-        8
-      ],
-      "severity": "none",
-      "resolution": "dependency-ordered: every story pair is connected by a dependsOn path; single-owner-per-wave chain holds"
-    },
-    {
-      "file": "src/state/AppContext.tsx",
-      "stories": [
-        "US-006",
-        "US-011"
-      ],
-      "waveAssignments": [
-        4,
+      "waves": [
+        1,
         6
       ],
-      "severity": "none",
-      "resolution": "dependency-ordered: every story pair is connected by a dependsOn path; single-owner-per-wave chain holds"
-    },
-    {
-      "file": "src/views/AllView.tsx",
-      "stories": [
-        "US-006",
-        "US-015"
-      ],
-      "waveAssignments": [
-        4,
-        7
-      ],
-      "severity": "none",
-      "resolution": "dependency-ordered: every story pair is connected by a dependsOn path; single-owner-per-wave chain holds"
-    },
-    {
-      "file": "src/views/DoneView.tsx",
-      "stories": [
-        "US-006",
-        "US-015"
-      ],
-      "waveAssignments": [
-        4,
-        7
-      ],
-      "severity": "none",
-      "resolution": "dependency-ordered: every story pair is connected by a dependsOn path; single-owner-per-wave chain holds"
-    },
-    {
-      "file": "src/views/TodayView.tsx",
-      "stories": [
-        "US-006",
-        "US-009",
-        "US-013"
-      ],
-      "waveAssignments": [
-        4,
-        6,
-        8
-      ],
-      "severity": "none",
-      "resolution": "dependency-ordered: every story pair is connected by a dependsOn path; single-owner-per-wave chain holds"
-    },
-    {
-      "file": "src/views/UpcomingView.tsx",
-      "stories": [
-        "US-006",
-        "US-014"
-      ],
-      "waveAssignments": [
-        4,
-        7
-      ],
-      "severity": "none",
-      "resolution": "dependency-ordered: every story pair is connected by a dependsOn path; single-owner-per-wave chain holds"
-    },
-    {
-      "file": "verification/visual.spec.ts-snapshots",
-      "stories": [
-        "US-006",
-        "US-007",
-        "US-009",
-        "US-013"
-      ],
-      "waveAssignments": [
-        4,
-        5,
-        6,
-        8
-      ],
-      "severity": "none",
-      "resolution": "dependency-ordered: every story pair is connected by a dependsOn path; single-owner-per-wave chain holds"
+      "severity": "low",
+      "note": "Dependency-ordered (US-108 dependsOn US-107); baseline re-bless directory"
     }
+  ],
+  "dagValidation": {
+    "timestamp": "2026-06-10T22:53:15Z",
+    "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+    "complexityScored": true,
+    "complexityFormula": "min(100, task_count*10 + dependsOn_depth*15 + (has_security_tag ? 30 : 0) + filePaths_count*2)",
+    "bottlenecks": [
+      {
+        "type": "single_story_wave",
+        "wave": 2,
+        "story": "US-102",
+        "fix": "warning",
+        "reason": "Intentional serialization point: contract-breaking ParseResult change (adds displaced); US-103/104/105/106 must build against the new signature. storyType logic — not stub-extractable."
+      },
+      {
+        "type": "single_story_wave",
+        "wave": 4,
+        "story": "US-105",
+        "fix": "warning",
+        "reason": "US-105 modifies the same files US-104 creates (src/components/ParsedInput.tsx/.test.tsx); deliberate extraction-then-behavior split per PRD risk mitigation. Not parallelizable."
+      },
+      {
+        "type": "single_story_wave",
+        "wave": 5,
+        "story": "US-106",
+        "fix": "warning",
+        "reason": "Integration join of US-103 (serializer), US-105 (ParsedInput behavior), and US-107 (TaskRow ownership). storyType logic — not stub-extractable."
+      },
+      {
+        "type": "single_story_wave",
+        "wave": 6,
+        "story": "US-108",
+        "fix": "warning",
+        "reason": "Terminal e2e/visual-baseline story; must follow all feature work by design. storyType test."
+      }
+    ],
+    "duplicationRisks": [],
+    "fileConflictsComputed": 7,
+    "stubsCreated": [],
+    "timeouts": []
+  },
+  "progress": [],
+  "codebasePatterns": [
+    "All colors/spacing/type via CSS variables from DESIGN-SYSTEM.md — no literals in components",
+    "Every interactive element has a visible focus-visible style (2px accent ring, 2px offset)",
+    "src/lib/ modules are framework-free: no React imports, clocks/storage/ids injected as parameters",
+    "Unit tests use generator functions (makeTask, makeAppData, makeMemoryStorage), never beforeEach mutation",
+    "Test names state concrete behavior: 'snoozing with key 1 sets dueDate to tomorrow', never 'works correctly'",
+    "No `any` in TypeScript — use real types or unknown",
+    "Date math uses local-date components from src/lib/dates.ts — never UTC ms arithmetic across days",
+    "Same-wave stories own disjoint files: views live in src/views/<View>.tsx, components in src/components/, App.tsx is owned by exactly one in-flight story at a time",
+    "Date helpers use ISO weekday numbering 1=Mon..7=Sun; all date math via local components (new Date(y,m-1,d+n,12))",
+    "Parser: pass order recurrence->date->time->list->priority, LAST-wins per kind with displaced ranges (chip+displaced ranges excluded from title; reverted ranges unmatchable), word-level whole-token matching; chip displays: date \"Wed Jun 10\" (+year when != now year), time \"3:00 PM\", list \"#work\", priority \"P1\", recurrence source text",
+    "Store: reducer(state, action) pure; mutating payloads carry injected ids/dates (newId, completedAt, today); internal inverse action types restore/markDone/revertComplete",
+    "UI: classes shell-column/masthead/view-tabs/view-tab/keycap/empty-state in App.css; tokens only; aria-current=page marks active tab; useApp() from src/state/AppContext",
+    "Component tests: // @vitest-environment jsdom pragma + src/test-setup.ts localStorage shim; probe context state by rendering a JSON <pre> probe inside AppProvider",
+    "TaskList sections prop: [{label, tasks, rollover?}]; empty sections omitted; all-empty renders empty-state line. TaskRow classes: task-row--p1/--rollover/--selected/--done",
+    "Toast: useApp().toast + showToast; wrapped dispatch emits Captured/Completed/Done — next <date>/Deleted/Snoozed to <date>/Scheduled/Saved/Reopened/Undone/Redone",
+    "useKeymap config: callbacks (onComplete/onEdit/onDelete/onSnooze/onUndo/onRedo/onTypeahead) + getRowIds reads DOM .task-row[data-task-id]; today injectable",
+    "DST-sensitive unit tests pin process.env.TZ=America/New_York as first line of the test file; midnight math via new Date(y,m,d+1,0,0,0) local constructor, never +24h",
+    "New components get their own CSS file next to the component (StorageBanner.css pattern), tokens only"
   ],
   "contracts": {
     "design_tokens": {
@@ -267,20 +1021,6 @@
         "value": "Task",
         "pattern": "^[A-Z][a-zA-Z]*$",
         "definitionFile": "src/lib/types.ts",
-        "owner": "US-001",
-        "consumers": [
-          "US-002",
-          "US-003",
-          "US-004",
-          "US-005",
-          "US-006",
-          "US-009",
-          "US-012",
-          "US-013",
-          "US-014",
-          "US-015",
-          "US-016"
-        ],
         "shape": {
           "properties": [
             {
@@ -336,12 +1076,6 @@
         "value": "Recurrence",
         "pattern": "^[A-Z][a-zA-Z]*$",
         "definitionFile": "src/lib/types.ts",
-        "owner": "US-001",
-        "consumers": [
-          "US-002",
-          "US-003",
-          "US-004"
-        ],
         "shape": {
           "properties": [
             {
@@ -369,13 +1103,6 @@
         "value": "AppData",
         "pattern": "^[A-Z][a-zA-Z]*$",
         "definitionFile": "src/lib/types.ts",
-        "owner": "US-001",
-        "consumers": [
-          "US-004",
-          "US-005",
-          "US-006",
-          "US-016"
-        ],
         "shape": {
           "properties": [
             {
@@ -395,10 +1122,6 @@
         "value": "Chip",
         "pattern": "^[A-Z][a-zA-Z]*$",
         "definitionFile": "src/lib/parser.ts",
-        "owner": "US-002",
-        "consumers": [
-          "US-007"
-        ],
         "shape": {
           "properties": [
             {
@@ -426,10 +1149,12 @@
         "value": "ParseResult",
         "pattern": "^[A-Z][a-zA-Z]*$",
         "definitionFile": "src/lib/parser.ts",
-        "owner": "US-002",
+        "owner": "US-102",
         "consumers": [
-          "US-007",
-          "US-008"
+          "US-103",
+          "US-104",
+          "US-105",
+          "US-106"
         ],
         "shape": {
           "properties": [
@@ -464,2539 +1189,147 @@
             {
               "name": "chips",
               "type": "Chip[]"
+            },
+            {
+              "name": "displaced",
+              "type": "Range[]"
             }
           ],
           "methods": []
         },
-        "definition": "export interface ParseResult {\n  valid: boolean;\n  title: string;\n  dueDate: string | null;\n  dueTime: string | null;\n  list: string | null;\n  priority: 1 | 2 | 3 | null;\n  recurrence: Recurrence | null;\n  chips: Chip[];\n}"
+        "definition": "export interface ParseResult {\n  valid: boolean;\n  title: string;\n  dueDate: string | null;\n  dueTime: string | null;\n  list: string | null;\n  priority: 1 | 2 | 3 | null;\n  recurrence: Recurrence | null;\n  chips: Chip[];\n  displaced: Range[];\n}"
+      },
+      "range": {
+        "value": "Range",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/parser.ts",
+        "owner": "US-102",
+        "consumers": [
+          "US-103",
+          "US-104",
+          "US-105",
+          "US-106"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "start",
+              "type": "number"
+            },
+            {
+              "name": "end",
+              "type": "number"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface Range {\n  start: number;\n  end: number;\n}"
+      },
+      "serialize_result": {
+        "value": "SerializeResult",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/serialize.ts",
+        "owner": "US-103",
+        "consumers": [
+          "US-106"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "text",
+              "type": "string"
+            },
+            {
+              "name": "revertedRanges",
+              "type": "Range[]"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface SerializeResult {\n  text: string;\n  revertedRanges: Range[];\n}"
+      },
+      "parsed_input_props": {
+        "value": "ParsedInputProps",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/components/ParsedInput.tsx",
+        "owner": "US-104",
+        "consumers": [
+          "US-105",
+          "US-106"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "value",
+              "type": "string"
+            },
+            {
+              "name": "onChange",
+              "type": "(value: string) => void"
+            },
+            {
+              "name": "onSubmit",
+              "type": "(result: ParseResult) => void"
+            },
+            {
+              "name": "onCancel",
+              "type": "(() => void) | undefined"
+            },
+            {
+              "name": "parseEnabled",
+              "type": "boolean"
+            },
+            {
+              "name": "initialReverts",
+              "type": "Range[] | undefined"
+            },
+            {
+              "name": "now",
+              "type": "Date | undefined"
+            },
+            {
+              "name": "inputRef",
+              "type": "React.Ref<HTMLInputElement> | undefined"
+            },
+            {
+              "name": "onKeyDown",
+              "type": "((e: React.KeyboardEvent<HTMLInputElement>) => boolean) | undefined"
+            },
+            {
+              "name": "inputProps",
+              "type": "React.InputHTMLAttributes<HTMLInputElement> | undefined"
+            },
+            {
+              "name": "ariaLabel",
+              "type": "string"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface ParsedInputProps {\n  value: string;\n  onChange: (value: string) => void;\n  onSubmit: (result: ParseResult) => void;\n  onCancel?: () => void;\n  parseEnabled: boolean;\n  initialReverts?: Range[];\n  now?: Date;\n  inputRef?: React.Ref<HTMLInputElement>;\n  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => boolean;\n  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;\n  ariaLabel: string;\n}"
       }
-    }
-  },
-  "stories": [
-    {
-      "id": "US-001",
-      "title": "Task types, date helpers, and persistence module",
-      "description": "As the app, I need versioned load/save of AppData to localStorage so user data survives reloads and corruption is recoverable.",
-      "acceptanceCriteria": [
-        "src/lib/types.ts [NEW] exports Task, Recurrence, AppData exactly as specified in FR-26 and FR-29…FR-31 (no any anywhere)",
-        "src/lib/dates.ts [NEW] exports todayStr, addDays, nextWeekdayAfter, nextSaturdayAfter, isoWeekStart, snoozeTomorrow, snoozeNextWeek, snoozeWeekend — local-date-component math only (FR-32), strictly-after weekday semantics (FR-33) — planner-added AC for the shared date module",
-        "src/lib/persistence.ts [NEW] exports load(storage: StorageLike): LoadResult and save(storage: StorageLike, data: AppData): SaveResult (storage injected; never touches window directly)",
-        "save serializes, writes under key todo-quantum.v1, re-reads and parses to verify; returns {ok: false, reason: 'quota'} on QuotaExceededError without throwing",
-        "load of missing key returns {ok: true, data: {schemaVersion: 1, tasks: []}, recovered: false}",
-        "load of unparseable/schema-invalid JSON stashes the raw blob under todo-quantum.recovery.<ISO timestamp>, returns empty AppData with recovered: true",
-        "Unit tests (Vitest, generator fns makeTask/makeAppData) cover: round-trip, missing key, corrupt JSON stash, quota failure; all pass via pnpm test -- --run",
-        "Typecheck (pnpm run typecheck) and lint (pnpm run lint) pass"
-      ],
-      "priority": 1,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing tests for date helpers (TDD)",
-          "description": "Create src/lib/dates.test.ts covering: todayStr(now) local YYYY-MM-DD; addDays across month/year boundaries; compareDates; nextWeekdayAfter(today, weekday) strictly-after semantics; nextSaturdayAfter(today) including when today IS Saturday (FR-33 weekend rule: returns following Saturday); isoWeekStart. Edge cases: DST transition days 2026-03-08 and 2026-11-01 (local-component math per FR-32, never UTC ms), year rollover Dec 31, leap day 2028-02-29. Use generator helpers, not beforeEach.",
-          "filePaths": [
-            "src/lib/dates.test.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/dates.test.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement src/lib/dates.ts to pass the tests",
-          "description": "Implement the pure date-component helpers from T-001 in src/lib/dates.ts. All functions take explicit date strings or Date 'now' parameters — no Date.now() inside (FR-32, FR-10 determinism). Export snooze target helpers: snoozeTomorrow(today), snoozeNextWeek(today) (+7), snoozeWeekend(today) (next Saturday strictly after today).",
-          "filePaths": [
-            "src/lib/dates.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/dates.test.ts"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-001",
-          "consumedBy": [
-            "US-003",
-            "US-005",
-            "US-010",
-            "US-013"
-          ],
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Create src/lib/types.ts type definitions",
-          "description": "Create src/lib/types.ts with the EXACT definitions from contracts.shared_types (Task, Recurrence, AppData — copy the contract definition strings verbatim). Add StorageLike (pick of Storage: getItem/setItem/removeItem), LoadResult, SaveResult discriminated unions. Pure types only, no runtime code, no any.",
-          "filePaths": [
-            "src/lib/types.ts"
-          ],
-          "commands": [
-            "pnpm run typecheck"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — pure type definitions, no runtime logic",
-          "consumedBy": [
-            "US-002",
-            "US-003",
-            "US-004",
-            "US-005",
-            "US-006",
-            "US-009",
-            "US-016"
-          ],
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Write failing tests for persistence (TDD)",
-          "description": "Create src/lib/persistence.test.ts with makeTask/makeAppData generator functions and a makeMemoryStorage() fake implementing StorageLike. Test names state behavior concretely: round-trip save-then-load returns deep-equal data; load of missing key returns empty AppData with recovered false; load of corrupt JSON stashes raw blob under todo-quantum.recovery.<ISO> and returns recovered true; load of schema-invalid JSON (wrong schemaVersion type) treated as corrupt; save returning quota failure when setItem throws QuotaExceededError; save verifies by re-read-and-parse. Boundary cases: empty tasks array, 100+ tasks.",
-          "filePaths": [
-            "src/lib/persistence.test.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/persistence.test.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-005",
-          "title": "Implement src/lib/persistence.ts and run story gates",
-          "description": "Implement load/save per the tests: storage key 'todo-quantum.v1' (contracts.storage_keys.app_data), recovery prefix 'todo-quantum.recovery.' (contracts.storage_keys.recovery_prefix). load validates shape (schemaVersion === 1, tasks is array) before accepting. Injected clock parameter for the recovery-key timestamp. Then run full story gates.",
-          "filePaths": [
-            "src/lib/persistence.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-004",
-          "consumedBy": [
-            "US-006",
-            "US-016"
-          ],
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T20:53:30Z"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T20:53:30Z"
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 60
     },
-    {
-      "id": "US-002",
-      "title": "Natural-language parser",
-      "description": "As a user, I want 'Send report tomorrow 3pm #work !p1' parsed into structured fields as I type so capture is one line of text.",
-      "acceptanceCriteria": [
-        "src/lib/parser.ts [NEW] exports parse(input: string, now: Date): ParseResult — deterministic, now injected",
-        "ParseResult = {title, dueDate, dueTime, list, priority, recurrence, chips} where chips: Array<{start, end, kind, display}> carries source ranges",
-        "Implements the FR-1…FR-10 grammar table exactly: every listed token parses; every listed non-token stays literal",
-        "'Pay May invoice' yields title 'Pay May invoice' with zero chips (FR-2 anchor rule)",
-        "'Send report tomorrow 3pm #work !p1' with now=2026-06-09 yields dueDate 2026-06-10, dueTime 15:00, list work, priority 1, title 'Send report', 3 chips",
-        "Empty-after-extraction title yields {valid: false} (FR-13)",
-        "Unit tests cover every grammar row, every documented literal-fallback case, and chip ranges; all pass",
-        "Typecheck and lint pass"
-      ],
-      "priority": 2,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-001"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing grammar tests: dates and times (TDD)",
-          "description": "Create src/lib/parser.test.ts (import Task/Recurrence types from src/lib/types.ts created by US-001 — do NOT redefine). Cover FR-1…FR-3: today/tomorrow/yesterday; bare weekdays mon…sunday (next strictly after now); 'next friday' (following ISO week); 'jun 12' and '12 jun' (next future occurrence); 'in 3 days'/'in 2 weeks'; times 3pm, 3:30pm, 15:00 (only with a date present or am/pm suffix); bare '3' never a time. Literal fallbacks: 'Pay May invoice' zero chips; 'meet monday-ish' stays literal (not whole word); '25:00' stays literal. Each test name states the expected parse.",
-          "filePaths": [
-            "src/lib/parser.test.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/parser.test.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement date/time tokenization in src/lib/parser.ts",
-          "description": "Create src/lib/parser.ts with Chip + ParseResult interfaces (copy contracts.shared_types.chip / parse_result definitions verbatim) and implement whole-word, keyword-anchored date/time token recognition per FR-1…FR-3 using helpers from src/lib/dates.ts. Pure function of (input, now) — FR-10.",
-          "filePaths": [
-            "src/lib/parser.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/parser.test.ts"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-001",
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Write failing grammar tests: list, priority, recurrence, chips, title (TDD)",
-          "description": "Extend src/lib/parser.test.ts for FR-4…FR-9 and FR-13: single #list (first wins, later '#x' literal, 1-32 word chars); !p1/!p2/!p3 only (!p4 and !urgent literal); recurrence forms 'every day', 'daily', 'every 2 weeks', 'every monday', 'every weekday' (byWeekday Mon–Fri); duplicate same-kind tokens first-wins; chips carry exact {start,end} source ranges and human display strings; title is residue whitespace-collapsed; input that is ONLY tokens yields valid:false. Canonical: 'Send report tomorrow 3pm #work !p1' full assertion from the AC.",
-          "filePaths": [
-            "src/lib/parser.test.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/parser.test.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Implement remaining tokens and assemble ParseResult; run story gates",
-          "description": "Complete parser.ts: list/priority/recurrence recognition, first-wins-per-kind conflict rule (FR-9), title residue extraction (FR-7), chip assembly with ranges (FR-8), valid flag (FR-13). Run full story gates.",
-          "filePaths": [
-            "src/lib/parser.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/parser.test.ts",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-003",
-          "consumedBy": [
-            "US-007"
-          ],
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T20:58:38Z"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T20:58:38Z"
-        }
+    "parsing_rules": {
+      "token_precedence": {
+        "value": "pass order recurrence->date->time->list->priority; LAST-wins per kind (supersedes first-wins / old FR-9); earlier same-kind token ranges reported in ParseResult.displaced; chip AND displaced ranges are both excluded from title; tokens inside reverted ranges match nothing"
       },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
+      "sealing": {
+        "value": "displaced text is removed from the field only when the displacing token is sealed (followed by whitespace, or on submit); until sealed it renders demoted; seam collapses to a single space; live field is never trimmed"
       },
-      "notes": "",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 63
-    },
-    {
-      "id": "US-003",
-      "title": "Recurrence engine",
-      "description": "As a user, I want recurring tasks to regenerate on completion at the right next date so repeating work schedules itself.",
-      "acceptanceCriteria": [
-        "src/lib/recurrence.ts [NEW] exports nextOccurrence(rec: Recurrence, anchor: string, today: string): string implementing FR-26…FR-28 (smallest pattern-matching date strictly after max(anchor, today))",
-        "Monthly byMonthDay: 31 from 2026-01-31 yields 2026-02-28 (clamp rule FR-27)",
-        "Weekly byWeekday:[1] anchored Monday, completed the following Wednesday, yields the next Monday after today (no back-dated avalanche, FR-28)",
-        "every 2 weeks preserves anchor parity: next = anchor + 14k, smallest strictly after today",
-        "Unit tests cover daily/weekly/monthly, interval > 1, clamping, overdue-completion, and DST-transition weeks (e.g. 2026-03-08, 2026-11-01); all pass",
-        "Typecheck and lint pass"
-      ],
-      "priority": 3,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-001"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing tests for nextOccurrence (TDD)",
-          "description": "Create src/lib/recurrence.test.ts (import Recurrence from src/lib/types.ts created by US-001 — do NOT redefine). Cases: daily interval 1 and 3; weekly single and multi byWeekday; biweekly anchor parity (anchor + 14k strictly after today); monthly byMonthDay 1, 15, 31 with Feb clamp (2026-01-31 → 2026-02-28); overdue completion advances from today not anchor; completion ON the due date advances one period; DST weeks 2026-03-08 / 2026-11-01 produce calendar-correct dates; interval boundaries (interval 1 minimum, 12 months). Test names state the expected next date.",
-          "filePaths": [
-            "src/lib/recurrence.test.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/recurrence.test.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement src/lib/recurrence.ts; run story gates",
-          "description": "Implement nextOccurrence using src/lib/dates.ts component math (no UTC ms arithmetic — FR-32). Algorithm: generate pattern dates anchored at 'anchor', return the smallest strictly greater than max(anchor, today). Run full story gates.",
-          "filePaths": [
-            "src/lib/recurrence.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/recurrence.test.ts",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-001",
-          "consumedBy": [
-            "US-004"
-          ],
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:00:25Z"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:00:25Z"
-        }
+      "serializer_token_order": {
+        "value": "title, date, time, recurrence, list, priority"
       },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
+      "date_serialization": {
+        "value": "yesterday/today/tomorrow at now-1/now/now+1; '<mon> <day>' within next 12 months; '<mon> <day> <year>' otherwise; chip display shows year when date year != now year"
       },
-      "notes": "",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 39
-    },
-    {
-      "id": "US-004",
-      "title": "Store reducer with undo/redo",
-      "description": "As a user, I want every action reversible so I never fear a keystroke.",
-      "acceptanceCriteria": [
-        "src/lib/store.ts [NEW] exports reducer over {data: AppData, undoStack, redoStack} with actions: add, complete, uncomplete, edit, delete, snooze, undo, redo, externalReload",
-        "Every mutating action pushes its inverse onto undoStack (cap 50, FIFO eviction) and clears redoStack; undo pops, applies, pushes inverse onto redoStack (FR-36, FR-38)",
-        "complete on a task with recurrence also creates the next occurrence (id via injected newId(), date via nextOccurrence); its inverse removes the spawned task and restores status (FR-39)",
-        "delete inverse restores the task with its original order value",
-        "externalReload replaces data and empties both stacks (FR-43)",
-        "Unit tests: every action round-trips via undo to deep-equal prior state; recurring complete+undo removes spawned task; stack cap evicts oldest; all pass",
-        "Typecheck and lint pass"
-      ],
-      "priority": 4,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-001",
-        "US-003"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing tests for basic actions and undo round-trips (TDD)",
-          "description": "Create src/lib/store.test.ts (import types from src/lib/types.ts; use makeTask/makeAppData generators). For EACH of add/complete/uncomplete/edit/delete/snooze: action applies correctly, then undo restores deep-equal prior data (including original order on delete-undo). redo re-applies; a new mutation after undo clears redoStack (FR-38). Stack cap: 51 mutations evict the oldest inverse (FR-36). Boundary: undo on empty stack is a no-op; snooze with explicit target date string; edit of nonexistent id is a no-op.",
-          "filePaths": [
-            "src/lib/store.test.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/store.test.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement src/lib/store.ts reducer with inverse-op stacks",
-          "description": "Create src/lib/store.ts: StoreState {data, undoStack, redoStack}, Action discriminated union, pure reducer. Each mutating action computes its inverse action and pushes it (cap 50 FIFO). undo/redo pop-apply-push. order assignment for add = max existing order + 1 (FR-30). Dependencies injected via action payloads (newId, dates) — reducer stays pure.",
-          "filePaths": [
-            "src/lib/store.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/store.test.ts"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-001",
-          "consumedBy": [
-            "US-006"
-          ],
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Write failing tests for recurring completion and externalReload (TDD)",
-          "description": "Extend src/lib/store.test.ts: completing a recurring task spawns exactly one new open task with fresh id (injected newId), nextOccurrence-computed dueDate, copied title/list/priority/recurrence (FR-28); undo of that completion removes the spawned task AND reopens the original (FR-39); only one open task per chain after repeated complete cycles; externalReload replaces data and empties both stacks (FR-43). Scale: 100-task AppData reducer ops stay correct.",
-          "filePaths": [
-            "src/lib/store.test.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/store.test.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Implement recurring-complete spawn and externalReload; run story gates",
-          "description": "Wire nextOccurrence from src/lib/recurrence.ts (created by US-003 — import, do NOT reimplement) into the complete action for recurring tasks; implement compound inverse (remove spawn + restore status); implement externalReload. Run full story gates.",
-          "filePaths": [
-            "src/lib/store.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/store.test.ts",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-003",
-          "wiring_verification": {
-            "file": "src/lib/store.ts",
-            "must_contain": [
-              "from './recurrence'",
-              "nextOccurrence"
-            ]
-          },
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:05:51Z"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:05:51Z"
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 78
-    },
-    {
-      "id": "US-005",
-      "title": "View selectors",
-      "description": "As a user, I want Today/Upcoming/All/Done computed from one task list so views are always consistent.",
-      "acceptanceCriteria": [
-        "src/lib/selectors.ts [NEW] exports todayItems(data, today), upcomingGroups(data, today), allItems(data, filterText), doneItems(data) implementing FR-21…FR-23",
-        "todayItems returns three ordered sections: rollover (open, dueDate < today, ascending dueDate), due-today (dueTime ascending then order), anytime (dueDate null, by order)",
-        "upcomingGroups returns day-groups for today+1…today+7 then ISO-week groups, ALREADY omitting empty groups (the selector filters; the UI renders what it receives — FR-22)",
-        "allItems('rep') matches case-insensitive substring on title and list; empty filter returns all open tasks",
-        "doneItems sorts by completedAt descending",
-        "Unit tests cover each section's membership and ordering with a fixed today; all pass",
-        "Typecheck and lint pass"
-      ],
-      "priority": 5,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-001"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing tests for all four selectors (TDD)",
-          "description": "Create src/lib/selectors.test.ts with a fixed today='2026-06-09' and generator-built fixtures. todayItems: rollover membership (open + past due) ascending by dueDate, due-today ordering by dueTime with null times last then order, anytime by order, done tasks excluded everywhere except doneItems. upcomingGroups: 7 day-groups starting tomorrow then ISO-week groups, empty groups OMITTED, week labels stable. allItems: case-insensitive substring on title AND list, empty string returns all open, no matches returns []. doneItems: completedAt descending. Boundaries: empty AppData, 1 task, 100+ tasks, tasks dated years ahead.",
-          "filePaths": [
-            "src/lib/selectors.test.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/selectors.test.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement src/lib/selectors.ts; run story gates",
-          "description": "Implement the four selectors as pure functions over AppData using src/lib/dates.ts comparisons. Rollover is DERIVED here (FR-24) — no stored flag. Run full story gates.",
-          "filePaths": [
-            "src/lib/selectors.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/selectors.test.ts",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-001",
-          "consumedBy": [
-            "US-009",
-            "US-013",
-            "US-014",
-            "US-015"
-          ],
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:02:19Z"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:02:19Z"
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 39
-    },
-    {
-      "id": "US-006",
-      "title": "App shell, masthead, view tabs, and state provider",
-      "description": "As a visitor, I want the app shell rendered to the design system so the structure exists for every later story.",
-      "acceptanceCriteria": [
-        "src/App.tsx (existing) replaced with shell: masthead (today's date, --type-display Fraunces over double rule per DESIGN-SYSTEM §1), view tabs (Today/Upcoming/All/Done, mono uppercase, accent underline on current), main column (max-width 720 desktop / 640 tablet / full 375 per §7), placeholder content region",
-        "src/components/ViewTabs.tsx [NEW]; current view held in App state; clicking a tab switches view",
-        "src/state/AppContext.tsx [NEW] exposes useApp() returning {state, dispatch, view, setView, barText, setBarText, recovered}; initial state loads from persistence load(localStorage) — planner-added AC realizing FR-15/FR-20/US-016 groundwork",
-        "Only --color-*/--space-*/--type-*/--radius-* tokens used — grep -rnE '#[0-9A-Fa-f]{3,6}' src/components src/App.tsx src/App.css returns no matches in changed files",
-        "Scaffold demo content and unused assets removed from src/App.tsx/src/App.css",
-        "Visual gate passes: bash verification/run-visual-gate.sh / (baseline created, rendered, inspected against DESIGN-SYSTEM.md before blessing)",
-        "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
-        "Typecheck and lint pass"
-      ],
-      "priority": 6,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-004"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Create AppContext state provider over the store reducer",
-          "description": "Create src/state/AppContext.tsx: React context + provider wrapping useReducer over the US-004 reducer (import from src/lib/store.ts — do NOT create an inline replacement). INITIAL STATE comes from load(window.localStorage) via src/lib/persistence.ts (created by US-001 — import, do NOT reimplement); hold the LoadResult's recovered flag in context for US-016 to surface as a toast later. Expose {state, dispatch, view, setView, barText, setBarText, recovered} via useApp() hook. View type: 'today' | 'upcoming' | 'all' | 'done'. barText is shared so US-015's All-view filter can read it. NOTE: this makes localStorage-seeded e2e specs work from US-006 onward; US-016 owns saving, banner, recovery toast, and multi-tab.",
-          "filePaths": [
-            "src/state/AppContext.tsx"
-          ],
-          "commands": [
-            "pnpm run typecheck"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — thin React wiring over the US-004-unit-tested reducer; behavior verified by the e2e in T-003 (component-test tooling arrives in US-007)",
-          "consumedBy": [
-            "US-007",
-            "US-009",
-            "US-011",
-            "US-013",
-            "US-014",
-            "US-015",
-            "US-016"
-          ],
-          "status": "passed",
-          "wiring_verification": {
-            "file": "src/state/AppContext.tsx",
-            "must_contain": [
-              "from '../lib/persistence'",
-              "load("
-            ]
-          }
-        },
-        {
-          "id": "T-002",
-          "title": "Implement masthead and ViewTabs",
-          "description": "Replace scaffold src/App.tsx structure: wrap in AppProvider; render masthead (today's local date via dates.ts, Fraunces --type-display over double rule per DESIGN-SYSTEM §1) and ViewTabs (src/components/ViewTabs.tsx [NEW], mono uppercase tabs, accent underline current via tokens, keycap hints hidden below 768 per §7). View-switch region added in T-003.",
-          "filePaths": [
-            "src/App.tsx",
-            "src/components/ViewTabs.tsx"
-          ],
-          "commands": [
-            "pnpm run typecheck"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — presentational scaffold; behavior covered by T-005 e2e and the visual gate (component-test tooling arrives in US-007)",
-          "wiring_verification": {
-            "file": "src/App.tsx",
-            "must_contain": [
-              "ViewTabs",
-              "AppProvider"
-            ]
-          },
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Create placeholder views and view-switch region",
-          "description": "Create src/views/TodayView.tsx, UpcomingView.tsx, AllView.tsx, DoneView.tsx as placeholders (each renders its italic empty state per §6 — later stories own these files, which keeps waves disjoint) and render the active one in App.tsx based on useApp().view.",
-          "filePaths": [
-            "src/views/TodayView.tsx",
-            "src/views/UpcomingView.tsx",
-            "src/views/AllView.tsx",
-            "src/views/DoneView.tsx",
-            "src/App.tsx"
-          ],
-          "commands": [
-            "pnpm run typecheck"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — presentational placeholders; behavior covered by T-005 e2e and the visual gate",
-          "wiring_verification": {
-            "file": "src/App.tsx",
-            "must_contain": [
-              "TodayView",
-              "UpcomingView",
-              "AllView",
-              "DoneView"
-            ]
-          },
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Rewrite App.css from tokens; remove scaffold demo",
-          "description": "Rewrite src/App.css using only --color-*/--space-*/--type-*/--radius-* tokens (layout per §7 breakpoints: column max-width 720 desktop / 640 tablet / full-bleed 375); delete scaffold demo markup remnants and unused assets (src/assets/hero.png, react.svg if unreferenced). Verify zero hex literals.",
-          "filePaths": [
-            "src/App.css"
-          ],
-          "commands": [
-            "grep -rnE '#[0-9A-Fa-f]{3,6}' src/components src/views src/App.tsx src/App.css || echo NO_HEX_LITERALS",
-            "pnpm run typecheck"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — CSS/scaffold cleanup, verified by hex-grep command and the visual gate",
-          "status": "passed"
-        },
-        {
-          "id": "T-005",
-          "title": "Write e2e shell spec",
-          "description": "Create e2e/shell.spec.ts: masthead shows today's date; four tabs render; clicking each tab switches the visible view (placeholder empty states); current tab has accent underline (assert computed border/underline color equals --color-accent resolved value); no console errors.",
-          "filePaths": [
-            "e2e/shell.spec.ts"
-          ],
-          "commands": [
-            "pnpm exec playwright test e2e/shell.spec.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-006",
-          "title": "Visual gate: create and inspect the first baseline",
-          "description": "Run the visual gate for route /. This creates the FIRST baseline (PNGs in verification/visual.spec.ts-snapshots/): render it, LOOK at the screenshots at 375/768/1280, confirm masthead/tabs/empty-state match DESIGN-SYSTEM.md §1/§6/§7 before blessing (Pixel Law). Cite the inspected screenshot paths in completion evidence.",
-          "filePaths": [
-            "verification/visual.spec.ts-snapshots"
-          ],
-          "commands": [
-            "bash verification/run-visual-gate.sh /"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — command-only verification task, no source files",
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:12:28Z"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:12:28Z"
-        },
-        "visualReview": {
-          "status": "passed",
-          "blocking": false
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 100
-    },
-    {
-      "id": "US-007",
-      "title": "Command bar with live parse chips",
-      "description": "As a user, I want tokens to become visible chips as I type so I trust the parse before pressing Enter.",
-      "acceptanceCriteria": [
-        "src/components/CommandBar.tsx [NEW]: text input styled per DESIGN-SYSTEM §6 (vermilion ▸ prompt, fg border, print shadow), permanently mounted above the view tabs",
-        "On each input change, parse() runs and recognized tokens render as accent-underlined chips inline (overlay or mirrored rendering — visually inside the bar), per §6 never boxed",
-        "Enter with valid parse dispatches add, clears input, keeps focus in the bar (FR-12)",
-        "Enter with empty/invalid title: danger border flash at --motion-fast, inline mono message 'nothing to capture', no task created (FR-13)",
-        "Esc with ≥1 chip reverts the most recent chip to literal text (FR-14); input value updates accordingly",
-        "Chips have visually-hidden text announcing the parse (e.g. 'due tomorrow 3 PM') via aria-describedby on the input (FR-45)",
-        "Dev deps @testing-library/react, @testing-library/user-event, jsdom [NEW dev deps — this story introduces all three] added; component tests: typing canonical string renders 3 chips; Enter dispatches add and clears; Esc reverts last chip",
-        "Visual gate passes for / including a state with the canonical string typed",
-        "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
-        "Typecheck and lint pass"
-      ],
-      "priority": 7,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-002",
-        "US-006"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Add component-test tooling (dev deps + vitest jsdom config)",
-          "description": "Add dev deps @testing-library/react, @testing-library/user-event, jsdom via pnpm add -D. Configure Vitest for component tests in vite.config.ts (test.environment 'jsdom' — or per-file // @vitest-environment jsdom pragma; choose one and note it in codebasePatterns). Verify existing src/lib tests still pass.",
-          "filePaths": [
-            "package.json",
-            "vite.config.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — config/scaffold task (dev-dependency and test-environment setup)",
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Write failing component tests for CommandBar (TDD)",
-          "description": "Create src/components/CommandBar.test.tsx using @testing-library/react + user-event with a fixed injected now. Tests: typing 'Send report tomorrow 3pm #work !p1' renders exactly 3 accent chips with display strings; Enter dispatches add with parsed fields, clears input, keeps focus; Enter on 'tomorrow' alone (empty title) shows 'nothing to capture' and dispatches nothing; Esc reverts the LAST chip to literal text; input has aria-describedby pointing at visually-hidden chip announcement text.",
-          "filePaths": [
-            "src/components/CommandBar.test.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/components/CommandBar.test.tsx"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Implement CommandBar component",
-          "description": "Create src/components/CommandBar.tsx: controlled input bound to useApp().barText; on change run parse(input, now) from src/lib/parser.ts (created by US-002 — import, do NOT reimplement); render chips inline via mirrored overlay (accent underline, never boxed, §6); ▸ prompt glyph in accent; print shadow per §6; Enter/Esc per FR-12…FR-14; aria-describedby chip announcements (FR-45); danger flash uses --motion-fast and --color-danger tokens only.",
-          "filePaths": [
-            "src/components/CommandBar.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/components/CommandBar.test.tsx"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-002",
-          "consumedBy": [
-            "US-008",
-            "US-010",
-            "US-015"
-          ],
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Wire CommandBar into App.tsx; run story gates",
-          "description": "Mount <CommandBar /> in src/App.tsx between the masthead and ViewTabs (it is omnipresent across views). Autofocus on mount (FR-15: load focus = BAR). Run full story gates.",
-          "filePaths": [
-            "src/App.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — wiring task verified by wiring_verification and the T-002 suite",
-          "wiring_verification": {
-            "file": "src/App.tsx",
-            "must_contain": [
-              "CommandBar"
-            ]
-          },
-          "status": "passed"
-        },
-        {
-          "id": "T-005",
-          "title": "Visual gate including typed-chips state",
-          "description": "Create e2e/states-commandbar.spec.ts capturing the canonical-string-typed state (3 chips visible) with toHaveScreenshot at all 3 breakpoints. The bar changes the default / render, so re-bless the route baseline (inspect before blessing). Run the gate and cite screenshots.",
-          "filePaths": [
-            "e2e/states-commandbar.spec.ts",
-            "verification/visual.spec.ts-snapshots"
-          ],
-          "commands": [
-            "pnpm exec playwright test e2e/states-commandbar.spec.ts",
-            "bash verification/run-visual-gate.sh /"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — command-only verification task",
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:23:15Z"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:23:15Z"
-        },
-        "visualReview": {
-          "status": "passed",
-          "blocking": false
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 100
-    },
-    {
-      "id": "US-008",
-      "title": "Command mode",
-      "description": "As a user, I want > to switch the bar into a fuzzy command palette so navigation never needs the mouse.",
-      "acceptanceCriteria": [
-        "When input begins with >, bar enters command mode: prompt glyph ❯, mono input text (DESIGN-SYSTEM §6), fuzzy-matched command list rendered beneath the bar",
-        "v1 commands: today, upcoming, all, done, undo, redo, help (FR-19); ↑/↓ move command selection, Enter executes; Esc exits command mode and clears the input to the empty string (capture mode)",
-        ">help opens the cheatsheet overlay (delivered by US-017; until then it is a registered command whose handler is wired in US-017)",
-        "Fuzzy match: subsequence, case-insensitive (>tdy matches today)",
-        "Text not starting with > is NEVER treated as a command (FR-18)",
-        "Command list has role=listbox with aria-activedescendant on the input",
-        "Component tests: >tdy + Enter switches view to Today; >undo dispatches undo; Esc exits command mode leaving an empty input",
-        "Visual gate passes including command-mode-open state",
-        "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
-        "Typecheck and lint pass"
-      ],
-      "priority": 8,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-007"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing tests for the command registry and fuzzy matcher (TDD)",
-          "description": "Create src/lib/commands.test.ts: registry exposes exactly the seven v1 commands (contracts.commands.palette_set); fuzzySubsequence('tdy','today') true, case-insensitive, non-subsequence false; match ranking stable; empty query lists all. Boundary: query longer than command, unicode input stays literal.",
-          "filePaths": [
-            "src/lib/commands.test.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/commands.test.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement src/lib/commands.ts registry",
-          "description": "Create src/lib/commands.ts: Command {id, label, run(ctx)} for today/upcoming/all/done (setView), undo/redo (dispatch), help (ctx.openCheatsheet — accepts a callback so US-017 can wire the real overlay; until then App passes a no-op). Export fuzzyMatch.",
-          "filePaths": [
-            "src/lib/commands.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/commands.test.ts"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-001",
-          "consumedBy": [
-            "US-017"
-          ],
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Write failing component tests for command mode (TDD)",
-          "description": "Extend src/components/CommandBar.test.tsx: typing '>' flips to command mode (❯ glyph, mono class); '>tdy' highlights today, Enter switches view; '>undo' Enter dispatches undo; ↑/↓ move aria-activedescendant; Esc exits leaving empty input; plain text without > never opens the list (FR-18); list has role=listbox.",
-          "filePaths": [
-            "src/components/CommandBar.test.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/components/CommandBar.test.tsx"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Implement command mode in CommandBar; run story gates",
-          "description": "Extend src/components/CommandBar.tsx: detect leading '>' (FR-18), render fuzzy-filtered command list beneath the bar (mono, §6), keyboard selection with aria-activedescendant, Enter executes via commands.ts, Esc clears to '' (FR-17 step 3). Run full story gates.",
-          "filePaths": [
-            "src/components/CommandBar.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/components/CommandBar.test.tsx",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-003",
-          "wiring_verification": {
-            "file": "src/components/CommandBar.tsx",
-            "must_contain": [
-              "from '../lib/commands'",
-              "fuzzyMatch"
-            ]
-          },
-          "status": "passed"
-        },
-        {
-          "id": "T-005",
-          "title": "Visual gate including command-mode-open state",
-          "description": "Create e2e/states-commandmode.spec.ts capturing the command-mode-open state ('>' typed, list visible) with toHaveScreenshot. Command mode is closed by default, so the route baseline is unchanged — the gate must pass against the existing baseline. Cite screenshots.",
-          "filePaths": [
-            "e2e/states-commandmode.spec.ts"
-          ],
-          "commands": [
-            "pnpm exec playwright test e2e/states-commandmode.spec.ts",
-            "bash verification/run-visual-gate.sh /"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — command-only verification task",
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:27:07Z"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:27:07Z"
-        },
-        "visualReview": {
-          "status": "passed",
-          "blocking": false
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "src/lib/commands.ts is the planner-chosen realization of FR-19 (not named in the PRD); fuzzyMatch + registry extracted for US-017 reuse via consumedBy.",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 100
-    },
-    {
-      "id": "US-009",
-      "title": "Task list and task row",
-      "description": "As a user, I want my tasks rendered as broadsheet rows with selection, completion, and inline editing.",
-      "acceptanceCriteria": [
-        "src/components/TaskList.tsx + src/components/TaskRow.tsx [NEW]: rows per DESIGN-SYSTEM §6 (surface bg, hairline border, 3px left rule: accent for priority 1, border otherwise; metadata in mono right-aligned, wrapping below title at 375)",
-        "Selection model: at most one selected row, accent-thickened left rule + print shadow; roving tabindex (selected row tabIndex 0, others -1) (FR-46)",
-        "Mouse: hover reveals checkbox; click checkbox completes (strike-through draws at --motion-base, row settles muted); click title opens inline edit (input pre-filled, Enter saves via edit, Esc cancels)",
-        "Rollover rows render muted left rule + italic '— since {weekday}' annotation, never danger-colored (FR-24)",
-        "Empty list renders italic empty state: 'Nothing on deck — type to capture.' (DESIGN-SYSTEM §6)",
-        "Component tests: render sections, complete dispatches with strike state, inline edit save/cancel, empty state",
-        "Visual gate passes including selected + rollover + empty states",
-        "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
-        "Typecheck and lint pass"
-      ],
-      "priority": 9,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-005",
-        "US-006",
-        "US-007"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing component tests for TaskRow (TDD)",
-          "description": "Create src/components/TaskRow.test.tsx: renders title (Newsreader), mono metadata (time, list); priority-1 row has accent left rule (class/style assertion); rollover prop renders italic '— since Mon' in muted (never --color-danger); checkbox click dispatches complete; title click opens inline edit pre-filled, Enter dispatches edit with new title, Esc cancels without dispatch.",
-          "filePaths": [
-            "src/components/TaskRow.test.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/components/TaskRow.test.tsx"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement TaskRow component",
-          "description": "Create src/components/TaskRow.tsx per DESIGN-SYSTEM §6 task-row spec: surface bg, hairline border, 3px left rule (accent for priority 1 / border otherwise / muted for rollover), hover-revealed checkbox, strike-through completion animation at --motion-base, inline edit, mono metadata wrapping below title at 375 (§7). Tokens only.",
-          "filePaths": [
-            "src/components/TaskRow.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/components/TaskRow.test.tsx"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-001",
-          "consumedBy": [
-            "US-012",
-            "US-013",
-            "US-014",
-            "US-015"
-          ],
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Implement TaskList with selection + roving tabindex (TDD pair in one task)",
-          "description": "Create src/components/TaskList.test.tsx then src/components/TaskList.tsx: renders rows from a sections prop {label, tasks[]} with mono uppercase section labels over hairline rules; at most one selected row (accent rule + print shadow); roving tabindex (selected 0, rest -1, FR-46); empty sections list renders the italic empty state 'Nothing on deck — type to capture.'; exposes onSelect/selection so US-010's keymap can drive it.",
-          "filePaths": [
-            "src/components/TaskList.test.tsx",
-            "src/components/TaskList.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/components/TaskList.test.tsx"
-          ],
-          "testFirst": true,
-          "consumedBy": [
-            "US-010",
-            "US-013",
-            "US-014",
-            "US-015"
-          ],
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Wire TaskList into TodayView placeholder; run story gates",
-          "description": "Replace the placeholder body of src/views/TodayView.tsx (created by US-006): render TaskList with sections from todayItems(state.data, today) (import selectors from src/lib/selectors.ts created by US-005 — do NOT reimplement). This makes rows visible at / for the visual gate. US-013 later owns the full Today assembly. Compute today via dates.ts todayStr(new Date()) at the view boundary (injected-clock pattern; US-013 later swaps in useToday()).",
-          "filePaths": [
-            "src/views/TodayView.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — wiring task verified by wiring_verification and component suites",
-          "wiring_verification": {
-            "file": "src/views/TodayView.tsx",
-            "must_contain": [
-              "TaskList",
-              "todayItems"
-            ]
-          },
-          "status": "passed"
-        },
-        {
-          "id": "T-005",
-          "title": "Visual gate including selected + rollover + empty states",
-          "description": "Create e2e/states-tasklist.spec.ts capturing selected-row, rollover, and empty states (seeded/cleared localStorage) with toHaveScreenshot at 3 breakpoints. TodayView now renders rows, so re-bless the route baseline (inspect before blessing). Run the gate and cite screenshots.",
-          "filePaths": [
-            "e2e/states-tasklist.spec.ts",
-            "verification/visual.spec.ts-snapshots"
-          ],
-          "commands": [
-            "pnpm exec playwright test e2e/states-tasklist.spec.ts",
-            "bash verification/run-visual-gate.sh /"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — command-only verification task",
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:33:49Z"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:33:49Z"
-        },
-        "visualReview": {
-          "status": "passed",
-          "blocking": false
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 100
-    },
-    {
-      "id": "US-010",
-      "title": "Keyboard system and focus model",
-      "description": "As a user, I want one coherent keyboard layer so the bar and the list never fight over keys.",
-      "acceptanceCriteria": [
-        "src/hooks/useKeymap.ts [NEW] implements the FR-15…FR-17 focus model and Esc precedence exactly",
-        "Bar focused: printable keys type; ↓ (or Esc when bar empty) moves focus to list; Enter captures",
-        "List focused: j/↓ next, k/↑ previous, x/Space complete, e/Enter inline edit, Del/Backspace delete, 1/2/3 snooze, g then t/u/a/d switch view, ? opens the cheatsheet (key registered here; overlay handler wired when US-017 lands); any other printable character moves focus to the bar AND inserts itself (FR-16)",
-        "Undo-key routing per FR-37: LIST focused → ⌘Z/Ctrl+Z always dispatches app undo (and ⌘⇧Z/Ctrl+Shift+Z app redo); BAR focused with empty input → app undo/redo; BAR focused with non-empty input → native text-field undo untouched. No focus/content combination leaves the key dead",
-        "Component tests: focus handoff bar↔list both directions, each list key dispatches its action, ⌘Z routing in all three contexts (list-focused, bar-empty, bar-non-empty)",
-        "Visual gate passes (focus-visible states)",
-        "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
-        "Typecheck and lint pass"
-      ],
-      "priority": 10,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-007",
-        "US-009",
-        "US-011"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing tests for useKeymap focus model and routing (TDD)",
-          "description": "Create src/hooks/useKeymap.test.tsx rendering a harness (bar input + list rows). Tests: ArrowDown from bar moves focus to list; Esc from EMPTY chip-less bar moves to list; Esc precedence order (FR-17) at each stage; in list j/k/x/Space/e/Enter/Del/1/2/3/g-then-t/u/a/d/? dispatch the right callbacks; unbound printable 'b' in list refocuses bar and inserts 'b' (FR-16); ⌘Z in all THREE contexts: list-focused dispatches undo regardless of bar content, bar-empty dispatches undo, bar-non-empty does NOT call preventDefault (native undo untouched) (FR-37); ⌘⇧Z redo mirrors. Snooze keys dispatch snooze with targets from dates.ts (snoozeTomorrow/snoozeNextWeek/snoozeWeekend).",
-          "filePaths": [
-            "src/hooks/useKeymap.test.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/hooks/useKeymap.test.tsx"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement src/hooks/useKeymap.ts",
-          "description": "Implement the centralized keymap hook: context-priority (overlay > bar > list, FR-15), key tables per FR-16, Esc precedence chain (FR-17), ⌘Z/⌘⇧Z routing by focus context (FR-37), 'g' two-key sequence with timeout, '?' opens-cheatsheet callback slot (no-op until US-017), snooze targets via src/lib/dates.ts helpers. Single document-level listener; never intercepts keys while an input other than the bar is focused (inline edit safety).",
-          "filePaths": [
-            "src/hooks/useKeymap.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/hooks/useKeymap.test.tsx"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-001",
-          "consumedBy": [
-            "US-012",
-            "US-017"
-          ],
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Install useKeymap in App.tsx; run story gates",
-          "description": "Call useKeymap() in src/App.tsx wiring bar ref, list selection handlers, dispatch, setView, and the cheatsheet callback slot. Verify load focus lands in the bar (FR-15). Run full story gates.",
-          "filePaths": [
-            "src/App.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — wiring task verified by wiring_verification and the T-001 suite",
-          "wiring_verification": {
-            "file": "src/App.tsx",
-            "must_contain": [
-              "useKeymap"
-            ]
-          },
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Visual gate: focus-visible states",
-          "description": "Create e2e/states-focus.spec.ts capturing keyboard-selected row (accent rule + print shadow) and focus-ring states with toHaveScreenshot. Default render unchanged — gate passes against existing baseline. Cite screenshots.",
-          "filePaths": [
-            "e2e/states-focus.spec.ts"
-          ],
-          "commands": [
-            "pnpm exec playwright test e2e/states-focus.spec.ts",
-            "bash verification/run-visual-gate.sh /"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — command-only verification task",
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:47:35Z"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:47:35Z"
-        },
-        "visualReview": {
-          "status": "passed",
-          "blocking": false
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "dependsOn US-011 is an App.tsx single-ownership serialization edge (006→007→011→010→016→017), not a semantic need.",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 100
-    },
-    {
-      "id": "US-011",
-      "title": "Toast and undo wiring",
-      "description": "As a user, I want quiet confirmation with an undo handle after every mutation.",
-      "acceptanceCriteria": [
-        "src/components/Toast.tsx [NEW]: bottom-left, inverted ink (fg bg / bg text), print shadow, mono label + 'Undo ⌘Z' keycap; auto-dismisses after 4.8s; only the latest toast shows",
-        "Toast container is aria-live=polite; message text includes the action ('Completed', 'Deleted', 'Snoozed to …', 'Captured', 'Scheduled')",
-        "Completing a recurring task toasts the next occurrence date ('Done — next Mon Jun 15')",
-        "Clicking Undo in the toast (or ⌘Z per FR-37) reverses the action; toast updates to 'Undone'",
-        "Component tests: toast renders per action type, auto-dismiss timer (fake timers), Undo click dispatches undo, aria-live attribute present",
-        "Visual gate passes including visible-toast state",
-        "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
-        "Typecheck and lint pass"
-      ],
-      "priority": 11,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-007"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing component tests for Toast (TDD)",
-          "description": "Create src/components/Toast.test.tsx: renders message per action type (Completed/Deleted/Snoozed to X/Captured/Scheduled/Undone); recurring completion message includes next occurrence date; auto-dismiss after 4.8s with fake timers; a new toast replaces the prior (only latest shows); Undo button click dispatches undo; container has aria-live=polite (FR-44).",
-          "filePaths": [
-            "src/components/Toast.test.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/components/Toast.test.tsx"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement Toast component and toast state",
-          "description": "Create src/components/Toast.tsx (presentation: inverted ink, print shadow, bottom-left, mono label, 'Undo ⌘Z' keycap pill per §6) and a toast slice in src/state/AppContext.tsx: showToast(message) replacing prior, auto-clear timer 4.8s, message builders per action type including recurring next-date.",
-          "filePaths": [
-            "src/components/Toast.tsx",
-            "src/state/AppContext.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/components/Toast.test.tsx"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-001",
-          "consumedBy": [
-            "US-012",
-            "US-016"
-          ],
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Mount Toast in App.tsx and emit toasts from mutations; run story gates",
-          "description": "Mount <Toast /> in src/App.tsx; dispatch-side wiring so add/complete/delete/edit emit their toast (capture in CommandBar already dispatches add — route through a wrapped dispatch in AppContext so every mutation toasts). Undo click and ⌘Z produce 'Undone'. Run full story gates.",
-          "filePaths": [
-            "src/App.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — wiring task verified by wiring_verification and the T-001 suite",
-          "wiring_verification": {
-            "file": "src/App.tsx",
-            "must_contain": [
-              "Toast"
-            ]
-          },
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Visual gate including visible-toast state",
-          "description": "Create e2e/states-toast.spec.ts: trigger a completion, capture the visible toast with toHaveScreenshot. Toast hidden by default — gate passes against existing baseline. Cite screenshots.",
-          "filePaths": [
-            "e2e/states-toast.spec.ts"
-          ],
-          "commands": [
-            "pnpm exec playwright test e2e/states-toast.spec.ts",
-            "bash verification/run-visual-gate.sh /"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — command-only verification task",
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:41:03Z"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:41:03Z"
-        },
-        "visualReview": {
-          "status": "passed",
-          "blocking": false
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 100
-    },
-    {
-      "id": "US-012",
-      "title": "Snooze",
-      "description": "As a user, I want one-key snooze so an overdue item leaves Today in under a second. (Depends on US-011: snooze surfaces its result via the toast.)",
-      "acceptanceCriteria": [
-        "With a row selected: 1 sets dueDate to tomorrow, 2 to today+7, 3 to next Saturday strictly after today (FR-33…FR-35; pressing 3 on a Saturday yields the following Saturday)",
-        "Snoozing a task with dueDate: null assigns the target date and the toast labels it 'Scheduled' (FR-35)",
-        "Mouse parity: row overflow menu offers Tomorrow / Next week / Weekend",
-        "Each snooze shows the undo toast naming the new date (e.g. 'Snoozed to Sat Jun 13 — Undo ⌘Z')",
-        "Unit tests for the three date computations live with store tests, including weekend-on-weekend and 2 crossing a month boundary",
-        "Component test: pressing 1 on selected row dispatches snooze with tomorrow's date",
-        "Visual gate passes",
-        "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
-        "Typecheck and lint pass"
-      ],
-      "priority": 12,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-010",
-        "US-011"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing snooze-date tests in the store suite (TDD)",
-          "description": "Extend src/lib/store.test.ts: snooze action with snoozeTomorrow/snoozeNextWeek/snoozeWeekend targets from src/lib/dates.ts — tomorrow simple case; +7 crossing a month boundary (2026-06-29 → 2026-07-06); weekend on Saturday 2026-06-13 yields 2026-06-20 (FR-33); snoozing dueDate:null task assigns the date (FR-35); snoozed task leaves todayItems rollover section (cross-check with selectors).",
-          "filePaths": [
-            "src/lib/store.test.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/lib/store.test.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Write failing component test for key-1 snooze and overflow menu (TDD)",
-          "description": "Extend src/components/TaskRow.test.tsx: overflow menu (hover/focus revealed) offers Tomorrow / Next week / Weekend and dispatches snooze with the correct computed date; toast message 'Snoozed to <date>' for dated tasks and 'Scheduled' for previously-undated tasks. Extend src/hooks/useKeymap.test.tsx: pressing 1 with a selected row dispatches snooze with tomorrow's date.",
-          "filePaths": [
-            "src/components/TaskRow.test.tsx",
-            "src/hooks/useKeymap.test.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/components/TaskRow.test.tsx src/hooks/useKeymap.test.tsx"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Implement overflow menu + snooze toast labels; run story gates",
-          "description": "Add the overflow menu to src/components/TaskRow.tsx (hover/focus reveal per §6, mono items, tokens only) dispatching snooze with dates.ts targets; ensure the wrapped dispatch in AppContext emits 'Snoozed to <human date>' / 'Scheduled' toast text. Run full story gates.",
-          "filePaths": [
-            "src/components/TaskRow.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-001/T-002",
-          "wiring_verification": {
-            "file": "src/components/TaskRow.tsx",
-            "must_contain": [
-              "snoozeTomorrow",
-              "snoozeWeekend"
-            ]
-          },
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Visual gate including overflow-menu state",
-          "description": "Create e2e/states-snooze.spec.ts capturing the row overflow menu open with toHaveScreenshot. Menu hidden by default — gate passes against existing baseline. Cite screenshots.",
-          "filePaths": [
-            "e2e/states-snooze.spec.ts"
-          ],
-          "commands": [
-            "pnpm exec playwright test e2e/states-snooze.spec.ts",
-            "bash verification/run-visual-gate.sh /"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — command-only verification task",
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:51:06Z"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-09T21:51:06Z"
-        },
-        "visualReview": {
-          "status": "passed",
-          "blocking": false
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 100
-    },
-    {
-      "id": "US-013",
-      "title": "Today view assembly",
-      "description": "As a user, I want the app to open into an honest Today so the day's plan needs zero clicks.",
-      "acceptanceCriteria": [
-        "Today renders the three FR-21 sections with section labels (mono uppercase, hairline rule); rollover rows above dated rows above anytime rows",
-        "'Today' recomputes on window focus and via a timer scheduled for next local midnight, re-armed after firing (FR-25); a task due 'today' left overnight appears as rollover without reload",
-        "Midnight-timer DST test: with fake timers crossing 2026-11-01 (25h day) and 2026-03-08 (23h day), the timer fires at local midnight, not 24h-after-arm",
-        "On load, command bar receives focus and Today is the active view (G-2)",
-        "Load reveal: masthead settles first, rows stagger 40ms (verified by asserting each row's computed animation-delay increases by 40ms); under prefers-reduced-motion an e2e asserts computed animation durations are 0",
-        "e2e (Playwright): seeded localStorage with rollover + today + anytime tasks renders all three sections, correct order, no interaction",
-        "Visual gate passes (this story owns the canonical / baseline update)",
-        "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
-        "Typecheck and lint pass"
-      ],
-      "priority": 13,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-009",
-        "US-010",
-        "US-011"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing tests for useToday hook (TDD)",
-          "description": "Create src/hooks/useToday.test.tsx with fake timers: returns current local YYYY-MM-DD; recomputes on window focus event; arms a timeout for next local midnight and re-arms after firing; DST cases — armed across 2026-11-01 (25h day) and 2026-03-08 (23h day) it fires at local midnight, not 24h-after-arm.",
-          "filePaths": [
-            "src/hooks/useToday.test.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/hooks/useToday.test.tsx"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement src/hooks/useToday.ts",
-          "description": "Implement the hook using dates.ts: compute ms-to-next-local-midnight from local date components (DST-safe), setTimeout + re-arm, focus listener, cleanup on unmount.",
-          "filePaths": [
-            "src/hooks/useToday.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/hooks/useToday.test.tsx"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-001",
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Assemble full TodayView with section labels and load reveal",
-          "description": "Complete src/views/TodayView.tsx: three FR-21 sections via todayItems(data, useToday()) with mono uppercase labels over hairline rules; load-reveal stagger — masthead settles first, each row gets animation-delay = index * 40ms within --motion-slow total, implemented via CSS in src/App.css using motion tokens (zero under prefers-reduced-motion since tokens collapse to 0ms).",
-          "filePaths": [
-            "src/views/TodayView.tsx",
-            "src/App.css"
-          ],
-          "commands": [
-            "pnpm test -- --run",
-            "pnpm run typecheck"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — presentational assembly; behavior pinned by T-001 hook tests, T-004 e2e, and the visual gate",
-          "wiring_verification": {
-            "file": "src/views/TodayView.tsx",
-            "must_contain": [
-              "useToday",
-              "todayItems"
-            ]
-          },
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Write e2e for Today sections, focus, stagger, reduced motion",
-          "description": "Create e2e/today.spec.ts: seed localStorage (todo-quantum.v1) with rollover + today + anytime tasks; assert three sections render in order with zero interactions; command bar has focus on load; each row's computed animation-delay increases by 40ms; with reduced-motion emulation computed animation durations are 0; rollover annotation is italic and NOT --color-danger.",
-          "filePaths": [
-            "e2e/today.spec.ts"
-          ],
-          "commands": [
-            "pnpm exec playwright test e2e/today.spec.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-005",
-          "title": "Visual gate: canonical baseline update; run story gates",
-          "description": "This story owns the canonical / baseline: re-bless with the seeded three-section Today state, inspect all breakpoints against DESIGN-SYSTEM.md before blessing, cite screenshots. Then run remaining story gates.",
-          "filePaths": [
-            "verification/visual.spec.ts-snapshots"
-          ],
-          "commands": [
-            "bash verification/run-visual-gate.sh /",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — command-only verification task",
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "timestamp": "2026-06-09T22:00:03.781126+00:00"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "timestamp": "2026-06-09T22:00:03.781126+00:00"
-        },
-        "visualReview": {
-          "status": "pending",
-          "blocking": false
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 100
-    },
-    {
-      "id": "US-014",
-      "title": "Upcoming view",
-      "description": "As a user, I want the next stretch of days visible so I can plan beyond today.",
-      "acceptanceCriteria": [
-        "Upcoming renders the day-groups starting tomorrow (header: mono uppercase weekday + date over hairline rule), then week-groups ('WEEK OF JUN 22'); the selector already omits empty groups (US-005/FR-22)",
-        "Rows reuse TaskRow; selection/snooze/complete keys work identically here",
-        "Empty upcoming renders the italic empty state",
-        "e2e: seeded tasks across 3 weeks land in the correct groups",
-        "Visual gate passes for the Upcoming state",
-        "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
-        "Typecheck and lint pass"
-      ],
-      "priority": 14,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-009",
-        "US-010"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing component tests for UpcomingView (TDD)",
-          "description": "Create src/views/UpcomingView.test.tsx: day-group headers render mono uppercase weekday + date; week-group headers 'WEEK OF <date>'; rows render via TaskList/TaskRow; empty data renders italic empty state; groups arrive pre-filtered from upcomingGroups (assert no empty headers).",
-          "filePaths": [
-            "src/views/UpcomingView.test.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/views/UpcomingView.test.tsx"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement UpcomingView",
-          "description": "Replace placeholder src/views/UpcomingView.tsx: render upcomingGroups(data, today) (import from src/lib/selectors.ts created by US-005 and TaskList/TaskRow created by US-009 — do NOT reimplement) with §6 group headers; selection/snooze/complete flow through the same TaskList handlers as Today. Compute today via dates.ts todayStr(new Date()) at the view boundary (US-013's useToday() is a later, separate story — do not wait for it).",
-          "filePaths": [
-            "src/views/UpcomingView.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/views/UpcomingView.test.tsx",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-001",
-          "wiring_verification": {
-            "file": "src/views/UpcomingView.tsx",
-            "must_contain": [
-              "upcomingGroups",
-              "TaskList"
-            ]
-          },
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Write e2e for Upcoming grouping",
-          "description": "Create e2e/upcoming.spec.ts: seed tasks across 3 weeks; navigate to Upcoming (g u); assert 7-day day-groups then week groups, correct membership, empty groups absent.",
-          "filePaths": [
-            "e2e/upcoming.spec.ts"
-          ],
-          "commands": [
-            "pnpm exec playwright test e2e/upcoming.spec.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Visual gate for the Upcoming state",
-          "description": "Extend e2e/upcoming.spec.ts (owned by this story) with toHaveScreenshot captures of the seeded Upcoming view at 3 breakpoints. Run the gate (default / baseline unchanged) and cite screenshots.",
-          "filePaths": [
-            "e2e/upcoming.spec.ts"
-          ],
-          "commands": [
-            "pnpm exec playwright test e2e/upcoming.spec.ts",
-            "bash verification/run-visual-gate.sh /"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — command-only verification task",
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "timestamp": "2026-06-09T22:04:37.142615+00:00"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "timestamp": "2026-06-09T22:04:37.142615+00:00"
-        },
-        "visualReview": {
-          "status": "pending",
-          "blocking": false
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 100
-    },
-    {
-      "id": "US-015",
-      "title": "All and Done views with live filter",
-      "description": "As a user, I want a complete honest list and a browsable history, filterable by just typing.",
-      "acceptanceCriteria": [
-        "All view lists every open task (dated then anytime, by dueDate then order); Done view lists completed tasks by completedAt descending, struck-through muted per DESIGN-SYSTEM §8",
-        "In All view only, non-empty bar text (not starting with >) ALSO live-filters the list via allItems(filterText) while remaining valid capture input — Enter still captures it as a task and clears the filter (FR-20)",
-        "A mono hint 'filtering — Enter captures' appears under the bar while filtering",
-        "uncomplete is reachable in Done view: x/checkbox restores a task to open (status open, completedAt null)",
-        "Component/e2e tests: filter narrows visible rows; Enter during filter creates the task; Done uncomplete round-trips",
-        "Visual gate passes for All-filtered and Done states",
-        "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
-        "Typecheck and lint pass"
-      ],
-      "priority": 15,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-008",
-        "US-009",
-        "US-010",
-        "US-011"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing component tests for AllView and DoneView (TDD)",
-          "description": "Create src/views/AllView.test.tsx and src/views/DoneView.test.tsx: All renders dated-then-anytime open tasks; with barText 'rep' only matching rows show plus the mono hint 'filtering — Enter captures'; barText starting '>' does NOT filter (FR-18 boundary); Done renders completedAt-descending struck-through rows; x/checkbox in Done dispatches uncomplete restoring open + completedAt null.",
-          "filePaths": [
-            "src/views/AllView.test.tsx",
-            "src/views/DoneView.test.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/views/AllView.test.tsx src/views/DoneView.test.tsx"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement AllView and DoneView",
-          "description": "Replace placeholder src/views/AllView.tsx and src/views/DoneView.tsx: AllView reads useApp().barText, filters via allItems(data, barText) when non-empty and not command-mode; renders the filter hint; DoneView via doneItems with §8 struck-through muted rows and uncomplete affordance. Import selectors (US-005) and TaskList/TaskRow (US-009) — do NOT reimplement.",
-          "filePaths": [
-            "src/views/AllView.tsx",
-            "src/views/DoneView.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/views/AllView.test.tsx src/views/DoneView.test.tsx",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-001",
-          "wiring_verification": {
-            "file": "src/views/AllView.tsx",
-            "must_contain": [
-              "allItems",
-              "barText"
-            ]
-          },
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Write e2e for filter-then-capture flow",
-          "description": "Create e2e/all-done.spec.ts: navigate to All (g a); type 'rep' — rows narrow and hint shows; press Enter — task 'rep' is created, filter clears, toast shows; switch to Done (g d); complete a task then uncomplete it from Done and verify it returns to All.",
-          "filePaths": [
-            "e2e/all-done.spec.ts"
-          ],
-          "commands": [
-            "pnpm exec playwright test e2e/all-done.spec.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Visual gate for All-filtered and Done states",
-          "description": "Extend e2e/all-done.spec.ts (owned by this story) with toHaveScreenshot captures of All-with-filter and Done states. Run the gate (default / baseline unchanged) and cite screenshots.",
-          "filePaths": [
-            "e2e/all-done.spec.ts"
-          ],
-          "commands": [
-            "pnpm exec playwright test e2e/all-done.spec.ts",
-            "bash verification/run-visual-gate.sh /"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — command-only verification task",
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "timestamp": "2026-06-09T22:12:26.667020+00:00"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "timestamp": "2026-06-09T22:12:26.667020+00:00"
-        },
-        "visualReview": {
-          "status": "pending",
-          "blocking": false
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 100
-    },
-    {
-      "id": "US-016",
-      "title": "Persistence wiring, storage banner, multi-tab",
-      "description": "As a user, I want my data saved continuously and loudly told when it can't be.",
-      "acceptanceCriteria": [
-        "App state initializes from load() (recovery notice toast when recovered: true); every state change schedules a debounced (250ms) save()",
-        "save failure (quota/unavailable) sets a persistent dismissible banner under the masthead: danger border, mono text 'Changes aren't being saved — this browser's storage is unavailable.'; capture keeps working in memory (FR-41)",
-        "storage events for the app key dispatch externalReload: state replaced, undo/redo stacks cleared, toast 'List updated in another tab' (FR-43)",
-        "beforeunload flushes any pending debounced save (FR-40)",
-        "Integration tests: mutation → debounced write lands (fake timers); quota-failing storage shows banner; storage event clears stacks and toasts",
-        "Visual gate passes including banner-visible state",
-        "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
-        "Typecheck and lint pass"
-      ],
-      "priority": 16,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-010",
-        "US-011"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing tests for usePersistence (TDD)",
-          "description": "Create src/hooks/usePersistence.test.tsx with fake timers and makeMemoryStorage: initial state from load() including recovered:true → recovery toast; mutation schedules ONE debounced save after 250ms (rapid mutations coalesce); save quota failure flips a persistent banner flag while state keeps mutating in memory; storage event for todo-quantum.v1 dispatches externalReload (stacks cleared — assert undo afterwards is a no-op) and toasts 'List updated in another tab'; beforeunload flushes the pending save.",
-          "filePaths": [
-            "src/hooks/usePersistence.test.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/hooks/usePersistence.test.tsx"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement src/hooks/usePersistence.ts",
-          "description": "Implement the hook: load-on-init is ALREADY wired in AppContext (US-006) — this hook owns the rest: surface recovery toast when recovered:true, debounced 250ms save on state.data change (import save from src/lib/persistence.ts created by US-001 — do NOT reimplement), quota-failure → banner state + keep running, storage-event listener for the app key → externalReload + 'List updated in another tab' toast, beforeunload flush.",
-          "filePaths": [
-            "src/hooks/usePersistence.ts"
-          ],
-          "commands": [
-            "pnpm test -- --run src/hooks/usePersistence.test.tsx"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-001",
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Implement StorageBanner and wire both into App.tsx; run story gates",
-          "description": "Create src/components/StorageBanner.tsx (danger border, mono text per AC, dismissible, role=alert per FR-44) and wire usePersistence() + <StorageBanner /> under the masthead in src/App.tsx. Run full story gates.",
-          "filePaths": [
-            "src/components/StorageBanner.tsx",
-            "src/App.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — wiring + presentational task verified by wiring_verification and the T-001 suite",
-          "wiring_verification": {
-            "file": "src/App.tsx",
-            "must_contain": [
-              "usePersistence",
-              "StorageBanner"
-            ]
-          },
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Visual gate including banner-visible state",
-          "description": "Create e2e/states-banner.spec.ts capturing the storage-banner state (inject a quota-failing storage stub via init script) with toHaveScreenshot. Banner hidden by default — gate passes against existing baseline. Cite screenshots.",
-          "filePaths": [
-            "e2e/states-banner.spec.ts"
-          ],
-          "commands": [
-            "pnpm exec playwright test e2e/states-banner.spec.ts",
-            "bash verification/run-visual-gate.sh /"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — command-only verification task",
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "timestamp": "2026-06-09T22:18:13.922356+00:00"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "timestamp": "2026-06-09T22:18:13.922356+00:00"
-        },
-        "visualReview": {
-          "status": "pending",
-          "blocking": false
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "dependsOn US-010 is an App.tsx single-ownership serialization edge, not a semantic need. dependsOn US-011 IS semantic (recovery + multi-tab toasts).",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 100
-    },
-    {
-      "id": "US-017",
-      "title": "Cheatsheet overlay",
-      "description": "As a user, I want ? (or >help) to show every key so the keyboard layer is discoverable. (Depends on US-008 and US-010, which register the entry points.)",
-      "acceptanceCriteria": [
-        "src/components/Cheatsheet.tsx [NEW]: overlay per DESIGN-SYSTEM §6 — surface sheet over bg scrim at 80% opacity, double-rule header, two-column mono key table listing every US-010 binding",
-        "role=dialog + aria-modal=true; focus trapped inside; Esc closes (FR-17 precedence: highest); focus returns to the previously focused element on close (FR-46)",
-        "Opens via ? in LIST context (US-010 binding) and via >help (US-008 command); both paths wired here",
-        "Component tests: open via both paths, focus trap cycles, Esc closes and restores focus",
-        "Visual gate passes including cheatsheet-open state",
-        "Browser-verified: visual-gate screenshots at 375/768/1280 inspected and cited in completion evidence",
-        "Typecheck and lint pass"
-      ],
-      "priority": 17,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-008",
-        "US-010",
-        "US-016"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing component tests for Cheatsheet (TDD)",
-          "description": "Create src/components/Cheatsheet.test.tsx: opens via the '?' keymap callback and via the >help command handler; role=dialog + aria-modal; Tab cycles inside (focus trap); Esc closes and focus returns to the previously focused element; key table lists every US-010 binding (assert presence of j, k, x, 1, 2, 3, g t, ?, ⌘Z rows).",
-          "filePaths": [
-            "src/components/Cheatsheet.test.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/components/Cheatsheet.test.tsx"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement Cheatsheet component",
-          "description": "Create src/components/Cheatsheet.tsx per §6: bg scrim 80%, surface sheet, double-rule header echoing the masthead, two-column mono key table, focus trap + restore, Esc close (registered at top of FR-17 precedence). Tokens only.",
-          "filePaths": [
-            "src/components/Cheatsheet.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run src/components/Cheatsheet.test.tsx"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — implementation of the tests written in T-001",
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Wire both entry points in App.tsx; run story gates",
-          "description": "Mount <Cheatsheet /> in src/App.tsx with open-state; pass the real open callback into useKeymap's '?' slot (US-010) and the commands.ts help handler (US-008) — replacing the no-ops. Run full story gates.",
-          "filePaths": [
-            "src/App.tsx"
-          ],
-          "commands": [
-            "pnpm test -- --run",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — wiring task verified by wiring_verification and the T-001 suite",
-          "wiring_verification": {
-            "file": "src/App.tsx",
-            "must_contain": [
-              "Cheatsheet"
-            ]
-          },
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Visual gate including cheatsheet-open state",
-          "description": "Create e2e/states-cheatsheet.spec.ts capturing the open cheatsheet with toHaveScreenshot at 3 breakpoints. Hidden by default — gate passes against existing baseline. Cite screenshots.",
-          "filePaths": [
-            "e2e/states-cheatsheet.spec.ts"
-          ],
-          "commands": [
-            "pnpm exec playwright test e2e/states-cheatsheet.spec.ts",
-            "bash verification/run-visual-gate.sh /"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — command-only verification task",
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "timestamp": "2026-06-09T22:28:39.516814+00:00"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "timestamp": "2026-06-09T22:28:39.516814+00:00"
-        },
-        "visualReview": {
-          "status": "pending",
-          "blocking": false
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "dependsOn US-016 is an App.tsx single-ownership serialization edge, not a semantic need.",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 100
-    },
-    {
-      "id": "US-018",
-      "title": "Speed-benchmark e2e suite",
-      "description": "As the team, we want the headline goals enforced as machine-verifiable journeys so 'fast' is a regression-tested property.",
-      "acceptanceCriteria": [
-        "e2e/speed.spec.ts [NEW] passes via pnpm exec playwright test e2e/ (FR-48)",
-        "Capture proxy (G-1): from page load, keyboard-only — type canonical string, Enter — task row visible; zero non-typing interactions; time from Enter keyup to row visible < 200ms (Playwright timestamp assertion)",
-        "Zero-click Today (G-2): seeded storage → Today sections visible with no interaction",
-        "Triage proxy (G-3): 5 seeded rollover tasks cleared via only ↓ x 1 2 3 keys in a single run; Today's rollover section empties",
-        "Undo journey: complete → ⌘Z → task restored open",
-        "Reload persistence: capture → reload → task present",
-        "Dark theme smoke: data-theme=dark renders with dark tokens (bg computed style #1A1611)",
-        "Typecheck and lint pass"
-      ],
-      "priority": 18,
-      "status": "passed",
-      "startedAt": null,
-      "dependsOn": [
-        "US-012",
-        "US-013",
-        "US-014",
-        "US-015",
-        "US-016",
-        "US-017"
-      ],
-      "storyType": "test",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write the speed-benchmark e2e suite",
-          "description": "Create e2e/speed.spec.ts with the six journeys from the ACs: capture (<200ms Enter-to-row via performance timestamps, keyboard only), zero-click Today (seeded), 5-task triage with ↓ x 1 2 3 only, undo via ⌘Z, reload persistence, dark-theme smoke (set data-theme=dark, assert body background rgb(26,22,17)). Seed via localStorage key todo-quantum.v1.",
-          "filePaths": [
-            "e2e/speed.spec.ts"
-          ],
-          "commands": [
-            "pnpm exec playwright test e2e/speed.spec.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Run the full gate suite as final evidence",
-          "description": "Run every configured gate end-to-end and record output as Iron Law evidence: typecheck, lint, unit with coverage ≥ 80, full e2e directory, visual gate. For the FR-48 Lighthouse load condition, configure lighthouserc.json with a puppeteerScript (or equivalent collect.settings) that seeds 100 tasks into localStorage key todo-quantum.v1 before auditing, then run lhci and assert performance ≥ 0.9 against the seeded route.",
-          "filePaths": [
-            "lighthouserc.json"
-          ],
-          "commands": [
-            "pnpm run typecheck",
-            "pnpm run lint",
-            "pnpm test -- --run",
-            "pnpm exec playwright test e2e/",
-            "bash verification/run-visual-gate.sh /"
-          ],
-          "testFirst": false,
-          "notes": "testFirst: false — command-only verification task, no source files",
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "timestamp": "2026-06-09T22:43:29.989459+00:00"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "timestamp": "2026-06-09T22:43:29.989459+00:00"
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "",
-      "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-      "complexity": 100
-    }
-  ],
-  "progress": [
-    {
-      "timestamp": "2026-06-09T20:53:30Z",
-      "iteration": 1,
-      "storyId": "US-001",
-      "action": "story_passed",
-      "details": "types.ts/dates.ts/persistence.ts implemented TDD; 50 unit tests pass; typecheck+lint clean",
-      "filesChanged": [
-        "src/lib/types.ts",
-        "src/lib/dates.ts",
-        "src/lib/dates.test.ts",
-        "src/lib/persistence.ts",
-        "src/lib/persistence.test.ts",
-        "vite.config.ts"
-      ],
-      "learnings": "vitest default include collected Playwright specs; scoped test.include to src/**/*.test.{ts,tsx} in vite.config.ts. Use pnpm exec vitest run <file> for targeted runs (pnpm passes literal -- through). ISO weekday convention 1=Mon..7=Sun."
-    },
-    {
-      "timestamp": "2026-06-09T20:58:38Z",
-      "iteration": 1,
-      "storyId": "US-002",
-      "action": "story_passed",
-      "details": "parser.ts full FR-1..FR-10 grammar TDD; 53 parser tests; adjacent date+time tokens merge into one chip (canonical = 3 chips)",
-      "filesChanged": [
-        "src/lib/parser.ts",
-        "src/lib/parser.test.ts"
-      ],
-      "learnings": "Adjacent date+time tokens merge into a single date chip with display \"Wed Jun 10, 3:00 PM\" to satisfy the 3-chip canonical AC; non-adjacent stay separate."
-    },
-    {
-      "timestamp": "2026-06-09T21:00:25Z",
-      "iteration": 1,
-      "storyId": "US-003",
-      "action": "story_passed",
-      "details": "recurrence.ts nextOccurrence TDD; 21 tests covering daily/weekly/monthly, parity, clamping, overdue, DST weeks",
-      "filesChanged": [
-        "src/lib/recurrence.ts",
-        "src/lib/recurrence.test.ts"
-      ],
-      "learnings": "Weekly parity computed via isoWeekStart deltas; monthly via year*12+month arithmetic with clamping; anchor parity preserved on overdue completion."
-    },
-    {
-      "timestamp": "2026-06-09T21:02:19Z",
-      "iteration": 1,
-      "storyId": "US-005",
-      "action": "story_passed",
-      "details": "selectors.ts todayItems/upcomingGroups/allItems/doneItems TDD; 22 selector tests; rollover derived at read time",
-      "filesChanged": [
-        "src/lib/selectors.ts",
-        "src/lib/selectors.test.ts"
-      ],
-      "learnings": "todayItems returns {rollover, dueToday, anytime}; upcomingGroups returns [{kind, start, label, tasks}] with labels \"Wed Jun 10\" / \"Week of Jun 15\" (UI uppercases via CSS)."
-    },
-    {
-      "timestamp": "2026-06-09T21:05:51Z",
-      "iteration": 1,
-      "storyId": "US-004",
-      "action": "story_passed",
-      "details": "store.ts reducer TDD; 30 store tests; inverse-op undo/redo cap 50; recurring complete spawns via nextOccurrence with compound inverse",
-      "filesChanged": [
-        "src/lib/store.ts",
-        "src/lib/store.test.ts"
-      ],
-      "learnings": "Inverse ops are themselves union members (restore{task,index}, markDone, revertComplete{spawnedId}); delete inverse re-inserts at original array index for deep-equal round-trips; redo re-spawns deterministically by reusing spawnedId as newId."
-    },
-    {
-      "timestamp": "2026-06-09T21:12:28Z",
-      "iteration": 1,
-      "storyId": "US-006",
-      "action": "story_passed",
-      "details": "App shell: masthead (Fraunces over double rule), ViewTabs, 4 placeholder views, AppContext over store reducer seeded from persistence.load. Visual gate PASS (regression 3/3, axe 4/4). Baselines inspected at __screenshots__/verification/visual.spec.ts/--{mobile,tablet,desktop}.png. Lighthouse perf 0.58 advisory (dev-server measurement).",
-      "filesChanged": [
-        "src/App.tsx",
-        "src/App.css",
-        "src/index.css",
-        "src/components/ViewTabs.tsx",
-        "src/views/TodayView.tsx",
-        "src/views/UpcomingView.tsx",
-        "src/views/AllView.tsx",
-        "src/views/DoneView.tsx",
-        "src/state/AppContext.tsx",
-        "e2e/shell.spec.ts",
-        "playwright.config.ts"
-      ],
-      "learnings": "playwright.config.ts now has webServer with reuseExistingServer:true — playwright manages the dev server for e2e. Visual baselines live at __screenshots__/verification/visual.spec.ts/ (snapshotPathTemplate), not verification/visual.spec.ts-snapshots. Lighthouse perf vs dev server is advisory (config || true)."
-    },
-    {
-      "timestamp": "2026-06-09T21:23:15Z",
-      "iteration": 1,
-      "storyId": "US-007",
-      "action": "story_passed",
-      "details": "CommandBar with mirrored chip overlay; 10 component tests; visual gate PASS; chips-state screenshots at __screenshots__/e2e/states-commandbar.spec.ts/ and re-blessed route baseline inspected at all 3 breakpoints.",
-      "filesChanged": [
-        "package.json",
-        "vite.config.ts",
-        "src/test-setup.ts",
-        "src/components/CommandBar.tsx",
-        "src/components/CommandBar.css",
-        "src/components/CommandBar.test.tsx",
-        "src/App.tsx",
-        "e2e/states-commandbar.spec.ts"
-      ],
-      "learnings": "Component tests use per-file // @vitest-environment jsdom pragma. Node>=22 ships a disabled localStorage global that makes vitest populateGlobal skip jsdom Storage — src/test-setup.ts re-attaches it. Esc revert keeps the literal text in the bar and demotes the token from the parse (revertedTokens list). CommandBar styles colocated in CommandBar.css (App.css is owned by US-006/US-013). When re-blessing baselines, verify against a FRESH dev server and re-run the comparison."
-    },
-    {
-      "timestamp": "2026-06-09T21:27:07Z",
-      "iteration": 1,
-      "storyId": "US-008",
-      "action": "story_passed",
-      "details": "Command mode: commands.ts registry (7 commands) + fuzzy subsequence matcher; CommandBar > mode with listbox, aria-activedescendant, Esc-to-empty; 208 unit tests, 15 e2e, visual gate PASS; command-mode screenshots inspected at 3 breakpoints.",
-      "filesChanged": [
-        "src/lib/commands.ts",
-        "src/lib/commands.test.ts",
-        "src/components/CommandBar.tsx",
-        "src/components/CommandBar.css",
-        "src/components/CommandBar.test.tsx",
-        "e2e/states-commandmode.spec.ts"
-      ],
-      "learnings": "openCheatsheet is a CommandBar prop defaulting to no-op; US-017 wires the real overlay. Command list options execute on mouseDown to beat input blur."
-    },
-    {
-      "timestamp": "2026-06-09T21:33:49Z",
-      "iteration": 1,
-      "storyId": "US-009",
-      "action": "story_passed",
-      "details": "TaskRow + TaskList with selection/roving tabindex; TodayView wired to todayItems; 15 component tests; 20 e2e; visual gate PASS; seeded-state screenshots inspected at __screenshots__/e2e/states-tasklist.spec.ts/.",
-      "filesChanged": [
-        "src/components/TaskRow.tsx",
-        "src/components/TaskRow.test.tsx",
-        "src/components/TaskList.tsx",
-        "src/components/TaskList.test.tsx",
-        "src/components/TaskList.css",
-        "src/views/TodayView.tsx",
-        "e2e/states-tasklist.spec.ts"
-      ],
-      "learnings": "TaskList supports controlled (selectedId/onSelect) and uncontrolled selection for US-010 keymap. Title click opens inline edit with stopPropagation — e2e selecting a row must click the meta area. TaskRow/TaskList styles in TaskList.css."
-    },
-    {
-      "timestamp": "2026-06-09T21:41:03Z",
-      "iteration": 1,
-      "storyId": "US-011",
-      "action": "story_passed",
-      "details": "Toast component + toast slice with wrapped dispatch in AppContext (every mutation toasts); 11 component tests; 25 e2e; visual gate PASS; toast screenshots inspected.",
-      "filesChanged": [
-        "src/components/Toast.tsx",
-        "src/components/Toast.css",
-        "src/components/Toast.test.tsx",
-        "src/state/AppContext.tsx",
-        "src/App.tsx",
-        "e2e/states-toast.spec.ts"
-      ],
-      "learnings": "useApp().dispatch is the WRAPPED dispatch (builds toast message from pre-reduce state via stateRef). Fake timers + user-event deadlock in vitest4/jsdom — use fireEvent + vi.useFakeTimers({toFake:[setTimeout,clearTimeout]}) for timer-driven component tests."
-    },
-    {
-      "timestamp": "2026-06-09T21:47:35Z",
-      "iteration": 1,
-      "storyId": "US-010",
-      "action": "story_passed",
-      "details": "useKeymap hook: FR-15..FR-17 focus model, FR-37 undo routing in 3 contexts, g-sequences, typeahead handoff; 20 hook tests; 30 e2e; visual gate PASS; focus-state screenshot inspected.",
-      "filesChanged": [
-        "src/hooks/useKeymap.ts",
-        "src/hooks/useKeymap.test.tsx",
-        "src/App.tsx",
-        "src/state/AppContext.tsx",
-        "src/components/CommandBar.tsx",
-        "src/views/TodayView.tsx",
-        "e2e/states-focus.spec.ts"
-      ],
-      "learnings": "Selection state + barRef live in AppContext (selectedTaskId/setSelectedTaskId/barRef) — sequential-mode deviation from declared filePaths, needed because US-010 cannot edit TodayView per ownership. US-013 must preserve TaskList selectedId/onSelect wiring. onEdit triggers TaskRow inline edit via DOM .task-row-title click. setBarText is Dispatch<SetStateAction<string>> for typeahead appends."
-    },
-    {
-      "timestamp": "2026-06-09T21:51:06Z",
-      "iteration": 1,
-      "storyId": "US-012",
-      "action": "story_passed",
-      "details": "Snooze: store-suite target tests (weekend-on-weekend, month boundary, undated->Scheduled), TaskRow overflow menu (Tomorrow/Next week/Weekend), key-1 snooze e2e; 262 unit, 33 e2e, visual gate PASS; menu screenshot inspected.",
-      "filesChanged": [
-        "src/lib/store.test.ts",
-        "src/components/TaskRow.tsx",
-        "src/components/TaskRow.test.tsx",
-        "src/components/TaskList.css",
-        "e2e/states-snooze.spec.ts"
-      ],
-      "learnings": "Key 1/2/3 snooze was already wired in US-010 useKeymap; US-012 adds mouse parity via the overflow menu. Toast labels (Snoozed to X / Scheduled) come from the wrapped dispatch in AppContext."
-    },
-    {
-      "timestamp": "2026-06-09T22:00:03.781126+00:00",
-      "iteration": 8,
-      "storyId": "US-013",
-      "action": "story_passed",
-      "details": "useToday hook (focus recompute + re-arming local-midnight timer, DST-safe via local Date constructor); TodayView assembled with load reveal (masthead settles, rows stagger 40ms via inline animation-delay, reduced-motion animation:none); e2e today.spec.ts; canonical baseline unchanged and re-verified.",
-      "filesChanged": [
-        "src/hooks/useToday.ts",
-        "src/hooks/useToday.test.tsx",
-        "src/views/TodayView.tsx",
-        "src/App.css",
-        "e2e/today.spec.ts"
-      ],
-      "learnings": "Machine TZ is fixed CST (no DST) — DST-sensitive tests must pin process.env.TZ at top of test file before imports. Reveal classes added imperatively in useLayoutEffect survive React re-renders unless className prop changes; gate one-shot reveal with module-level flag."
-    },
-    {
-      "timestamp": "2026-06-09T22:04:37.142615+00:00",
-      "iteration": 8,
-      "storyId": "US-014",
-      "action": "story_passed",
-      "details": "UpcomingView maps upcomingGroups(data, useToday()) onto TaskList sections (day labels then week labels, CSS-uppercased); empty state preserved; e2e seeds 4 tasks across 3 weeks and asserts group membership; 3 new blessed baselines upcoming-grouped-{mobile,tablet,desktop}.",
-      "filesChanged": [
-        "src/views/UpcomingView.tsx",
-        "src/views/UpcomingView.test.tsx",
-        "e2e/upcoming.spec.ts",
-        "__screenshots__/e2e/upcoming.spec.ts/"
-      ],
-      "learnings": "e2e screenshot baselines embed the live masthead date and relative seed dates — suite assumes same-day regeneration, consistent with prior states-* baselines."
-    },
-    {
-      "timestamp": "2026-06-09T22:12:26.667020+00:00",
-      "iteration": 8,
-      "storyId": "US-015",
-      "action": "story_passed",
-      "details": "AllView partitions allItems(filterText) into Dated/Anytime TaskList sections; FR-20 live filter from shared barText (non-empty, not >-prefixed) with mono filter-hint; DoneView renders custom done rows (TaskRow checkbox is disabled when done) with checkbox + x-key uncomplete; 6 blessed baselines (all-filtered/done x 3 breakpoints). Footprint deviation surfaced: added .filter-hint to src/App.css (outside contract files; no conflict — App.css wave owner US-013 already merged).",
-      "filesChanged": [
-        "src/views/AllView.tsx",
-        "src/views/DoneView.tsx",
-        "src/views/AllView.test.tsx",
-        "src/views/DoneView.test.tsx",
-        "src/App.css",
-        "e2e/all-done.spec.ts",
-        "__screenshots__/e2e/all-done.spec.ts/"
-      ],
-      "learnings": "useKeymap listens at document level so row-level React handlers fire first; DoneView x-reopen must stopPropagation or the keymap re-completes the row. TaskRow checkbox is disabled for done tasks — Done view needs its own row markup for uncomplete."
-    },
-    {
-      "timestamp": "2026-06-09T22:18:13.922356+00:00",
-      "iteration": 8,
-      "storyId": "US-016",
-      "action": "story_passed",
-      "details": "usePersistence hook: 250ms debounced save with coalescing, beforeunload + unmount flush, storage-event externalReload with stack clear and toast, recovery toast; StorageBanner component (own CSS file, danger tokens) wired under masthead in App.tsx; e2e includes real two-tab sync and quota-failure via patched Storage.prototype.setItem; 3 blessed banner baselines; full e2e suite 59/59.",
-      "filesChanged": [
-        "src/hooks/usePersistence.ts",
-        "src/hooks/usePersistence.test.tsx",
-        "src/components/StorageBanner.tsx",
-        "src/components/StorageBanner.css",
-        "src/App.tsx",
-        "e2e/states-banner.spec.ts",
-        "__screenshots__/e2e/states-banner.spec.ts/"
-      ],
-      "learnings": "e2e quota simulation: addInitScript patching Storage.prototype.setItem to throw DOMException QuotaExceededError for the app key only — load still works, save fails. Two Playwright pages in one context share localStorage and fire real storage events."
-    },
-    {
-      "timestamp": "2026-06-09T22:28:39.516814+00:00",
-      "iteration": 8,
-      "storyId": "US-017",
-      "action": "story_passed",
-      "details": "Cheatsheet overlay (own CSS): bg scrim at 0.8 opacity via pseudo-element, double-rule Fraunces header, two-column mono dl key table with all US-010 bindings; focus trapped (dialog-container focus, generic Tab cycle), Esc closes with stopPropagation beating keymap precedence, focus restored on unmount; wired ? (useKeymap) and >help (CommandBar prop) in App.tsx; 3 blessed baselines after fixing default focus ring + key-column collisions.",
-      "filesChanged": [
-        "src/components/Cheatsheet.tsx",
-        "src/components/Cheatsheet.css",
-        "src/components/Cheatsheet.test.tsx",
-        "src/App.tsx",
-        "e2e/states-cheatsheet.spec.ts",
-        "__screenshots__/e2e/states-cheatsheet.spec.ts/"
-      ],
-      "learnings": "Focus the dialog container (tabIndex -1), never a button, on modal open: user-event (and some AT) complete an Enter press as a click on whatever is focused at keyup, instantly closing the modal. Unconditional stopPropagation inside the dialog prevents keymap typeahead from stealing focus to the bar."
-    },
-    {
-      "timestamp": "2026-06-09T22:43:29.989459+00:00",
-      "iteration": 8,
-      "storyId": "US-018",
-      "action": "story_passed",
-      "details": "speed.spec.ts: G-1 capture <200ms via in-page keyup-to-row PerformanceObserver-style timer (measured well under 200ms), G-2 zero-click Today, G-3 triage with only down/x/1/2/3, undo journey, reload persistence, dark-theme smoke, 100-task render. FR-48 lighthouse: lighthouserc.json repointed to production build (pnpm run build && pnpm run preview, port 4173) -> perf 1.0 / a11y 1.0 / bp 1.0. Inline fix task: Google Fonts moved from render-blocking CSS @import (tokens.css) to async link in index.html (media=print onload swap + preconnect + noscript) — FCP 4.6s -> 1.2s. Also added local process declare in useToday.test.tsx (tsc -b build is the real typecheck; root tsc --noEmit checks nothing).",
-      "filesChanged": [
-        "e2e/speed.spec.ts",
-        "lighthouserc.json",
-        "index.html",
-        "src/styles/tokens.css",
-        "src/hooks/useToday.test.tsx"
-      ],
-      "learnings": "Root tsconfig has files:[] so pnpm run typecheck (tsc --noEmit) validates nothing — the build (tsc -b) is the effective type gate. Lighthouse against vite dev server is meaningless (0.58); prod preview scored 1.0 after de-blocking fonts. lhci cannot seed localStorage without puppeteer; seeded-load perf is covered by a Playwright 100-task render test."
-    }
-  ],
-  "codebasePatterns": [
-    "All colors/spacing/type via CSS variables from DESIGN-SYSTEM.md — no literals in components",
-    "Every interactive element has a visible focus-visible style (2px accent ring, 2px offset)",
-    "src/lib/ modules are framework-free: no React imports, clocks/storage/ids injected as parameters",
-    "Unit tests use generator functions (makeTask, makeAppData, makeMemoryStorage), never beforeEach mutation",
-    "Test names state concrete behavior: 'snoozing with key 1 sets dueDate to tomorrow', never 'works correctly'",
-    "No `any` in TypeScript — use real types or unknown",
-    "Date math uses local-date components from src/lib/dates.ts — never UTC ms arithmetic across days",
-    "Same-wave stories own disjoint files: views live in src/views/<View>.tsx, components in src/components/, App.tsx is owned by exactly one in-flight story at a time",
-    "Date helpers use ISO weekday numbering 1=Mon..7=Sun; all date math via local components (new Date(y,m-1,d+n,12))",
-    "Parser: pass order recurrence->date->time->list->priority, first-wins per kind, word-level whole-token matching; chip displays: date \"Wed Jun 10\", time \"3:00 PM\", list \"#work\", priority \"P1\", recurrence source text",
-    "Store: reducer(state, action) pure; mutating payloads carry injected ids/dates (newId, completedAt, today); internal inverse action types restore/markDone/revertComplete",
-    "UI: classes shell-column/masthead/view-tabs/view-tab/keycap/empty-state in App.css; tokens only; aria-current=page marks active tab; useApp() from src/state/AppContext",
-    "Component tests: // @vitest-environment jsdom pragma + src/test-setup.ts localStorage shim; probe context state by rendering a JSON <pre> probe inside AppProvider",
-    "TaskList sections prop: [{label, tasks, rollover?}]; empty sections omitted; all-empty renders empty-state line. TaskRow classes: task-row--p1/--rollover/--selected/--done",
-    "Toast: useApp().toast + showToast; wrapped dispatch emits Captured/Completed/Done — next <date>/Deleted/Snoozed to <date>/Scheduled/Saved/Reopened/Undone/Redone",
-    "useKeymap config: callbacks (onComplete/onEdit/onDelete/onSnooze/onUndo/onRedo/onTypeahead) + getRowIds reads DOM .task-row[data-task-id]; today injectable",
-    "DST-sensitive unit tests pin process.env.TZ=America/New_York as first line of the test file; midnight math via new Date(y,m,d+1,0,0,0) local constructor, never +24h",
-    "New components get their own CSS file next to the component (StorageBanner.css pattern), tokens only"
-  ],
-  "userIntent": {
-    "text": "todo app that implements the best features from existing todo apps and fixes common pain points",
-    "timestamp": "2026-06-09T18:39:06Z",
-    "source_message_id": null
-  },
-  "userClarifications": [
-    {
-      "question": "Weekend snooze target when today is already Sat/Sun",
-      "answer": "Next Saturday strictly after today (snooze always moves forward)",
-      "stage": "spec",
-      "timestamp": "2026-06-09T20:15:37Z"
-    },
-    {
-      "question": "Free-text search in v1",
-      "answer": "Bar text live-filters the All view only; no search command; global search out of scope",
-      "stage": "spec",
-      "timestamp": "2026-06-09T20:15:37Z"
-    },
-    {
-      "question": "Undo stack when another tab writes storage",
-      "answer": "Clear undo/redo stacks and show List-updated-in-another-tab toast",
-      "stage": "spec",
-      "timestamp": "2026-06-09T20:15:37Z"
-    },
-    {
-      "question": "JSON export/import in v1",
-      "answer": "Out of scope v1 (explicit Non-Goal NG-6)",
-      "stage": "spec",
-      "timestamp": "2026-06-09T20:15:37Z"
-    }
-  ],
-  "dagValidation": {
-    "timestamp": "2026-06-09T20:38:13Z",
-    "prdSha": "38ea23a910b7ced7645ecf0c9ffb7a7da7654289bd43d1ccf32de50b3a0109c7",
-    "bottlenecks": [
-      {
-        "type": "warning",
-        "storyId": "US-007",
-        "detail": "fan-out 4 (US-008/009/010/011) plus singleton waves 3-5 (US-004 -> US-006 -> US-007). Extraction of US-007 T-001 component-test tooling evaluated and rejected: US-011 stays serialized behind US-007 via the App.tsx single-owner chain and US-009 via the verification/visual.spec.ts-snapshots re-bless chain, so no parallelism would be unlocked. Intentional layering preserved.",
-        "fix": "warning",
-        "reverted": false
-      },
-      {
-        "type": "warning",
-        "storyId": "US-018",
-        "detail": "fan-in 6 — final integration/benchmark story; expected terminal aggregation, no restructuring.",
-        "fix": "warning",
-        "reverted": false
-      },
-      {
-        "type": "warning",
-        "storyId": "US-001",
-        "detail": "fan-out 4 — foundation types/persistence story; expected root, no restructuring.",
-        "fix": "warning",
-        "reverted": false
+      "esc_two_tier": {
+        "value": "Esc reverts the most recent session chip ((kind, parsed value) absent from mount-time baseline parse); with no session chips Esc invokes onCancel (edit: cancel; bar: existing behavior)"
       }
-    ],
-    "duplicationRisks": [],
-    "fileConflictsComputed": 14,
-    "stubsCreated": [],
-    "timeouts": [],
-    "complexityScored": true,
-    "complexityFormula": "min(100, task_count*10 + dependsOn_depth*15 + (has_security_tag ? 30 : 0) + filePaths_count*2)"
-  },
-  "reviews": {
-    "command-bar-todo": {
-      "deepReview": {
-        "feature_id": "command-bar-todo",
-        "base_sha": "7e7acaf",
-        "head_sha": "3cd2525ab8eb6203a62169b7621b7c0ded3e44e1",
-        "files_changed": 142,
-        "stories_included": [
-          "US-001",
-          "US-002",
-          "US-003",
-          "US-004",
-          "US-005",
-          "US-006",
-          "US-007",
-          "US-008",
-          "US-009",
-          "US-010",
-          "US-011",
-          "US-012",
-          "US-013",
-          "US-014",
-          "US-015",
-          "US-016",
-          "US-017",
-          "US-018"
-        ],
-        "timestamp": "2026-06-10T17:55:00Z",
-        "risk_score": 35,
-        "tier": "MEDIUM",
-        "reviewers_dispatched": [
-          "code-reviewer",
-          "test-engineer",
-          "silent-failure-hunter",
-          "cross-story-synthesizer",
-          "live-devtools-interactive"
-        ],
-        "report": "docs/reviews/command-bar-todo-deep-review.md",
-        "findings_summary": {
-          "critical": 2,
-          "high": 8,
-          "medium": 11,
-          "low": 10
-        },
-        "blockers": [
-          "F-001 corrupt-storage white-screen loop (persistence.ts isAppData)",
-          "F-002 unguarded localStorage SecurityError white-screen",
-          "F-003 command-palette arrows broken with non-empty list",
-          "F-004 stale chip-revert state corrupts later captures"
-        ],
-        "high_priority": [
-          "F-005",
-          "F-006",
-          "F-007",
-          "F-008",
-          "F-009",
-          "F-010"
-        ],
-        "conflicts": [],
-        "suppressed_count": 0,
-        "kudos": [
-          "DST-proof date math + fully round-tripped inverse-op undo",
-          "exemplary cross-story contract discipline (single-source keys/types/tokens, byte-identical copy)",
-          "honest test suite: no over-mocking, real failure injection, true Enter-to-paint measurement"
-        ],
-        "verdict": "REQUEST_CHANGES",
-        "resolution": {
-          "status": "RESOLVED",
-          "resolvedAt": "2026-06-10T19:30:00Z",
-          "commits": [
-            "543125a",
-            "6addcd6",
-            "643f272"
-          ],
-          "deferred": [
-            "F-018 DoneView/TaskRow consolidation",
-            "low-severity dedup debt (date-format x3, View union x3, dead exports, e2e SeedTask type)"
-          ],
-          "evidence": "typecheck+lint pass; 335/335 unit; coverage enforced 92/86/93/95; 72/72 e2e; visual gate PASS; seeded Lighthouse >=0.9; F-003/004/005/007/013 re-verified live"
-        }
+    },
+    "css_classes": {
+      "chip_class": {
+        "value": "command-bar-chip",
+        "notes": "class name intentionally unchanged when chip CSS moves to ParsedInput.css in US-104, keeping the visual baseline stable"
       }
     }
   }
