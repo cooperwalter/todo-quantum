@@ -125,6 +125,65 @@ describe('TaskRow inline edit', () => {
   });
 });
 
+describe('TaskRow edit close returns selection to the row', () => {
+  function renderRowWithSelect(task: Task) {
+    const onSelect = vi.fn();
+    window.localStorage.setItem(
+      'todo-quantum.v1',
+      JSON.stringify({ schemaVersion: 1, tasks: [task] }),
+    );
+    render(
+      <AppProvider>
+        <TaskRow task={task} onSelect={onSelect} />
+        <TasksProbe />
+      </AppProvider>,
+    );
+    return onSelect;
+  }
+
+  function rowElement(task: Task): HTMLElement {
+    return document.querySelector(`[data-task-id="${task.id}"]`) as HTMLElement;
+  }
+
+  it('Esc-cancelling an edit selects the edited row and moves focus onto it', async () => {
+    const user = userEvent.setup();
+    const task = makePlainTask();
+    const onSelect = renderRowWithSelect(task);
+    await user.click(screen.getByText('Send report'));
+    await user.keyboard('{Escape}');
+    expect(onSelect).toHaveBeenLastCalledWith(task.id);
+    expect(document.activeElement).toBe(rowElement(task));
+  });
+
+  it('saving an edit with Enter selects the edited row and moves focus onto it', async () => {
+    const user = userEvent.setup();
+    const task = makePlainTask();
+    const onSelect = renderRowWithSelect(task);
+    await user.click(screen.getByText('Send report'));
+    const edit = screen.getByRole('textbox', { name: /edit task/i });
+    await user.clear(edit);
+    await user.type(edit, 'Send the Q2 report{Enter}');
+    expect(probedTasks()[0].title).toBe('Send the Q2 report');
+    expect(onSelect).toHaveBeenLastCalledWith(task.id);
+    expect(document.activeElement).toBe(rowElement(task));
+  });
+
+  it('saving an edit via blur does not pull focus back onto the row', async () => {
+    const user = userEvent.setup();
+    const task = makePlainTask();
+    const onSelect = renderRowWithSelect(task);
+    await user.click(screen.getByText('Send report'));
+    const edit = screen.getByRole('textbox', { name: /edit task/i });
+    await user.clear(edit);
+    await user.type(edit, 'Send quarterly report');
+    onSelect.mockClear();
+    fireEvent.blur(edit);
+    expect(probedTasks()[0].title).toBe('Send quarterly report');
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(document.activeElement).not.toBe(rowElement(task));
+  });
+});
+
 describe('TaskRow keyboard-first surface (US-107)', () => {
   it('renders no overflow options button and no snooze menu for an open task', () => {
     renderRow(makeTask());

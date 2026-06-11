@@ -148,6 +148,46 @@ describe('ParsedInput onKeyDown consumption', () => {
   });
 });
 
+describe('ParsedInput keystroke containment (document-level keymap must not see handled keys)', () => {
+  function listenOnDocument(key: string): { calls: () => number; dispose: () => void } {
+    let count = 0;
+    const listener = (e: KeyboardEvent) => {
+      if (e.key === key) count += 1;
+    };
+    document.addEventListener('keydown', listener);
+    return { calls: () => count, dispose: () => document.removeEventListener('keydown', listener) };
+  }
+
+  it('stops the submit Enter from propagating to document-level listeners', async () => {
+    const user = userEvent.setup();
+    const probe = listenOnDocument('Enter');
+    render(<Harness onSubmit={vi.fn()} />);
+    await user.type(screen.getByRole('textbox'), 'report{Enter}');
+    expect(probe.calls()).toBe(0);
+    probe.dispose();
+  });
+
+  it('stops a cancelling Escape from propagating when onCancel is provided', async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    const probe = listenOnDocument('Escape');
+    render(<Harness onCancel={onCancel} />);
+    await user.type(screen.getByRole('textbox'), 'report{Escape}');
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(probe.calls()).toBe(0);
+    probe.dispose();
+  });
+
+  it('lets Escape propagate when there is nothing to cancel (no session chips, no onCancel — bar behavior)', async () => {
+    const user = userEvent.setup();
+    const probe = listenOnDocument('Escape');
+    render(<Harness />);
+    await user.type(screen.getByRole('textbox'), 'report{Escape}');
+    expect(probe.calls()).toBe(1);
+    probe.dispose();
+  });
+});
+
 describe('ParsedInput sealed displacement — text preservation while unsealed', () => {
   it('never removes the existing date text while typing "satchel" character-by-character after it', async () => {
     const user = userEvent.setup();

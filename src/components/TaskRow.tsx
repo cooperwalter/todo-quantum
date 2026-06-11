@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import './TaskList.css';
 import { isoWeekday, todayStr } from '../lib/dates';
 import { formatTimeDisplay, parse } from '../lib/parser';
@@ -52,6 +52,17 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
   // When the serialized text does not round-trip, fall back to plain title-only
   // editing (parse disabled) so the user never sees misleading chips.
   const [parseEnabled, setParseEnabled] = useState(true);
+  const rowRef = useRef<HTMLLIElement | null>(null);
+  // Set by keyboard-driven closes (Esc/Enter); consumed after the editor unmounts
+  // so the focus lands on the row element, not the removed textarea.
+  const pendingRowFocus = useRef(false);
+
+  useLayoutEffect(() => {
+    if (!editing && pendingRowFocus.current) {
+      pendingRowFocus.current = false;
+      rowRef.current?.focus();
+    }
+  }, [editing]);
 
   function complete() {
     dispatch({
@@ -85,14 +96,22 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
     setEditing(true);
   }
 
-  function closeEdit() {
+  // Closing the editor via the KEYBOARD (Esc cancel, Enter save) hands selection
+  // and focus back to the row so j/k navigation continues from the edited task.
+  // Blur closes must NOT do this — blur means focus deliberately went elsewhere,
+  // and pulling it back would steal the user's click target.
+  function closeEdit(refocusRow = false) {
     setEditing(false);
     setEditError(null);
+    if (refocusRow) {
+      onSelect?.(task.id);
+      pendingRowFocus.current = true;
+    }
   }
 
   // Diff a ParseResult against the task into the minimal set of changed fields,
   // using null for cleared ones, and dispatch a SINGLE edit action.
-  function saveParsed(result: ParseResult) {
+  function saveParsed(result: ParseResult, refocusRow = false) {
     const title = result.title.trim();
     if (title.length === 0) {
       setEditError('Enter a task title');
@@ -110,11 +129,11 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
     if (Object.keys(changes).length > 0) {
       dispatch({ type: 'edit', id: task.id, changes });
     }
-    closeEdit();
+    closeEdit(refocusRow);
   }
 
   // Title-only save for the round-trip-fallback path: only the title can change.
-  function saveTitleOnly() {
+  function saveTitleOnly(refocusRow = false) {
     const title = draft.trim();
     if (title.length === 0) {
       setEditError('Enter a task title');
@@ -123,7 +142,7 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
     if (title !== task.title) {
       dispatch({ type: 'edit', id: task.id, changes: { title } });
     }
-    closeEdit();
+    closeEdit(refocusRow);
   }
 
   // Blur resolves the current draft through the same parse, then decides: an empty
@@ -162,6 +181,7 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
 
   return (
     <li
+      ref={rowRef}
       className={classes}
       data-task-id={task.id}
       tabIndex={tabIndex}
@@ -188,8 +208,8 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
             now={frozen}
             initialReverts={initialReverts}
             parseEnabled={parseEnabled}
-            onSubmit={parseEnabled ? saveParsed : () => saveTitleOnly()}
-            onCancel={closeEdit}
+            onSubmit={parseEnabled ? (result) => saveParsed(result, true) : () => saveTitleOnly(true)}
+            onCancel={() => closeEdit(true)}
             ariaLabel="Edit task"
             inputProps={{
               autoFocus: true,

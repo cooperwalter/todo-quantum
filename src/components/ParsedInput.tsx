@@ -309,6 +309,10 @@ export function ParsedInput({
     if (onKeyDown?.(event) === true) return;
 
     if (event.key === 'Enter') {
+      // The submit is fully handled here — the document-level keymap must not see
+      // the same keystroke (with focus handed back to the row it would re-open the
+      // editor via its Enter-edits binding).
+      event.stopPropagation();
       // Strip any remaining displaced ranges (sealed by submit) before the final
       // parse so the captured task never carries a half-overwritten token.
       const submitSealed = parseEnabled
@@ -335,7 +339,15 @@ export function ParsedInput({
         setReverts((prev) => [...prev, { start: last.start, end: last.end }]);
         return;
       }
-      onCancel?.();
+      if (onCancel !== undefined) {
+        // Cancelling is fully handled here; contain the keystroke for the same
+        // reason as Enter (the keymap's Escape binding clears the selection the
+        // caller just restored). With no onCancel (the bar), Escape falls through
+        // so the keymap's bar-Escape behavior still works.
+        event.preventDefault();
+        event.stopPropagation();
+        onCancel();
+      }
     }
   }
 
