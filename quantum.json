@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-edit-token-parsing.md",
   "designPath": "docs/plans/2026-06-10-edit-token-parsing-design.md",
   "createdAt": "2026-06-10T22:51:29Z",
-  "updatedAt": "2026-06-11T17:16:20.211739+00:00",
+  "updatedAt": "2026-06-11T17:26:31.522350+00:00",
   "userIntent": {
     "text": "when editing an existing todo, typing things like #atag and tomorrow, etc, should function like when adding a new todo",
     "timestamp": "2026-06-10T22:51:29Z",
@@ -402,7 +402,7 @@
         "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
       ],
       "priority": 5,
-      "status": "failed",
+      "status": "passed",
       "dependsOn": [
         "US-102"
       ],
@@ -420,7 +420,7 @@
             "pnpm run typecheck"
           ],
           "testFirst": false,
-          "status": "pending",
+          "status": "passed",
           "notes": "testFirst: false \u2014 extraction/move of existing covered behavior; component tests land in T-003 before any new behavior",
           "consumedBy": [
             "US-105",
@@ -441,7 +441,7 @@
             "pnpm run lint"
           ],
           "testFirst": false,
-          "status": "pending",
+          "status": "passed",
           "notes": "testFirst: false \u2014 refactor gated by the existing CommandBar.test.tsx suite passing unmodified (except imports)",
           "wiring_verification": {
             "file": "src/components/CommandBar.tsx",
@@ -462,7 +462,7 @@
             "pnpm exec vitest run src/components/ParsedInput.test.tsx"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-004",
@@ -474,20 +474,20 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "status": "pending",
+          "status": "passed",
           "notes": "testFirst: false \u2014 verification-only task"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-11T17:26:31.522350+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-11T17:26:31.522350+00:00"
         }
       },
       "retries": {
@@ -1009,6 +1009,22 @@
         "src/lib/serialize.test.ts"
       ],
       "learnings": "Agent worktree isolation branched from main (762af0b) not the feature tip; US-103 agent self-corrected via git reset --hard onto d7493f3. This is the reliable remediation pattern for the worktree-base bug. Times serialize to am/pm because parser flags 24h H:MM as needsDate=true."
+    },
+    {
+      "timestamp": "2026-06-11T17:26:31.522350+00:00",
+      "iteration": 3,
+      "storyId": "US-104",
+      "action": "story_passed",
+      "details": "Extracted controlled ParsedInput from CommandBar (owns ParsedInputProps; reverts now Range[] passed into parse() 3rd arg, old applyReverts deleted). Pixel-identical: 23/23 CommandBar tests unmodified, 10/10 e2e, visual gate PASS no re-bless. Merged 577ffe5 (FF). Attempts 1-2 failed on worktree-base-mismatch (branched from old main); attempt 3 succeeded via git reset --hard onto feature tip. Orchestrator then fixed a build regression: removed stray process.env.TZ line from serialize.test.ts (US-103) that broke tsc -b.",
+      "filesChanged": [
+        "src/components/ParsedInput.tsx",
+        "src/components/ParsedInput.css",
+        "src/components/ParsedInput.test.tsx",
+        "src/components/CommandBar.tsx",
+        "src/components/CommandBar.css",
+        "src/lib/serialize.test.ts"
+      ],
+      "learnings": "GATE BLINDNESS: pnpm run typecheck = tsc --noEmit against root tsconfig.json (files:[]) is a NO-OP \u2014 checks nothing. Real type errors only surface in pnpm run build (tsc -b). The orchestrator must run pnpm run build in the final integration gate. Worktree isolation branches from main, not the feature tip \u2014 every spawned agent must git reset --hard onto the passed base SHA first."
     }
   ],
   "codebasePatterns": [
@@ -1028,7 +1044,7 @@
     "TaskList sections prop: [{label, tasks, rollover?}]; empty sections omitted; all-empty renders empty-state line. TaskRow classes: task-row--p1/--rollover/--selected/--done",
     "Toast: useApp().toast + showToast; wrapped dispatch emits Captured/Completed/Done \u2014 next <date>/Deleted/Snoozed to <date>/Scheduled/Saved/Reopened/Undone/Redone",
     "useKeymap config: callbacks (onComplete/onEdit/onDelete/onSnooze/onUndo/onRedo/onTypeahead) + getRowIds reads DOM .task-row[data-task-id]; today injectable",
-    "DST-sensitive unit tests pin process.env.TZ=America/New_York as first line of the test file; midnight math via new Date(y,m,d+1,0,0,0) local constructor, never +24h",
+    "DST-sensitive tests rely on the GLOBAL TZ pin in vite.config.ts (env.TZ=America/New_York); individual test files must NOT set process.env.TZ (it breaks tsc -b / pnpm run build \u2014 node process global is not in the app tsconfig). Date math via local components: new Date(y,m,d+1,0,0,0), never +24h",
     "New components get their own CSS file next to the component (StorageBanner.css pattern), tokens only"
   ],
   "contracts": {
