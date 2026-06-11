@@ -152,6 +152,7 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
     rollover ? 'task-row--rollover' : '',
     selected ? 'task-row--selected' : '',
     task.status === 'done' ? 'task-row--done' : '',
+    editing ? 'task-row--editing' : '',
   ]
     .filter(Boolean)
     .join(' ');

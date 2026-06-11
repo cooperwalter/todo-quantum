@@ -7,7 +7,7 @@ import { useKeymap } from './useKeymap';
 const ROW_IDS = ['t1', 't2', 't3'];
 
 function Harness({ calls }: { calls: string[] }) {
-  const barRef = useRef<HTMLInputElement>(null);
+  const barRef = useRef<HTMLTextAreaElement>(null);
   const [selected, setSelected] = useState<string | null>(null);
   useKeymap({
     barRef,
@@ -27,7 +27,7 @@ function Harness({ calls }: { calls: string[] }) {
   });
   return (
     <div>
-      <input ref={barRef} aria-label="bar" />
+      <textarea ref={barRef} aria-label="bar" />
       <input aria-label="inline-edit" />
       {ROW_IDS.map((id) => (
         <div key={id} tabIndex={-1} data-task-id={id} data-testid={id} data-selected={selected === id}>
@@ -45,8 +45,8 @@ function renderHarness() {
   render(<Harness calls={calls} />);
 }
 
-function bar(): HTMLInputElement {
-  return screen.getByLabelText('bar') as HTMLInputElement;
+function bar(): HTMLTextAreaElement {
+  return screen.getByLabelText('bar') as HTMLTextAreaElement;
 }
 
 function row(id: string): HTMLElement {

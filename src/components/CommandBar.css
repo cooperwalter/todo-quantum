@@ -6,7 +6,9 @@
 
 .command-bar {
   display: flex;
-  align-items: center;
+  /* flex-start (not center) so the ▸ prompt stays on the first line when the
+     field wraps to multiple lines. */
+  align-items: flex-start;
   gap: var(--space-2);
   background: var(--color-surface);
   border: 1px solid var(--color-fg);
@@ -29,6 +31,8 @@
   font-family: var(--type-mono);
   font-size: var(--text-mono-size);
   line-height: var(--text-mono-leading);
+  /* Match the field's top padding so the glyph aligns with the first text line. */
+  padding-top: var(--space-1);
 }
 
 .command-bar-error {

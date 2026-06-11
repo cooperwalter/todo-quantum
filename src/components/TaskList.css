@@ -67,6 +67,13 @@
   align-self: center;
 }
 
+/* While editing, the field can grow to several lines; pin the checkbox to the
+   first line instead of centering it against the whole multi-line row. */
+.task-row--editing .task-row-checkbox {
+  align-self: flex-start;
+  margin-top: var(--space-1);
+}
+
 .task-row:hover .task-row-checkbox,
 .task-row:focus-within .task-row-checkbox,
 .task-row--selected .task-row-checkbox,

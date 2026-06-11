@@ -16,7 +16,7 @@ interface HarnessProps {
   onCancel?: () => void;
   parseEnabled?: boolean;
   initialReverts?: Range[];
-  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => boolean;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => boolean;
 }
 
 function Harness({
@@ -55,8 +55,8 @@ function announcementText(): string {
   return document.getElementById('command-bar-announcement')?.textContent ?? '';
 }
 
-function input(): HTMLInputElement {
-  return screen.getByRole('textbox') as HTMLInputElement;
+function input(): HTMLTextAreaElement {
+  return screen.getByRole('textbox') as HTMLTextAreaElement;
 }
 
 beforeEach(() => {
@@ -132,7 +132,7 @@ describe('ParsedInput onKeyDown consumption', () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
     render(<Harness onSubmit={onSubmit} onKeyDown={() => true} />);
-    const input = screen.getByRole('textbox') as HTMLInputElement;
+    const input = screen.getByRole('textbox') as HTMLTextAreaElement;
     await user.type(input, 'report tomorrow');
     await user.type(input, '{Enter}');
     expect(input.value).toBe('report tomorrow');

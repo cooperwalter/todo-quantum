@@ -5,7 +5,7 @@ import { snoozeNextWeek, snoozeTomorrow, snoozeWeekend, todayStr } from '../lib/
 export type KeymapViewId = 'today' | 'upcoming' | 'all' | 'done';
 
 export interface UseKeymapConfig {
-  barRef: RefObject<HTMLInputElement | null>;
+  barRef: RefObject<HTMLTextAreaElement | null>;
   getRowIds: () => string[];
   selectedId: string | null;
   setSelectedId: (id: string | null) => void;

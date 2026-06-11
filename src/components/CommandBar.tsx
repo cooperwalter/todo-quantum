@@ -25,7 +25,7 @@ export function CommandBar({ now, openCheatsheet }: { now?: Date; openCheatsheet
   }
 
   /** Command-mode key handling. Returns true when command mode consumes the key. */
-  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>): boolean {
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>): boolean {
     if (!commandMode) return false;
     // Command mode owns these keys end-to-end: stop propagation so the
     // document-level keymap never sees them (React flushes our state update

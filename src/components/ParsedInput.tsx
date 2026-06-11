@@ -3,6 +3,9 @@ import './ParsedInput.css';
 import { parse } from '../lib/parser';
 import type { Chip, ParseResult, Range } from '../lib/parser';
 
+// The field auto-grows from one line up to this many lines, then scrolls.
+const MAX_LINES = 5;
+
 export interface ParsedInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -11,9 +14,9 @@ export interface ParsedInputProps {
   parseEnabled: boolean;
   initialReverts?: Range[];
   now?: Date;
-  inputRef?: React.Ref<HTMLInputElement>;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => boolean;
-  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+  inputRef?: React.Ref<HTMLTextAreaElement>;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => boolean;
+  inputProps?: React.TextareaHTMLAttributes<HTMLTextAreaElement>;
   ariaLabel: string;
 }
 
@@ -151,14 +154,27 @@ function removeRanges(value: string, ranges: Range[], caret: number): Rewrite {
 }
 
 function assignForwardedRef(
-  ref: React.Ref<HTMLInputElement> | undefined,
-  node: HTMLInputElement | null,
+  ref: React.Ref<HTMLTextAreaElement> | undefined,
+  node: HTMLTextAreaElement | null,
 ): void {
   if (typeof ref === 'function') {
     ref(node);
   } else if (ref !== null && ref !== undefined) {
-    (ref as React.MutableRefObject<HTMLInputElement | null>).current = node;
+    (ref as React.MutableRefObject<HTMLTextAreaElement | null>).current = node;
   }
+}
+
+// Grow the textarea to fit its content, capped at MAX_LINES; beyond that it
+// scrolls. Returns nothing — mutates the element's inline height/overflow.
+function autosize(el: HTMLTextAreaElement): void {
+  const style = window.getComputedStyle(el);
+  const line = Number.parseFloat(style.lineHeight) || 0;
+  const padding = Number.parseFloat(style.paddingTop) + Number.parseFloat(style.paddingBottom);
+  const maxHeight = line * MAX_LINES + padding;
+  el.style.height = 'auto';
+  const next = Math.min(el.scrollHeight, maxHeight);
+  el.style.height = `${next}px`;
+  el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden';
 }
 
 export function ParsedInput({
@@ -187,7 +203,8 @@ export function ParsedInput({
     [baseline],
   );
 
-  const innerRef = useRef<HTMLInputElement | null>(null);
+  const innerRef = useRef<HTMLTextAreaElement | null>(null);
+  const mirrorRef = useRef<HTMLDivElement | null>(null);
   const pendingCaret = useRef<number | null>(null);
   // The caret offset captured from the user's edit BEFORE React's controlled
   // re-render writes `value` back (which resets the native selection to the end in
@@ -241,17 +258,32 @@ export function ParsedInput({
     pendingCaret.current = null;
   }, [value]);
 
+  // Re-fit the field height whenever the text (and therefore its wrapped line
+  // count) changes. The mirror is absolutely positioned over the field, so it
+  // tracks the new height automatically.
+  useLayoutEffect(() => {
+    if (innerRef.current !== null) autosize(innerRef.current);
+  }, [value]);
+
+  // When the field scrolls (content taller than MAX_LINES), keep the colored
+  // mirror in lockstep so chips stay aligned with the caret.
+  function syncMirrorScroll(event: React.UIEvent<HTMLTextAreaElement>) {
+    if (mirrorRef.current !== null) {
+      mirrorRef.current.scrollTop = event.currentTarget.scrollTop;
+    }
+  }
+
   // Merge the caller-supplied ref (CommandBar focuses the bar through it) with the
   // internal ref the seal/caret effects need to read selection from the live node.
   const setInputRef = useCallback(
-    (node: HTMLInputElement | null): void => {
+    (node: HTMLTextAreaElement | null): void => {
       innerRef.current = node;
       assignForwardedRef(inputRef, node);
     },
     [inputRef],
   );
 
-  function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function handleChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
     const next = event.target.value;
     // Snapshot the caret from the live edit event before the controlled re-render
     // resets it, so the seal effect can honor the caret rule.
@@ -266,7 +298,12 @@ export function ParsedInput({
     return parsed.chips.filter((c) => !baselineKeys.has(`${c.kind}:${c.display}`));
   }
 
-  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    // The field is a textarea, but titles/captures are single-line: Enter always
+    // means submit, never a newline. Suppress the default insertion up front so it
+    // is prevented even when a consumer (command mode) handles the key below.
+    if (event.key === 'Enter') event.preventDefault();
+
     // Caller-first: command mode (or any consumer) gets the key before the
     // capture path. Returning true means the consumer handled it.
     if (onKeyDown?.(event) === true) return;
@@ -308,7 +345,7 @@ export function ParsedInput({
   return (
     <>
       <div className="command-bar-field">
-        <div className="command-bar-mirror" aria-hidden="true">
+        <div className="command-bar-mirror" aria-hidden="true" ref={mirrorRef}>
           {mirrorSegments(value, chips, demoted).map((seg) => {
             if (seg.variant === 'chip') {
               return (
@@ -327,13 +364,14 @@ export function ParsedInput({
             return <span key={seg.key}>{seg.text}</span>;
           })}
         </div>
-        <input
+        <textarea
           ref={setInputRef}
           className="command-bar-input"
-          type="text"
+          rows={1}
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onScroll={syncMirrorScroll}
           aria-label={ariaLabel}
           aria-describedby="command-bar-announcement"
           autoComplete="off"

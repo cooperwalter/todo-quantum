@@ -16,14 +16,24 @@
   border: none;
   width: 100%;
   box-sizing: border-box;
-  white-space: pre;
+  /* Wrap identically in both layers so chips stay aligned with the caret as the
+     field grows to multiple lines. */
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .command-bar-input {
+  display: block;
   background: transparent;
   color: transparent;
   caret-color: var(--color-fg);
   position: relative;
+  margin: 0;
+  resize: none;
+  /* Height is driven by autosize(); start collapsed and never show a horizontal
+     bar. overflow-y flips to auto once the content passes MAX_LINES. */
+  overflow: hidden;
 }
 
 .command-bar-input:focus {

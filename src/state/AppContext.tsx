@@ -23,7 +23,7 @@ interface AppContextValue {
   setView: (view: View) => void;
   barText: string;
   setBarText: Dispatch<SetStateAction<string>>;
-  barRef: RefObject<HTMLInputElement | null>;
+  barRef: RefObject<HTMLTextAreaElement | null>;
   selectedTaskId: string | null;
   setSelectedTaskId: (id: string | null) => void;
   recovered: boolean;
@@ -98,7 +98,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [view, setView] = useState<View>('today');
   const [barText, setBarText] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const barRef = useRef<HTMLInputElement | null>(null);
+  const barRef = useRef<HTMLTextAreaElement | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stateRef = useRef(state);
