@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-edit-token-parsing.md",
   "designPath": "docs/plans/2026-06-10-edit-token-parsing-design.md",
   "createdAt": "2026-06-10T22:51:29Z",
-  "updatedAt": "2026-06-11T17:45:59.532576+00:00",
+  "updatedAt": "2026-06-11T17:59:22.134327+00:00",
   "userIntent": {
     "text": "when editing an existing todo, typing things like #atag and tomorrow, etc, should function like when adding a new todo",
     "timestamp": "2026-06-10T22:51:29Z",
@@ -632,7 +632,7 @@
         "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
       ],
       "priority": 7,
-      "status": "pending",
+      "status": "passed",
       "dependsOn": [
         "US-103",
         "US-105",
@@ -651,7 +651,7 @@
             "pnpm exec vitest run src/lib/store.test.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -664,7 +664,7 @@
             "pnpm exec vitest run src/components/TaskRow.test.tsx"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -679,7 +679,7 @@
             "pnpm run lint"
           ],
           "testFirst": true,
-          "status": "pending",
+          "status": "passed",
           "wiring_verification": {
             "file": "src/components/TaskRow.tsx",
             "must_contain": [
@@ -702,7 +702,7 @@
             "pnpm run typecheck"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-005",
@@ -713,20 +713,20 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "status": "pending",
+          "status": "passed",
           "notes": "testFirst: false \u2014 verification-only task"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-11T17:59:22.134327+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-11T17:59:22.134327+00:00"
         }
       },
       "retries": {
@@ -734,7 +734,8 @@
         "maxAttempts": 3,
         "failureLog": []
       },
-      "notes": ""
+      "notes": "",
+      "startedAt": null
     },
     {
       "id": "US-108",
@@ -1039,6 +1040,20 @@
         "src/components/ParsedInput.css"
       ],
       "learnings": "react-refresh/only-export-components forbids exporting non-component helpers from component files \u2014 keep removeRanges internal, verify caret math via integration tests. react-hooks/immutability flags forwarded-ref .current writes in render-phase callback refs \u2014 use a module-scope assignForwardedRef helper. jsdom resets caret to end-of-field on each controlled write, so right-of-caret cases assert via integration not fireEvent. US-105 added inert .command-bar-demoted to ParsedInput.css (outside declared files, flagged, gate-confirmed inert)."
+    },
+    {
+      "timestamp": "2026-06-11T17:59:22.134327+00:00",
+      "iteration": 5,
+      "storyId": "US-106",
+      "action": "story_passed",
+      "details": "TaskRow edit integration: openEdit (open-only) freezes clock, serializeTask + round-trip guard (console.error + title-only fallback on mismatch), ParsedInput replaces plain input, saveParsed diffs ParseResult vs task into one edit action (nulls for clears), blur saves/empty-cancels, Enter-empty blocks, done-task FR-120 guard, FR-115 announcement parity. Edit toast Saved\u2192Task updated. Merged 58e388e (FF). Gates: lint 0, build 0, 3472/3472 (38 store, 20 TaskRow, 11 usePersistence), visual gate PASS.",
+      "filesChanged": [
+        "src/components/TaskRow.tsx",
+        "src/components/TaskRow.test.tsx",
+        "src/lib/store.test.ts",
+        "src/state/AppContext.tsx"
+      ],
+      "learnings": "Frozen edit-session clock (one Date for serializeTask + ParsedInput now + save-parse) is the round-trip-stability anchor. TaskRow edit tests freeze time via vi.useFakeTimers({toFake:[Date]}) + setSystemTime to avoid userEvent hangs. A metadata task now serializes to multi-token text (Send report yesterday 3pm #work), so pre-existing title-only inline-edit tests switched to makePlainTask."
     }
   ],
   "codebasePatterns": [
