@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-edit-token-parsing.md",
   "designPath": "docs/plans/2026-06-10-edit-token-parsing-design.md",
   "createdAt": "2026-06-10T22:51:29Z",
-  "updatedAt": "2026-06-11T16:48:51.789629+00:00",
+  "updatedAt": "2026-06-11T17:04:28.408205+00:00",
   "userIntent": {
     "text": "when editing an existing todo, typing things like #atag and tomorrow, etc, should function like when adding a new todo",
     "timestamp": "2026-06-10T22:51:29Z",
@@ -227,7 +227,7 @@
         "Typecheck/lint passes"
       ],
       "priority": 3,
-      "status": "pending",
+      "status": "passed",
       "dependsOn": [
         "US-101"
       ],
@@ -244,7 +244,7 @@
             "pnpm exec vitest run src/lib/parser.test.ts"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -259,7 +259,7 @@
             "pnpm run lint"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -274,19 +274,19 @@
             "pnpm run typecheck"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-11T17:04:28.408205+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-11T17:04:28.408205+00:00"
         }
       },
       "retries": {
@@ -295,7 +295,8 @@
         "failureLog": []
       },
       "notes": "Plan-review sizing note: implementation task is a large unit; maxAttempts raised to 4.",
-      "contractBreaking": true
+      "contractBreaking": true,
+      "startedAt": null
     },
     {
       "id": "US-103",
@@ -968,6 +969,19 @@
         "__screenshots__/e2e/states-snooze.spec.ts/"
       ],
       "learnings": "Overflow button was hover/focus-only (opacity:0 default), so removing it did NOT diff the static root baseline \u2014 no re-bless needed. Snooze keymap (1/2/3) lives in useKeymap, fully decoupled from TaskRow; cheatsheet rows unchanged."
+    },
+    {
+      "timestamp": "2026-06-11T17:04:28.408205+00:00",
+      "iteration": 2,
+      "storyId": "US-102",
+      "action": "story_passed",
+      "details": "Last-wins parser: added Range + displaced:Range[] to ParseResult, parse(input,now,reverted?) signature. Whole-input occurrence scan per kind keeps LAST, earlier ranges \u2192 displaced. skip/used split: reverted words skipped by matchers but stay in title; consumed words excluded from title. Merged 1697b5d (FF). Gates: typecheck 0, lint 0, 366/366 unit (86 parser, 23 CommandBar).",
+      "filesChanged": [
+        "src/lib/parser.ts",
+        "src/lib/parser.test.ts",
+        "src/components/CommandBar.test.tsx"
+      ],
+      "learnings": "CommandBar.tsx unchanged \u2014 its applyReverts spreads {...result} so the new displaced field flows through automatically. prdSha c9d6908 reconciles via compute_prd_sha (normalized), not raw shasum. Worktree merges MUST run from project root \u2014 Bash cwd persists and can drift into a worktree, making git merge a silent no-op (already-up-to-date) against the wrong branch."
     }
   ],
   "codebasePatterns": [
