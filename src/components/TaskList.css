@@ -142,6 +142,19 @@
   outline: none;
 }
 
+/* In-row editing keeps the task-title typography (Newsreader 17/24 wght 500) so
+   opening an edit never swaps fonts mid-read. The mono spec belongs to the
+   command bar; the transparent field and its chip mirror must share one font to
+   stay glyph-aligned, so both are overridden together. Chips keep their accent
+   underline treatment, set in the serif here. */
+.task-row-edit .command-bar-input,
+.task-row-edit .command-bar-mirror {
+  font-family: var(--type-body);
+  font-weight: 500;
+  font-size: 17px;
+  line-height: 24px;
+}
+
 @media (max-width: 767px) {
   .task-row {
     flex-wrap: wrap;
