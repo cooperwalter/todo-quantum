@@ -238,3 +238,108 @@ describe('serializeTask edge cases', () => {
     expect(result.title).toBe(words);
   });
 });
+
+describe('serializeTask round-trip property grid', () => {
+  const today = todayStr(NOW);
+  const dueDateOptions: Array<string | null> = [
+    null,
+    addDays(today, -1), // yesterday
+    today, // today
+    addDays(today, 1), // tomorrow
+    addDays(today, 30), // bare <mon> <day> within 12 months
+    addDays(today, -370), // explicit-year past
+    addDays(today, 370), // explicit-year future
+  ];
+  const dueTimeOptions: Array<string | null> = [null, '15:00', '15:30', '00:00', '12:00', '09:05'];
+  const listOptions: Array<string | null> = [null, 'work'];
+  const priorityOptions: Array<1 | 2 | 3 | null> = [null, 1, 2, 3];
+  const recurrenceOptions: Array<Recurrence | null> = [
+    null,
+    makeRecurrence({ freq: 'daily', interval: 1 }),
+    makeRecurrence({ freq: 'daily', interval: 2 }),
+    makeRecurrence({ freq: 'weekly', interval: 1, byWeekday: null }),
+    makeRecurrence({ freq: 'weekly', interval: 2, byWeekday: null }),
+    makeRecurrence({ freq: 'weekly', interval: 1, byWeekday: [1] }),
+    makeRecurrence({ freq: 'weekly', interval: 1, byWeekday: [1, 2, 3, 4, 5] }),
+    makeRecurrence({ freq: 'monthly', interval: 1 }),
+    makeRecurrence({ freq: 'monthly', interval: 3 }),
+  ];
+  const titleOptions = ['Write report', 'Email invoices', 'call mom sharp'];
+
+  type GridCase = {
+    label: string;
+    task: Task;
+  };
+
+  function buildGrid(): GridCase[] {
+    const cases: GridCase[] = [];
+    for (const dueDate of dueDateOptions) {
+      for (const dueTime of dueTimeOptions) {
+        for (const recurrence of recurrenceOptions) {
+          for (const list of listOptions) {
+            for (const priority of priorityOptions) {
+              const title = titleOptions[cases.length % titleOptions.length];
+              cases.push({
+                label: `title=${title} date=${dueDate} time=${dueTime} rec=${recurrence ? recurrence.freq + recurrence.interval + (recurrence.byWeekday ?? '') : 'none'} list=${list} prio=${priority}`,
+                task: makeTask({ title, dueDate, dueTime, recurrence, list, priority }),
+              });
+            }
+          }
+        }
+      }
+    }
+    return cases;
+  }
+
+  const grid = buildGrid();
+
+  it('generates a grid of at least 2000 task combinations', () => {
+    expect(grid.length).toBeGreaterThanOrEqual(2000);
+  });
+
+  it.each(grid)('round-trips $label', ({ task }) => {
+    const { text, revertedRanges } = serializeTask(task, NOW);
+    const result = parse(text, NOW, revertedRanges);
+
+    expect(result.title).toBe(task.title);
+    expect(result.dueTime).toBe(task.dueTime);
+    expect(result.list).toBe(task.list);
+    expect(result.priority).toBe(task.priority);
+    expect(result.recurrence).toEqual(task.recurrence);
+
+    if (task.dueDate !== null) {
+      expect(result.dueDate).toBe(task.dueDate);
+    } else if (task.recurrence === null) {
+      expect(result.dueDate).toBeNull();
+    }
+    // When dueDate is null but recurrence is set, the parser infers a first
+    // occurrence; that inference is deterministic parser behavior, not a
+    // serializer round-trip concern, so dueDate is intentionally not asserted.
+  });
+});
+
+describe('serializeTask adversarial token-like titles round-trip', () => {
+  const adversarialTitles = [
+    'Email #invoices tomorrow',
+    'call mom 3pm sharp',
+    'review every monday notes',
+    'pay !p1 bill today',
+    'meet jun 12 friends',
+    'plan next week sprint',
+    'tomorrow today yesterday',
+    'standup at 12pm review',
+  ];
+
+  it.each(adversarialTitles)(
+    'reverts token-like words in the title %s so the literal title survives a round-trip',
+    (title) => {
+      const task = makeTask({ title, dueDate: addDays(todayStr(NOW), 1), list: 'work', priority: 2 });
+      const { text, revertedRanges } = serializeTask(task, NOW);
+      const result = parse(text, NOW, revertedRanges);
+      expect(result.title).toBe(title);
+      expect(result.dueDate).toBe(addDays(todayStr(NOW), 1));
+      expect(result.list).toBe('work');
+      expect(result.priority).toBe(2);
+    },
+  );
+});
