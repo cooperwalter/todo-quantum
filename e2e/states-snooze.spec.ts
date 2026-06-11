@@ -26,34 +26,56 @@ function seedTask(page: Page) {
   });
 }
 
-test('overflow menu open state @ desktop', async ({ page }) => {
+async function selectRowWithKeyboard(page: Page) {
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('j');
+  await expect(page.locator('[data-task-id="s1"]')).toBeFocused();
+}
+
+test('task rows render no overflow button or menu (keyboard-first, FR-121)', async ({ page }) => {
   await seedTask(page);
-  await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/', { waitUntil: 'networkidle' });
-  await page.getByRole('button', { name: /task options/i }).click();
-  await expect(page.getByRole('menuitem', { name: 'Tomorrow' })).toBeVisible();
-  await page.addStyleTag({ content: FREEZE });
-  await expect(page).toHaveScreenshot('snooze-menu-open-desktop.png', {
-    fullPage: true,
-    animations: 'disabled',
-  });
+  await expect(page.locator('.task-row')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: /task options/i })).toHaveCount(0);
+  await expect(page.locator('[role="menu"]')).toHaveCount(0);
 });
 
-test('snoozing from the menu moves the task out of rollover and toasts the new date', async ({ page }) => {
+test('pressing 1 on a j-selected overdue row sets dueDate to tomorrow in storage', async ({ page }) => {
   await seedTask(page);
   await page.goto('/', { waitUntil: 'networkidle' });
   await expect(page.locator('.task-section-label').first()).toHaveText('Rollover');
-  await page.getByRole('button', { name: /task options/i }).click();
-  await page.getByRole('menuitem', { name: 'Tomorrow' }).click();
+  await selectRowWithKeyboard(page);
+  await page.keyboard.press('1');
   await expect(page.locator('.task-row')).toHaveCount(0);
+  const tomorrow = await page.evaluate(() => {
+    const today = new Date();
+    const t = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+  });
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1') ?? '{}');
+          return data.tasks?.[0]?.dueDate as string | undefined;
+        }),
+      { message: 'debounced persistence flushes the snoozed dueDate to localStorage' },
+    )
+    .toBe(tomorrow);
   await expect(page.locator('.toast-message')).toHaveText(/^Snoozed to /);
 });
 
-test('pressing 1 on a selected row snoozes to tomorrow', async ({ page }) => {
+test('keyboard snooze moves the task out of rollover and toasts the new date @ desktop', async ({ page }) => {
   await seedTask(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/', { waitUntil: 'networkidle' });
-  await page.keyboard.press('ArrowDown');
+  await selectRowWithKeyboard(page);
   await page.keyboard.press('1');
   await expect(page.locator('.task-row')).toHaveCount(0);
   await expect(page.locator('.toast-message')).toHaveText(/^Snoozed to /);
+  await page.addStyleTag({ content: FREEZE });
+  await expect(page).toHaveScreenshot('snooze-post-keyboard-desktop.png', {
+    fullPage: true,
+    animations: 'disabled',
+  });
 });
