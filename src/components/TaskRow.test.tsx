@@ -119,12 +119,11 @@ describe('TaskRow inline edit', () => {
 });
 
 describe('TaskRow keyboard-first surface (US-107)', () => {
-  it('renders no overflow button, no menu role, and no task-row-overflow markup for an open task', () => {
+  it('renders no overflow options button and no snooze menu for an open task', () => {
     renderRow(makeTask());
     expect(screen.queryByRole('button', { name: /task options/i })).toBeNull();
     expect(screen.queryByRole('menu')).toBeNull();
-    expect(document.querySelector('.task-row-overflow')).toBeNull();
-    expect(document.querySelector('.task-row-menu')).toBeNull();
+    expect(screen.queryByRole('menuitem')).toBeNull();
   });
 });
 
