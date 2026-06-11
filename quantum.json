@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-edit-token-parsing.md",
   "designPath": "docs/plans/2026-06-10-edit-token-parsing-design.md",
   "createdAt": "2026-06-10T22:51:29Z",
-  "updatedAt": "2026-06-11T17:26:31.522350+00:00",
+  "updatedAt": "2026-06-11T17:45:59.532576+00:00",
   "userIntent": {
     "text": "when editing an existing todo, typing things like #atag and tomorrow, etc, should function like when adding a new todo",
     "timestamp": "2026-06-10T22:51:29Z",
@@ -530,7 +530,7 @@
         "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
       ],
       "priority": 6,
-      "status": "pending",
+      "status": "passed",
       "dependsOn": [
         "US-104"
       ],
@@ -547,7 +547,7 @@
             "pnpm exec vitest run src/components/ParsedInput.test.tsx"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -562,7 +562,7 @@
             "pnpm run lint"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -577,7 +577,7 @@
             "pnpm exec vitest run src/components/CommandBar.test.tsx"
           ],
           "testFirst": true,
-          "status": "pending"
+          "status": "passed"
         },
         {
           "id": "T-004",
@@ -588,20 +588,20 @@
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "status": "pending",
+          "status": "passed",
           "notes": "testFirst: false \u2014 verification-only task"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-11T17:45:59.532576+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-11T17:45:59.532576+00:00"
         }
       },
       "retries": {
@@ -609,7 +609,8 @@
         "maxAttempts": 4,
         "failureLog": []
       },
-      "notes": "Plan-review sizing note: implementation task is a large unit; maxAttempts raised to 4."
+      "notes": "Plan-review sizing note: implementation task is a large unit; maxAttempts raised to 4.",
+      "startedAt": null
     },
     {
       "id": "US-106",
@@ -1025,6 +1026,19 @@
         "src/lib/serialize.test.ts"
       ],
       "learnings": "GATE BLINDNESS: pnpm run typecheck = tsc --noEmit against root tsconfig.json (files:[]) is a NO-OP \u2014 checks nothing. Real type errors only surface in pnpm run build (tsc -b). The orchestrator must run pnpm run build in the final integration gate. Worktree isolation branches from main, not the feature tip \u2014 every spawned agent must git reset --hard onto the passed base SHA first."
+    },
+    {
+      "timestamp": "2026-06-11T17:45:59.532576+00:00",
+      "iteration": 4,
+      "storyId": "US-105",
+      "action": "story_passed",
+      "details": "Sealed displacement (demoted-text mirror, seal-on-space/submit, seam\u21921 space, never-trim), caret-shift rule via pre-render caret snapshot + useLayoutEffect setSelectionRange, session-chip baseline (kind,display absent from mount parse), Esc two-tier (revert recent session chip else onCancel). Merged 964fdc4 (FF). Gates: lint 0, build 0 (tsc -b), 3458/3458 unit (30 ParsedInput, 23 CommandBar), visual gate PASS no re-bless.",
+      "filesChanged": [
+        "src/components/ParsedInput.tsx",
+        "src/components/ParsedInput.test.tsx",
+        "src/components/ParsedInput.css"
+      ],
+      "learnings": "react-refresh/only-export-components forbids exporting non-component helpers from component files \u2014 keep removeRanges internal, verify caret math via integration tests. react-hooks/immutability flags forwarded-ref .current writes in render-phase callback refs \u2014 use a module-scope assignForwardedRef helper. jsdom resets caret to end-of-field on each controlled write, so right-of-caret cases assert via integration not fireEvent. US-105 added inert .command-bar-demoted to ParsedInput.css (outside declared files, flagged, gate-confirmed inert)."
     }
   ],
   "codebasePatterns": [
