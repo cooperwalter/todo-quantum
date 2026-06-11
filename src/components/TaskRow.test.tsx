@@ -118,62 +118,13 @@ describe('TaskRow inline edit', () => {
   });
 });
 
-describe('TaskRow overflow snooze menu (US-012)', () => {
-  function ToastProbe() {
-    const { toast } = useApp();
-    return <span data-testid="toast-probe">{toast?.message ?? ''}</span>;
-  }
-
-  function renderRowWithToast(task: Task) {
-    window.localStorage.setItem(
-      'todo-quantum.v1',
-      JSON.stringify({ schemaVersion: 1, tasks: [task] }),
-    );
-    return render(
-      <AppProvider>
-        <TaskRow task={task} />
-        <TasksProbe />
-        <ToastProbe />
-      </AppProvider>,
-    );
-  }
-
-  it('offers Tomorrow / Next week / Weekend and dispatches snooze with the computed dates', async () => {
-    const user = userEvent.setup();
-    const { snoozeTomorrow } = await import('../lib/dates');
-    const { todayStr } = await import('../lib/dates');
-    renderRowWithToast(makeTask({ dueDate: '2026-06-01' }));
-    await user.click(screen.getByRole('button', { name: /task options/i }));
-    expect(screen.getByRole('menuitem', { name: 'Tomorrow' })).toBeTruthy();
-    expect(screen.getByRole('menuitem', { name: 'Next week' })).toBeTruthy();
-    expect(screen.getByRole('menuitem', { name: 'Weekend' })).toBeTruthy();
-    await user.click(screen.getByRole('menuitem', { name: 'Tomorrow' }));
-    expect(probedTasks()[0].dueDate).toBe(snoozeTomorrow(todayStr(new Date())));
-  });
-
-  it('Weekend option dispatches snooze to the next Saturday strictly after today', async () => {
-    const user = userEvent.setup();
-    const { snoozeWeekend, todayStr } = await import('../lib/dates');
-    renderRowWithToast(makeTask({ dueDate: '2026-06-01' }));
-    await user.click(screen.getByRole('button', { name: /task options/i }));
-    await user.click(screen.getByRole('menuitem', { name: 'Weekend' }));
-    expect(probedTasks()[0].dueDate).toBe(snoozeWeekend(todayStr(new Date())));
-  });
-
-  it("toasts 'Snoozed to <date>' for a dated task", async () => {
-    const user = userEvent.setup();
-    renderRowWithToast(makeTask({ dueDate: '2026-06-01' }));
-    await user.click(screen.getByRole('button', { name: /task options/i }));
-    await user.click(screen.getByRole('menuitem', { name: 'Tomorrow' }));
-    expect(screen.getByTestId('toast-probe').textContent).toMatch(/^Snoozed to /);
-  });
-
-  it("toasts 'Scheduled' for a previously undated task (FR-35)", async () => {
-    const user = userEvent.setup();
-    renderRowWithToast(makeTask({ dueDate: null }));
-    await user.click(screen.getByRole('button', { name: /task options/i }));
-    await user.click(screen.getByRole('menuitem', { name: 'Next week' }));
-    expect(screen.getByTestId('toast-probe').textContent).toBe('Scheduled');
+describe('TaskRow keyboard-first surface (US-107)', () => {
+  it('renders no overflow button, no menu role, and no task-row-overflow markup for an open task', () => {
+    renderRow(makeTask());
+    expect(screen.queryByRole('button', { name: /task options/i })).toBeNull();
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(document.querySelector('.task-row-overflow')).toBeNull();
+    expect(document.querySelector('.task-row-menu')).toBeNull();
   });
 });
 
