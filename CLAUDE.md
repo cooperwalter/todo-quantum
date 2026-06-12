@@ -36,8 +36,13 @@ baseline. A baseline you never looked at is not a baseline.
 
 - Every visual decision derives from `DESIGN-SYSTEM.md`. Use the token names
   exactly (they are also `contracts` in quantum.json — deviating is a halt-and-propose event, never a silent change).
-- No generic AI aesthetics: no Inter/Roboto/Arial defaults, no purple-gradient-on-white,
-  no cookie-cutter card grids unless the design system explicitly calls for them.
+- **The bar is elite-designer output.** Every screen should look like a top-tier designer
+  composed it: intentional hierarchy and rhythm, optical alignment, designed hover and
+  focus-visible states, one consistent corner/border language. Beautiful and unmistakably
+  this product's — not interchangeable with any other app.
+- No AI slop: no Inter/Roboto/Arial/system-ui defaults, no purple-gradient-on-white, no
+  cookie-cutter card grids, no emoji-as-icons, no default browser shadows or focus rings —
+  unless the design system explicitly calls for them.
 - Match implementation effort to the aesthetic: maximalism needs elaborate code;
   minimalism needs precision in spacing, type scale, and motion.
 
