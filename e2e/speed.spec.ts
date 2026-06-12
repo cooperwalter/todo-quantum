@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, FIXED_NOW } from './fixtures';
 import type { Page } from '@playwright/test';
 
 interface SeedTask {
@@ -32,7 +32,7 @@ function makeSeed(id: string, title: string, dueDate: string | null, order: numb
 }
 
 function localDate(offsetDays: number): string {
-  const now = new Date();
+  const now = FIXED_NOW;
   const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offsetDays, 12);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }

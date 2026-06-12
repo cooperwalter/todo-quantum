@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 const CANONICAL = 'Send report tomorrow 3pm #work !p1';
 const BREAKPOINTS: [string, number][] = [

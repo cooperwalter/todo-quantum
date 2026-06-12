@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, FIXED_NOW } from './fixtures';
 import type { Page } from '@playwright/test';
 
 function expectedMastheadDate(): string {
@@ -7,7 +7,7 @@ function expectedMastheadDate(): string {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
-  }).format(new Date());
+  }).format(FIXED_NOW);
 }
 
 function hexToRgb(hex: string): string {

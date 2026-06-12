@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 const FREEZE =
   '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}';

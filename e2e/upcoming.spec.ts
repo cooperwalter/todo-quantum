@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, FIXED_NOW } from './fixtures';
 import type { Page } from '@playwright/test';
 
 const BREAKPOINTS: [string, number][] = [
@@ -11,7 +11,7 @@ const WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function plusDays(n: number): Date {
-  const now = new Date();
+  const now = FIXED_NOW;
   return new Date(now.getFullYear(), now.getMonth(), now.getDate() + n, 12);
 }
 

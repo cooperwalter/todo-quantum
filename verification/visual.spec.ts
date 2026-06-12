@@ -5,7 +5,7 @@
 // First run (no baseline): Playwright writes baselines and the test "fails" — this is expected.
 // INSPECT the generated PNGs against DESIGN-SYSTEM.md, then re-run to lock them in.
 // Regenerate intentionally with:  npx playwright test verification/visual.spec.ts --update-snapshots
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../e2e/fixtures';
 import { readFileSync } from 'node:fs';
 const cfg = JSON.parse(readFileSync(new URL('../lens.config.json', import.meta.url), 'utf8'));
 

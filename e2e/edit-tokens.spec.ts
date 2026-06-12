@@ -1,15 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, FIXED_NOW } from './fixtures';
 import type { Page } from '@playwright/test';
 
 const FREEZE =
   '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}';
 
 // Resolve the next occurrence (strictly after today) of an ISO weekday (1=Mon..7=Sun)
-// using the SAME real clock the app reads via `new Date()`. The app has no seeded
-// clock, so the seeded dueDate must be computed at run time to land on the intended
-// weekday relative to today.
+// from FIXED_NOW — the same instant the fixture pins the browser clock to — so the
+// seeded dueDate lands on the intended weekday relative to the app's "today".
 function nextWeekday(weekday: number): string {
-  const now = new Date();
+  const now = FIXED_NOW;
   const fmt = (d: Date) =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const current = now.getDay() === 0 ? 7 : now.getDay();
