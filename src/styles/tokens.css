@@ -1,21 +1,25 @@
-/* quantum-lens design tokens — direction: "Morning Edition" (warm broadsheet editorial).
-   Chosen via /lens-design 2026-06-09. All fg/bg pairs contrast-checked WCAG AA — see DESIGN-SYSTEM.md §3. */
+/* quantum-lens design tokens — direction: "Ink Garden" (Japanese stationery calm:
+   washi paper, sumi ink, aizome indigo for everything interactive, hanko crimson for marks).
+   Chosen via /lens-design 2026-06-12, replacing "Morning Edition".
+   All fg/bg pairs contrast-checked WCAG AA — see DESIGN-SYSTEM.md §3. */
+
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=M+PLUS+1+Code:wght@400;500;600&display=swap');
 
 :root {
   /* type families */
-  --type-display: 'Fraunces', Georgia, serif;
-  --type-body: 'Newsreader', Georgia, serif;
-  --type-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --type-display: 'Shippori Mincho', 'Hiragino Mincho ProN', Georgia, serif;
+  --type-body: 'Zen Kaku Gothic New', 'Hiragino Kaku Gothic ProN', sans-serif;
+  --type-mono: 'M PLUS 1 Code', ui-monospace, monospace;
   /* type scale (size/line-height pairs — gate checks computed sizes) */
-  --text-display-size: 44px;
-  --text-display-leading: 48px;
-  --text-h2-size: 28px;
+  --text-display-size: 40px;
+  --text-display-leading: 52px;
+  --text-h2-size: 24px;
   --text-h2-leading: 34px;
-  --text-body-size: 16px;
-  --text-body-leading: 26px;
-  --text-mono-size: 13px;
+  --text-body-size: 15px;
+  --text-body-leading: 25px;
+  --text-mono-size: 12px;
   --text-mono-leading: 20px;
-  /* space */
+  /* space — ma (negative space) is the medium; reach for the larger steps first */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -25,50 +29,55 @@
   --space-7: 48px;
   --space-8: 64px;
   --space-9: 96px;
-  /* radius — broadsheet edges are sharp; pill reserved for keycap hints */
-  --radius-sm: 0px;
-  --radius-md: 2px;
-  --radius-lg: 4px;
+  /* radius — soft stationery corners; pill reserved for keycap hints */
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
   --radius-pill: 999px;
-  /* motion */
-  --motion-fast: 120ms;
-  --motion-base: 240ms;
-  --motion-slow: 480ms;
-  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  /* print-shadow: the offset-ink shadow that replaces blur everywhere */
+  /* motion — calm and deliberate; the brushstroke is the show */
+  --motion-fast: 140ms;
+  --motion-base: 280ms;
+  --motion-slow: 560ms;
+  --ease: cubic-bezier(0.33, 0, 0.2, 1);
+  /* ink-wash shadow: the only permitted depth (no hard offsets, no default browser shadows) */
+  --shadow-wash: 0 2px 16px rgba(28, 28, 26, 0.07);
+  /* DEPRECATED (Morning Edition print shadow) — kept until the component re-skin
+     removes the last var(--shadow-print) reference; do not use in new styles */
   --shadow-print: 3px 3px 0;
   /* color (light — canonical) */
-  --color-bg: #FAF6EF;
-  --color-surface: #FFFDF8;
-  --color-fg: #211D17;
-  --color-muted: #6E6457;
-  --color-accent: #A63A12;
-  --color-accent-fg: #FFF7EF;
-  --color-border: #E4DACA;
-  --color-danger: #8E1B1B;
+  --color-bg: #F7F6F1;
+  --color-surface: #FFFFFF;
+  --color-fg: #1C1C1A;
+  --color-muted: #6F6E66;
+  --color-accent: #39517B;
+  --color-accent-fg: #F7F6F1;
+  --color-border: #DDDBD2;
+  --color-danger: #9A3B3B;
 }
 
 [data-theme="dark"] {
-  --color-bg: #1A1611;
-  --color-surface: #242019;
-  --color-fg: #F0E8DA;
-  --color-muted: #A99D8C;
-  --color-accent: #E8703A;
-  --color-accent-fg: #2B1207;
-  --color-border: #3B342B;
-  --color-danger: #E58B7B;
+  --color-bg: #171613;
+  --color-surface: #201F1A;
+  --color-fg: #ECE9DF;
+  --color-muted: #A5A296;
+  --color-accent: #8FA6CC;
+  --color-accent-fg: #14213A;
+  --color-border: #38362E;
+  --color-danger: #C97B72;
+  --shadow-wash: 0 2px 16px rgba(0, 0, 0, 0.35);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-bg: #1A1611;
-    --color-surface: #242019;
-    --color-fg: #F0E8DA;
-    --color-muted: #A99D8C;
-    --color-accent: #E8703A;
-    --color-accent-fg: #2B1207;
-    --color-border: #3B342B;
-    --color-danger: #E58B7B;
+    --color-bg: #171613;
+    --color-surface: #201F1A;
+    --color-fg: #ECE9DF;
+    --color-muted: #A5A296;
+    --color-accent: #8FA6CC;
+    --color-accent-fg: #14213A;
+    --color-border: #38362E;
+    --color-danger: #C97B72;
+    --shadow-wash: 0 2px 16px rgba(0, 0, 0, 0.35);
   }
 }
 
