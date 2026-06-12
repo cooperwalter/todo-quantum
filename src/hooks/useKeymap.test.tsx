@@ -122,6 +122,35 @@ describe('list navigation (FR-16)', () => {
     expect(calls).toContain('complete:t1');
   });
 
+  it('completing with Space hands selection and focus to the row below', () => {
+    bar().focus();
+    fireEvent.keyDown(bar(), { key: 'ArrowDown' });
+    fireEvent.keyDown(row('t1'), { key: ' ' });
+    expect(calls).toContain('complete:t1');
+    expect(row('t2').getAttribute('data-selected')).toBe('true');
+    expect(document.activeElement).toBe(row('t2'));
+  });
+
+  it('completing the last row with x hands selection and focus to the row above', () => {
+    bar().focus();
+    fireEvent.keyDown(bar(), { key: 'ArrowDown' });
+    fireEvent.keyDown(row('t1'), { key: 'j' });
+    fireEvent.keyDown(row('t2'), { key: 'j' });
+    fireEvent.keyDown(row('t3'), { key: 'x' });
+    expect(calls).toContain('complete:t3');
+    expect(row('t2').getAttribute('data-selected')).toBe('true');
+    expect(document.activeElement).toBe(row('t2'));
+  });
+
+  it('deleting with Backspace hands selection and focus to the row below', () => {
+    bar().focus();
+    fireEvent.keyDown(bar(), { key: 'ArrowDown' });
+    fireEvent.keyDown(row('t1'), { key: 'Backspace' });
+    expect(calls).toContain('delete:t1');
+    expect(row('t2').getAttribute('data-selected')).toBe('true');
+    expect(document.activeElement).toBe(row('t2'));
+  });
+
   it('e and Enter open inline edit for the selected row', () => {
     bar().focus();
     fireEvent.keyDown(bar(), { key: 'ArrowDown' });
@@ -130,12 +159,13 @@ describe('list navigation (FR-16)', () => {
     expect(calls.filter((c) => c === 'edit:t1')).toHaveLength(2);
   });
 
-  it('Delete and Backspace dispatch delete for the selected row', () => {
+  it('Delete and Backspace each dispatch delete, following the selection as it hands off', () => {
     bar().focus();
     fireEvent.keyDown(bar(), { key: 'ArrowDown' });
     fireEvent.keyDown(row('t1'), { key: 'Delete' });
-    fireEvent.keyDown(row('t1'), { key: 'Backspace' });
-    expect(calls.filter((c) => c === 'delete:t1')).toHaveLength(2);
+    fireEvent.keyDown(row('t2'), { key: 'Backspace' });
+    expect(calls).toContain('delete:t1');
+    expect(calls).toContain('delete:t2');
   });
 
   it('1/2/3 snooze the selected row to tomorrow / +7 / next Saturday (FR-33)', () => {
@@ -181,6 +211,14 @@ describe('list navigation (FR-16)', () => {
     expect(row('t1').dataset.selected).toBe('true');
     fireEvent.keyDown(row('t1'), { key: 'Escape' });
     expect(row('t1').dataset.selected).toBe('false');
+  });
+
+  it('Esc in the list also blurs the row so no focus outline lingers after deselection', () => {
+    bar().focus();
+    fireEvent.keyDown(bar(), { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(row('t1'));
+    fireEvent.keyDown(row('t1'), { key: 'Escape' });
+    expect(document.activeElement).not.toBe(row('t1'));
   });
 });
 

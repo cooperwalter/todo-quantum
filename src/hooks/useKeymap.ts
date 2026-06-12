@@ -50,6 +50,14 @@ export function useKeymap(config: UseKeymapConfig) {
       el?.focus();
     }
 
+    // Completing or deleting removes the row from every open-task view, so the
+    // selection must move on: prefer the row below, fall back to the row above
+    // when acting on the last row, clear when it was the only one.
+    function neighborOf(id: string, rows: string[]): string | null {
+      const idx = rows.indexOf(id);
+      return rows[idx + 1] ?? rows[idx - 1] ?? null;
+    }
+
     function moveToList(cfg: UseKeymapConfig) {
       const rows = cfg.getRowIds();
       if (rows.length === 0) return;
@@ -142,12 +150,16 @@ export function useKeymap(config: UseKeymapConfig) {
           return;
         }
         case 'x':
-        case ' ':
+        case ' ': {
           if (selected !== null) {
             event.preventDefault();
+            const next = neighborOf(selected, rows);
             cfg.onComplete(selected);
+            cfg.setSelectedId(next);
+            focusRow(next);
           }
           return;
+        }
         case 'e':
         case 'Enter':
           if (selected !== null) {
@@ -156,12 +168,16 @@ export function useKeymap(config: UseKeymapConfig) {
           }
           return;
         case 'Delete':
-        case 'Backspace':
+        case 'Backspace': {
           if (selected !== null) {
             event.preventDefault();
+            const next = neighborOf(selected, rows);
             cfg.onDelete(selected);
+            cfg.setSelectedId(next);
+            focusRow(next);
           }
           return;
+        }
         case '1':
           if (selected !== null) {
             event.preventDefault();
@@ -194,6 +210,12 @@ export function useKeymap(config: UseKeymapConfig) {
         case 'Escape':
           event.preventDefault();
           cfg.setSelectedId(null);
+          // Deselection must be complete: clearing selectedId removes the accent
+          // left rule, but the row would keep DOM focus and its focus-visible
+          // outline — blur it so no selection affordance lingers.
+          if (active instanceof HTMLElement && active.dataset.taskId !== undefined) {
+            active.blur();
+          }
           return;
         default: {
           if (event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
