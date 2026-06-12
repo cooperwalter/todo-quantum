@@ -1,4 +1,5 @@
-/* Storage banner — persistent danger notice under the masthead (FR-41, §6). */
+/* Storage banner — persistent danger notice under the masthead (FR-41, §6).
+   Surface card with hairline border + ink-wash shadow; danger speaks only in the text. */
 
 .storage-banner {
   display: flex;
@@ -8,17 +9,16 @@
   margin-top: var(--space-3);
   padding: var(--space-2) var(--space-3);
   background: var(--color-surface);
-  border: 1px solid var(--color-danger);
-  border-left: 3px solid var(--color-danger);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-wash);
 }
 
 .storage-banner-text {
-  font-family: var(--type-mono);
-  font-size: var(--text-mono-size);
-  line-height: var(--text-mono-leading);
-  letter-spacing: 0.04em;
-  color: var(--color-fg);
+  font-family: var(--type-body);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-leading);
+  color: var(--color-danger);
 }
 
 .storage-banner-dismiss {
@@ -26,7 +26,7 @@
   background: none;
   border: none;
   padding: 0 var(--space-1);
-  font-family: var(--type-mono);
+  font-family: var(--type-body);
   font-size: var(--text-body-size);
   line-height: var(--text-body-leading);
   color: var(--color-muted);

@@ -1,4 +1,4 @@
-/* Toast — DESIGN-SYSTEM.md §6: inverted ink, bottom-left, print shadow. Tokens only. */
+/* Toast — DESIGN-SYSTEM.md §6: inverted ink, bottom-left, ink-wash shadow. Tokens only. */
 
 .toast-region {
   position: fixed;
@@ -14,7 +14,7 @@
   background: var(--color-fg);
   color: var(--color-bg);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-print) var(--color-border);
+  box-shadow: var(--shadow-wash);
   padding: var(--space-3) var(--space-4);
   animation: toast-in var(--motion-base) var(--ease);
 }
@@ -31,11 +31,10 @@
 }
 
 .toast-message {
-  font-family: var(--type-mono);
+  font-family: var(--type-body);
   font-weight: 500;
-  font-size: var(--text-mono-size);
-  line-height: var(--text-mono-leading);
-  letter-spacing: 0.08em;
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-leading);
 }
 
 .toast-undo {
@@ -43,11 +42,11 @@
   background: none;
   border: none;
   padding: 0;
-  font-family: var(--type-mono);
-  font-weight: 600;
-  font-size: var(--text-mono-size);
+  font-family: var(--type-body);
+  font-weight: 500;
+  font-size: 12px;
   line-height: var(--text-mono-leading);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-bg);
   cursor: pointer;
@@ -62,8 +61,11 @@
 }
 
 .toast-keycap {
+  font-family: var(--type-mono);
+  font-size: var(--text-mono-size);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
   padding: 0 var(--space-2);
+  letter-spacing: normal;
   text-transform: none;
 }
