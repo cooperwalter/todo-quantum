@@ -91,8 +91,10 @@ export function useKeymap(config: UseKeymapConfig) {
           event.preventDefault();
           moveToList(cfg);
         } else if (event.key === 'Escape' && bar.value === '') {
+          // Esc backs out of the bar without grabbing a task — ArrowDown is the
+          // deliberate way into the list.
           event.preventDefault();
-          moveToList(cfg);
+          bar.blur();
         }
         return; // every other key types into the bar
       }

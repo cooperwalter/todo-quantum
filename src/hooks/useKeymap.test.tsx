@@ -69,10 +69,12 @@ describe('focus handoff bar -> list (FR-15)', () => {
     expect(row('t1').dataset.selected).toBe('true');
   });
 
-  it('Esc from an EMPTY bar moves focus to the list', () => {
+  it('Esc from an EMPTY bar blurs the bar without focusing or selecting any row', () => {
     bar().focus();
     fireEvent.keyDown(bar(), { key: 'Escape' });
-    expect(document.activeElement).toBe(row('t1'));
+    expect(document.activeElement).not.toBe(bar());
+    expect(document.activeElement).not.toBe(row('t1'));
+    expect(row('t1').getAttribute('data-selected')).toBe('false');
   });
 
   it('Esc from a NON-empty bar is left to the bar (no focus move)', () => {
