@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-ink-garden-reskin.md",
   "designPath": "DESIGN-SYSTEM.md",
   "createdAt": "2026-06-12T20:52:09Z",
-  "updatedAt": "2026-06-15T23:33:24.839256+00:00",
+  "updatedAt": "2026-06-15T23:42:19.848646+00:00",
   "userIntent": "Make this app beautiful \u2014 full aesthetic replacement chosen by user: direction 'Ink Garden' over five rejected alternatives; pure visual re-skin, zero behavior changes",
   "coverageThreshold": 80,
   "stories": [
@@ -1062,7 +1062,7 @@
       "priority": 11,
       "complexity": 100,
       "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
-      "status": "pending",
+      "status": "passed",
       "dependsOn": [
         "US-200",
         "US-209",
@@ -1090,7 +1090,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 token deletion with grep-gated precondition",
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -1107,7 +1107,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 cleanup with grep verification",
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -1160,14 +1160,14 @@
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T23:42:19.848646+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T23:42:19.848646+00:00"
         }
       },
       "retries": {
@@ -1175,7 +1175,8 @@
         "maxAttempts": 3,
         "failureLog": []
       },
-      "notes": "Atomic and last. The visual gate is expected red for every story between US-200 and here; this story turns it green and makes it binding again."
+      "notes": "Atomic and last. The visual gate is expected red for every story between US-200 and here; this story turns it green and makes it binding again.",
+      "startedAt": null
     }
   ],
   "contracts": {
@@ -1530,6 +1531,20 @@
         "src/views/DoneView.tsx"
       ],
       "learnings": "Project eslint forbids BOTH setState-in-effect AND ref-access-during-render, so open->done transition detection moved into the complete() event handler (a user event) rather than an effect/render-time ref."
+    },
+    {
+      "timestamp": "2026-06-15T23:42:19.848646+00:00",
+      "iteration": 10,
+      "storyId": "US-208",
+      "action": "story_passed",
+      "details": "Removed deprecated --shadow-print token (0 consumers) and the CSS @import (fonts now via non-blocking index.html link); swapped index.html to Ink Garden fonts. Grep audits clean: shadow-print/Morning-Edition-fonts/literal-hex all 0. Full authoritative baseline regen (39 PNGs) + Pixel Law inspection ledger (verification/baseline-inspection-2026-06.md, 15 desktop PNGs). Gates: build/lint PASS, unit 3509 @96.35%, e2e 77, visual 6, a11y 8 (0 violations). Lighthouse a11y 1.0 + best-practices pass; PERFORMANCE 0.69 < 0.9 SURFACED as non-goal #6 follow-up (CJK Shippori Mincho Japanese subset ~5s LCP on throttled net); threshold NOT lowered, gate non-blocking by design.",
+      "filesChanged": [
+        "src/styles/tokens.css",
+        "index.html",
+        "verification/baseline-inspection-2026-06.md",
+        "__screenshots__/**"
+      ],
+      "learnings": "Ink Garden CJK fonts regress Lighthouse perf (Morning Edition was all-Latin). Follow-up: self-host a Shippori Mincho subset (Latin + \u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u5341\u6708\u65e5\u4eca) to drop the ~260KiB Japanese subset off the critical path."
     }
   ],
   "codebasePatterns": [
