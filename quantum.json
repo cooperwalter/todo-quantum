@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-ink-garden-reskin.md",
   "designPath": "DESIGN-SYSTEM.md",
   "createdAt": "2026-06-12T20:52:09Z",
-  "updatedAt": "2026-06-15T22:58:36.363184+00:00",
+  "updatedAt": "2026-06-15T23:00:34.982132+00:00",
   "userIntent": "Make this app beautiful \u2014 full aesthetic replacement chosen by user: direction 'Ink Garden' over five rejected alternatives; pure visual re-skin, zero behavior changes",
   "coverageThreshold": 80,
   "stories": [
@@ -517,7 +517,7 @@
       "priority": 6,
       "complexity": 36,
       "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
-      "status": "pending",
+      "status": "passed",
       "dependsOn": [],
       "storyType": "logic",
       "tasks": [
@@ -534,7 +534,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 presentational CSS; focus-trap behavior covered by existing tests",
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -550,7 +550,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 presentational CSS",
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -568,14 +568,14 @@
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T23:00:34.982132+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T23:00:34.982132+00:00"
         }
       },
       "retries": {
@@ -583,7 +583,8 @@
         "maxAttempts": 3,
         "failureLog": []
       },
-      "notes": ""
+      "notes": "",
+      "startedAt": null
     },
     {
       "id": "US-201",
@@ -1456,6 +1457,17 @@
         "src/components/CommandBar.test.tsx"
       ],
       "learnings": "Chip parse-in is opacity-only: mirror overlay must align char-for-char with the transparent textarea, so transform/inline-block (which breaks multi-word chip wrapping) is unsafe."
+    },
+    {
+      "timestamp": "2026-06-15T23:00:34.982132+00:00",
+      "iteration": 5,
+      "storyId": "US-207",
+      "action": "story_passed",
+      "details": "Cheatsheet: radius-lg surface sheet + shadow-wash over 80% bg scrim; ink-rule gradient header (3px fg->transparent) replaces double rule; mono keycap pills (hairline, radius-pill); body-font labels; two-col >=768, one col <768. Focus-trap behavior untouched (7 tests pass). Pixel-inspected.",
+      "filesChanged": [
+        "src/components/Cheatsheet.css"
+      ],
+      "learnings": "Ink-rule motif (linear-gradient(90deg, fg 60%, transparent)) is the shared masthead_rule contract; reused here via header::after."
     }
   ],
   "codebasePatterns": [
