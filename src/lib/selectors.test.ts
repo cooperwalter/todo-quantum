@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { allItems, doneItems, todayItems, upcomingGroups } from './selectors';
+import { allItems, doneItems, selectTodayProgress, todayItems, upcomingGroups } from './selectors';
 import type { AppData, Task } from './types';
 
 const TODAY = '2026-06-09';
@@ -201,5 +201,45 @@ describe('scale', () => {
     const sections = todayItems(makeAppData(tasks), TODAY);
     expect(sections.rollover.length + sections.dueToday.length + sections.anytime.length).toBe(150);
     expect(allItems(makeAppData(tasks), '')).toHaveLength(150);
+  });
+});
+
+describe('selectTodayProgress', () => {
+  const today = '2026-06-10';
+  const base = {
+    status: 'open' as const, dueTime: null, list: null, priority: null,
+    recurrence: null, createdAt: '2026-06-01T00:00:00.000Z', completedAt: null, order: 0,
+  };
+  function makeData(tasks: Array<Partial<Task> & { id: string }>): AppData {
+    return { schemaVersion: 1, tasks: tasks.map((t) => ({ ...base, title: t.id, ...t })) as Task[] };
+  }
+
+  it('reports 0 of 0 when no dated tasks are due on or before today', () => {
+    const data = makeData([{ id: 'a', dueDate: null }, { id: 'b', dueDate: '2026-06-20' }]);
+    expect(selectTodayProgress(data, today)).toEqual({ done: 0, total: 0 });
+  });
+
+  it('counts a due-today task and its done subset', () => {
+    const data = makeData([
+      { id: 'a', dueDate: today, status: 'done' },
+      { id: 'b', dueDate: today, status: 'open' },
+    ]);
+    expect(selectTodayProgress(data, today)).toEqual({ done: 1, total: 2 });
+  });
+
+  it('counts rollovers (dated before today) alongside due-today', () => {
+    const data = makeData([
+      { id: 'a', dueDate: '2026-06-08', status: 'done' },
+      { id: 'b', dueDate: today, status: 'done' },
+    ]);
+    expect(selectTodayProgress(data, today)).toEqual({ done: 2, total: 2 });
+  });
+
+  it('excludes future-dated tasks from the total', () => {
+    const data = makeData([
+      { id: 'a', dueDate: today, status: 'done' },
+      { id: 'b', dueDate: '2026-07-01', status: 'open' },
+    ]);
+    expect(selectTodayProgress(data, today)).toEqual({ done: 1, total: 1 });
   });
 });

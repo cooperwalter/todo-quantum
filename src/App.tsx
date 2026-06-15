@@ -2,6 +2,7 @@ import { useState } from 'react';
 import './App.css';
 import { formatKanjiDate } from './lib/kanji-date';
 import { Cheatsheet } from './components/Cheatsheet';
+import { HankoSeal } from './components/HankoSeal';
 import { CommandBar } from './components/CommandBar';
 import { StorageBanner } from './components/StorageBanner';
 import { Toast } from './components/Toast';
@@ -30,6 +31,7 @@ function Masthead() {
         <h1 className="masthead-date-kanji">{formatKanjiDate(now)}</h1>
         <p className="masthead-date-en">{DATE_FORMAT.format(now)}</p>
       </div>
+      <HankoSeal />
       <div className="masthead-rule" aria-hidden="true" />
     </header>
   );

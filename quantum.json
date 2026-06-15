@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-ink-garden-reskin.md",
   "designPath": "DESIGN-SYSTEM.md",
   "createdAt": "2026-06-12T20:52:09Z",
-  "updatedAt": "2026-06-15T23:20:50.407919+00:00",
+  "updatedAt": "2026-06-15T23:26:12.953264+00:00",
   "userIntent": "Make this app beautiful \u2014 full aesthetic replacement chosen by user: direction 'Ink Garden' over five rejected alternatives; pure visual re-skin, zero behavior changes",
   "coverageThreshold": 80,
   "stories": [
@@ -819,7 +819,7 @@
       "priority": 9,
       "complexity": 78,
       "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
-      "status": "pending",
+      "status": "passed",
       "dependsOn": [
         "US-201"
       ],
@@ -836,7 +836,7 @@
             "pnpm exec vitest run src/components/HankoSeal.test.tsx 2>&1 | grep -q 'failed\\|Cannot find' && echo RED-CONFIRMED"
           ],
           "testFirst": true,
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -852,7 +852,7 @@
             "pnpm run lint"
           ],
           "testFirst": true,
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -892,14 +892,14 @@
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T23:26:12.953264+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T23:26:12.953264+00:00"
         }
       },
       "retries": {
@@ -907,7 +907,8 @@
         "maxAttempts": 3,
         "failureLog": []
       },
-      "notes": ""
+      "notes": "",
+      "startedAt": null
     },
     {
       "id": "US-205",
@@ -1497,6 +1498,21 @@
         "src/views/TodayView.tsx"
       ],
       "learnings": "Playwright --update-snapshots skips rewriting byte-identical PNGs; a lingering stale dev server can chain stale baselines forward. Delete the target PNGs to force a fresh write, then read to verify the feature renders."
+    },
+    {
+      "timestamp": "2026-06-15T23:26:12.953264+00:00",
+      "iteration": 8,
+      "storyId": "US-202",
+      "action": "story_passed",
+      "details": "HankoSeal component: rotated \u4eca\u65e5 seal top-right of masthead, crimson outline -> fills crimson when all today+rollover tasks done (new selectTodayProgress selector). role=status, aria-label '{done} of {total} tasks done today', not focusable/clickable, axe-clean. Filled glyph readable in both themes (paper-white light / night-ink dark, dual prefers-color-scheme + data-theme wiring). 5 component + 4 selector tests pass; outline & filled states pixel-verified in both themes.",
+      "filesChanged": [
+        "src/components/HankoSeal.tsx",
+        "src/components/HankoSeal.css",
+        "src/components/HankoSeal.test.tsx",
+        "src/lib/selectors.ts",
+        "src/App.tsx"
+      ],
+      "learnings": "Gate drives dark via emulateMedia(prefers-color-scheme), so the seal's dark filled-glyph color needs BOTH [data-theme=dark] and the @media prefers-color-scheme:dark :root:not([data-theme=light]) selectors to match tokens.css."
     }
   ],
   "codebasePatterns": [
