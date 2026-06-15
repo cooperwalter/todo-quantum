@@ -69,10 +69,10 @@ test('rollover row shows the muted italic since annotation, never danger', async
   expect(color).not.toBe(toRgb(danger));
 });
 
-test('empty list renders the italic empty state @ desktop', async ({ page }) => {
+test('empty list renders the enso empty state @ desktop', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/', { waitUntil: 'networkidle' });
-  await expect(page.locator('.empty-state')).toHaveText('Nothing on deck — type to capture.');
+  await expect(page.locator('.empty-state-copy')).toHaveText('Nothing on deck — type to capture.');
   await page.addStyleTag({ content: FREEZE });
   await expect(page).toHaveScreenshot('tasklist-empty-desktop.png', {
     fullPage: true,

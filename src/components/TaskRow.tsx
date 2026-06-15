@@ -10,6 +10,10 @@ import type { Task } from '../lib/types';
 
 const WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
+// Priority renders as a kanji numeral after the title. Crimson is reserved for
+// priority 1 (the §1/§3 "seal" discipline); 2 and 3 are muted ink.
+const PRIORITY_KANJI: Record<1 | 2 | 3, string> = { 1: '一', 2: '二', 3: '三' };
+
 export interface TaskRowProps {
   task: Task;
   rollover?: boolean;
@@ -231,6 +235,14 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
           }}
         >
           {task.title}
+        </span>
+      )}
+      {!editing && task.priority !== null && (
+        <span
+          className={`task-priority ${task.priority === 1 ? 'task-priority--1' : 'task-priority--muted'}`}
+          aria-label={`priority ${task.priority}`}
+        >
+          {PRIORITY_KANJI[task.priority]}
         </span>
       )}
       {sinceLabel !== null && <span className="task-row-since">{sinceLabel}</span>}

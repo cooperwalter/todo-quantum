@@ -70,6 +70,34 @@ describe('TaskRow rendering', () => {
     expect(document.querySelector('.task-row--p1')).toBeNull();
   });
 
+  it('renders priority 1 as a crimson 一 glyph after the title', () => {
+    renderRow(makeTask({ priority: 1 }));
+    const glyph = document.querySelector('.task-priority');
+    expect(glyph?.textContent).toBe('一');
+    expect(glyph?.className).toContain('task-priority--1');
+    expect(glyph?.getAttribute('aria-label')).toBe('priority 1');
+  });
+
+  it('renders priority 2 as a muted 二 glyph (crimson reserved for priority 1)', () => {
+    renderRow(makeTask({ priority: 2 }));
+    const glyph = document.querySelector('.task-priority');
+    expect(glyph?.textContent).toBe('二');
+    expect(glyph?.className).toContain('task-priority--muted');
+    expect(glyph?.className).not.toContain('task-priority--1');
+  });
+
+  it('renders priority 3 as a muted 三 glyph', () => {
+    renderRow(makeTask({ priority: 3 }));
+    const glyph = document.querySelector('.task-priority');
+    expect(glyph?.textContent).toBe('三');
+    expect(glyph?.className).toContain('task-priority--muted');
+  });
+
+  it('renders no priority glyph when the task has no priority', () => {
+    renderRow(makeTask({ priority: null }));
+    expect(document.querySelector('.task-priority')).toBeNull();
+  });
+
   it("renders an italic muted '— since {weekday}' annotation for rollover rows, never danger", () => {
     renderRow(makeTask({ dueDate: '2026-06-08' }), { rollover: true });
     const since = document.querySelector('.task-row-since');

@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-ink-garden-reskin.md",
   "designPath": "DESIGN-SYSTEM.md",
   "createdAt": "2026-06-12T20:52:09Z",
-  "updatedAt": "2026-06-15T22:46:58.636284+00:00",
+  "updatedAt": "2026-06-15T22:55:20.810382+00:00",
   "userIntent": "Make this app beautiful \u2014 full aesthetic replacement chosen by user: direction 'Ink Garden' over five rejected alternatives; pure visual re-skin, zero behavior changes",
   "coverageThreshold": 80,
   "stories": [
@@ -198,7 +198,7 @@
       "priority": 3,
       "complexity": 76,
       "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
-      "status": "pending",
+      "status": "passed",
       "dependsOn": [],
       "storyType": "logic",
       "tasks": [
@@ -213,7 +213,7 @@
             "pnpm exec vitest run src/components/TaskRow.test.tsx 2>&1 | grep -q 'failed' && echo RED-CONFIRMED"
           ],
           "testFirst": true,
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -228,7 +228,7 @@
             "pnpm run build"
           ],
           "testFirst": true,
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -296,14 +296,14 @@
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T22:55:20.810382+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T22:55:20.810382+00:00"
         }
       },
       "retries": {
@@ -1426,6 +1426,22 @@
         "src/lib/kanji-date.test.ts"
       ],
       "learnings": "Kanji numerals for 1-31: units direct, \u5341 for ten, \u5341X teens, X\u5341(Y) for 20-31."
+    },
+    {
+      "timestamp": "2026-06-15T22:55:20.810382+00:00",
+      "iteration": 3,
+      "storyId": "US-204",
+      "action": "story_passed",
+      "details": "Flat hairline rows (no card/box/left-rule/print-shadow), 17px circle checkbox filling ink when done, Shippori Mincho 17/26 titles, kanji priority glyph (\u4e00 crimson / \u4e8c\u4e09 muted), wide-tracked caps meta+since (CSS uppercase, DOM text unchanged)+section labels, enso \u25ef empty-state markup. 34 component tests + 3495 unit suite pass; pixel-inspected desktop rows.",
+      "filesChanged": [
+        "src/components/TaskRow.tsx",
+        "src/components/TaskList.tsx",
+        "src/components/TaskList.css",
+        "src/components/TaskRow.test.tsx",
+        "e2e/states-tasklist.spec.ts",
+        "e2e/shell.spec.ts"
+      ],
+      "learnings": "Empty-state copy must live in its own .empty-state-copy span so getByText/toHaveText(copy) survives the decorative \u25ef glyph. Rollover 'since' text stays lowercase in DOM; CSS text-transform handles caps so the exact-text test passes."
     }
   ],
   "codebasePatterns": [
