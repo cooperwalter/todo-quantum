@@ -4,6 +4,7 @@ import { isoWeekday, todayStr } from '../lib/dates';
 import { formatTimeDisplay, parse } from '../lib/parser';
 import type { ParseResult } from '../lib/parser';
 import { serializeTask } from '../lib/serialize';
+import { BrushStroke } from './BrushStroke';
 import { ParsedInput } from './ParsedInput';
 import { useApp } from '../state/AppContext';
 import type { Task } from '../lib/types';
@@ -60,6 +61,11 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
   // Set by keyboard-driven closes (Esc/Enter); consumed after the editor unmounts
   // so the focus lands on the row element, not the removed textarea.
   const pendingRowFocus = useRef(false);
+  // The sumi brushstroke draws on a fresh completion (set from the complete
+  // handler — a user event), then settles to muted via onDrawn. A row that mounts
+  // already-done (Done/All view on load) keeps justCompleted=false and shows the
+  // settled stroke.
+  const [justCompleted, setJustCompleted] = useState(false);
 
   useLayoutEffect(() => {
     if (!editing && pendingRowFocus.current) {
@@ -69,6 +75,7 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
   }, [editing]);
 
   function complete() {
+    setJustCompleted(true);
     dispatch({
       type: 'complete',
       id: task.id,
@@ -235,6 +242,9 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
           }}
         >
           {task.title}
+          {task.status === 'done' && (
+            <BrushStroke drawing={justCompleted} onDrawn={() => setJustCompleted(false)} />
+          )}
         </span>
       )}
       {!editing && task.priority !== null && (

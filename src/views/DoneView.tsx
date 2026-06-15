@@ -1,3 +1,4 @@
+import { BrushStroke } from '../components/BrushStroke';
 import { doneItems } from '../lib/selectors';
 import { useApp } from '../state/AppContext';
 
@@ -39,7 +40,10 @@ export function DoneView() {
               onChange={() => reopen(task.id)}
               aria-label={`Reopen ${task.title}`}
             />
-            <span className="task-row-title">{task.title}</span>
+            <span className="task-row-title">
+              {task.title}
+              <BrushStroke />
+            </span>
           </li>
         ))}
       </ul>

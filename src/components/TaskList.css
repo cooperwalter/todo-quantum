@@ -116,6 +116,7 @@
 }
 
 .task-row-title {
+  position: relative;
   font-family: var(--type-display);
   font-weight: 600;
   font-size: 17px;
@@ -124,9 +125,9 @@
   cursor: text;
 }
 
+/* Done titles settle to muted; the sumi brushstroke (BrushStroke) replaces the
+   old text-decoration line-through. */
 .task-row--done .task-row-title {
-  text-decoration: line-through;
-  text-decoration-color: var(--color-muted);
   color: var(--color-muted);
   transition: color var(--motion-base) var(--ease);
 }

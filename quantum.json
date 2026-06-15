@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-ink-garden-reskin.md",
   "designPath": "DESIGN-SYSTEM.md",
   "createdAt": "2026-06-12T20:52:09Z",
-  "updatedAt": "2026-06-15T23:26:12.953264+00:00",
+  "updatedAt": "2026-06-15T23:33:24.839256+00:00",
   "userIntent": "Make this app beautiful \u2014 full aesthetic replacement chosen by user: direction 'Ink Garden' over five rejected alternatives; pure visual re-skin, zero behavior changes",
   "coverageThreshold": 80,
   "stories": [
@@ -928,7 +928,7 @@
       "priority": 10,
       "complexity": 94,
       "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
-      "status": "pending",
+      "status": "passed",
       "dependsOn": [
         "US-210",
         "US-201"
@@ -946,7 +946,7 @@
             "pnpm exec vitest run src/components/BrushStroke.test.tsx 2>&1 | grep -q 'failed\\|Cannot find' && echo RED-CONFIRMED"
           ],
           "testFirst": true,
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -962,7 +962,7 @@
             "pnpm run lint"
           ],
           "testFirst": true,
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -1028,14 +1028,14 @@
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T23:33:24.839256+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T23:33:24.839256+00:00"
         }
       },
       "retries": {
@@ -1043,7 +1043,8 @@
         "maxAttempts": 3,
         "failureLog": []
       },
-      "notes": "Signature interaction. dependsOn US-210 (TaskRow/TaskList files) and US-201 (DoneView.tsx empty-state edit lands first)."
+      "notes": "Signature interaction. dependsOn US-210 (TaskRow/TaskList files) and US-201 (DoneView.tsx empty-state edit lands first).",
+      "startedAt": null
     },
     {
       "id": "US-208",
@@ -1513,6 +1514,22 @@
         "src/App.tsx"
       ],
       "learnings": "Gate drives dark via emulateMedia(prefers-color-scheme), so the seal's dark filled-glyph color needs BOTH [data-theme=dark] and the @media prefers-color-scheme:dark :root:not([data-theme=light]) selectors to match tokens.css."
+    },
+    {
+      "timestamp": "2026-06-15T23:33:24.839256+00:00",
+      "iteration": 9,
+      "storyId": "US-205",
+      "action": "story_passed",
+      "details": "BrushStroke component: tapered organic SVG path (preserveAspectRatio=none), aria-hidden. Draws left->right via clip-path inset at motion-base (fg 0.85), settles to muted; reduced-motion = instant. Wired into TaskRow (drawing on fresh completion via complete() handler, settles via onDrawn) and DoneView inline rows (settled). line-through removed from all of src. 45 unit tests + e2e all-done pass; Done-view stroke pixel-verified.",
+      "filesChanged": [
+        "src/components/BrushStroke.tsx",
+        "src/components/BrushStroke.css",
+        "src/components/BrushStroke.test.tsx",
+        "src/components/TaskRow.tsx",
+        "src/components/TaskList.css",
+        "src/views/DoneView.tsx"
+      ],
+      "learnings": "Project eslint forbids BOTH setState-in-effect AND ref-access-during-render, so open->done transition detection moved into the complete() event handler (a user event) rather than an effect/render-time ref."
     }
   ],
   "codebasePatterns": [
