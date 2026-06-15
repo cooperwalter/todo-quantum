@@ -9,7 +9,10 @@ export function UpcomingView() {
   const groups = upcomingGroups(state.data, today);
 
   if (groups.length === 0) {
-    return <p className="empty-state">Nothing ahead — type to capture.</p>;
+    return <p className="empty-state">
+        <span className="empty-state-glyph" aria-hidden="true">◯</span>
+        <span className="empty-state-copy">Nothing ahead — type to capture.</span>
+      </p>;
   }
 
   return (

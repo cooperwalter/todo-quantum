@@ -112,7 +112,7 @@ describe('DoneView', () => {
   it('renders the italic empty state when nothing has been completed', () => {
     seedTasks([]);
     renderDone();
-    expect(document.querySelector('.empty-state')?.textContent).toBe(
+    expect(document.querySelector('.empty-state-copy')?.textContent).toBe(
       'Nothing done yet — finish something today.',
     );
   });

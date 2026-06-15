@@ -98,7 +98,7 @@ describe('UpcomingView', () => {
   it("renders the italic empty state 'Nothing ahead — type to capture.' when no open task is due after today", () => {
     seedTasks([]);
     renderUpcoming();
-    const empty = document.querySelector('.empty-state');
+    const empty = document.querySelector('.empty-state-copy');
     expect(empty?.textContent).toBe('Nothing ahead — type to capture.');
   });
 
@@ -119,7 +119,7 @@ describe('UpcomingView', () => {
     renderUpcoming();
     fireEvent.click(screen.getByLabelText('Complete Send report'));
     expect(document.querySelectorAll('.task-row')).toHaveLength(0);
-    expect(document.querySelector('.empty-state')?.textContent).toBe(
+    expect(document.querySelector('.empty-state-copy')?.textContent).toBe(
       'Nothing ahead — type to capture.',
     );
   });

@@ -136,13 +136,13 @@ test('reload persistence: a captured task is present again after reload', async 
   await expect(page.locator('.task-row-title')).toHaveText(['Persisted by reload']);
 });
 
-test('dark theme smoke: data-theme=dark renders the dark background token #1A1611', async ({ page }) => {
+test('dark theme smoke: data-theme=dark renders the dark background token #171613', async ({ page }) => {
   await page.goto('/', { waitUntil: 'networkidle' });
   await page.evaluate(() => {
     document.documentElement.dataset.theme = 'dark';
   });
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(bg).toBe('rgb(26, 22, 17)');
+  expect(bg).toBe('rgb(23, 22, 19)');
 });
 
 test('100 seeded tasks render in the Today view without interaction', async ({ page }) => {

@@ -133,7 +133,7 @@ describe('AllView', () => {
   it('renders the italic empty state when no open task matches', () => {
     seedTasks([]);
     renderAll();
-    expect(document.querySelector('.empty-state')?.textContent).toBe(
+    expect(document.querySelector('.empty-state-copy')?.textContent).toBe(
       'Nothing here — type to capture.',
     );
   });

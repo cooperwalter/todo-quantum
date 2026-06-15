@@ -1,4 +1,4 @@
-/* App shell — Morning Edition. Tokens only (DESIGN-SYSTEM.md §3/§4/§7). */
+/* App shell — Ink Garden. Tokens only (DESIGN-SYSTEM.md §3/§4/§7). */
 
 .shell-column {
   max-width: 720px;
@@ -6,13 +6,22 @@
   padding: 0 var(--space-4) var(--space-7);
 }
 
-/* Masthead — today's date set huge in Fraunces over a double rule (§1). */
+/* Masthead — today's date set bilingually (kanji display + English dateline),
+   over a drawn ink rule (§1/§2). */
 .masthead {
-  padding: var(--space-6) 0 var(--space-3);
-  border-bottom: 3px double var(--color-fg);
+  position: relative;
+  padding: var(--space-6) 0 var(--space-4);
+  animation: masthead-settle var(--motion-base) var(--ease) backwards;
 }
 
-.masthead-date {
+.masthead-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+
+.masthead-date-kanji {
   margin: 0;
   font-family: var(--type-display);
   font-weight: 600;
@@ -21,7 +30,25 @@
   color: var(--color-fg);
 }
 
-/* View tabs — mono uppercase, accent underline on current (§6). */
+.masthead-date-en {
+  margin: 0;
+  font-family: var(--type-display);
+  font-weight: 600;
+  font-size: var(--text-h2-size);
+  line-height: var(--text-h2-leading);
+  color: var(--color-muted);
+}
+
+.masthead-rule {
+  height: 3px;
+  margin-top: var(--space-3);
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--color-fg) 60%, transparent);
+  transform-origin: left center;
+  animation: ink-rule-draw var(--motion-slow) var(--ease) backwards;
+}
+
+/* View tabs — wide-tracked caps (body font), crimson underline on current (§6). */
 .view-tabs {
   display: flex;
   gap: var(--space-5);
@@ -34,14 +61,14 @@
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  padding: var(--space-2) 0 var(--space-2);
+  padding: var(--space-2) 0 var(--space-1);
   margin-bottom: -1px;
-  font-family: var(--type-mono);
+  font-family: var(--type-body);
   font-weight: 500;
   font-size: var(--text-mono-size);
   line-height: var(--text-mono-leading);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.2em;
   color: var(--color-muted);
   cursor: pointer;
   display: inline-flex;
@@ -55,7 +82,7 @@
 
 .view-tab[aria-current='page'] {
   color: var(--color-fg);
-  border-bottom-color: var(--color-accent);
+  border-bottom-color: var(--color-danger);
 }
 
 .view-tab:focus-visible {
@@ -92,13 +119,21 @@
   color: var(--color-muted);
 }
 
-/* Empty states — italic Newsreader, muted (§6). */
+/* Empty states — a single muted enso glyph over one line of muted body copy (§6). */
 .empty-state {
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
   font-family: var(--type-body);
-  font-style: italic;
   font-size: var(--text-body-size);
   line-height: var(--text-body-leading);
+  color: var(--color-muted);
+}
+
+.empty-state-glyph {
+  font-size: 24px;
+  line-height: 1;
   color: var(--color-muted);
 }
 
@@ -127,8 +162,14 @@
   }
 }
 
-.masthead {
-  animation: masthead-settle var(--motion-base) var(--ease) backwards;
+/* The ink rule draws left -> right as the page settles (§5). */
+@keyframes ink-rule-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 .task-row--reveal {
@@ -137,6 +178,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .masthead,
+  .masthead-rule,
   .task-row--reveal {
     animation: none;
   }
@@ -154,9 +196,17 @@
     max-width: none;
   }
 
-  .masthead-date {
-    font-size: 32px;
-    line-height: 38px;
+  /* §7 mobile: display scales down one step; the English dateline drops to its
+     own line. */
+  .masthead-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+
+  .masthead-date-kanji {
+    font-size: 30px;
+    line-height: 40px;
   }
 
   .view-tabs {

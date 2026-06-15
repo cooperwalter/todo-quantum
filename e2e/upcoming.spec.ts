@@ -99,7 +99,7 @@ test('each seeded task renders inside the section whose header matches its due d
 test('empty upcoming renders the italic empty state', async ({ page }) => {
   await page.goto('/', { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Upcoming' }).click();
-  await expect(page.locator('.empty-state')).toHaveText('Nothing ahead — type to capture.');
+  await expect(page.locator('.empty-state-copy')).toHaveText('Nothing ahead — type to capture.');
 });
 
 for (const [name, width] of BREAKPOINTS) {

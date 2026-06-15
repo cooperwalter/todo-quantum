@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-ink-garden-reskin.md",
   "designPath": "DESIGN-SYSTEM.md",
   "createdAt": "2026-06-12T20:52:09Z",
-  "updatedAt": "2026-06-15T23:00:34.982132+00:00",
+  "updatedAt": "2026-06-15T23:13:55.723034+00:00",
   "userIntent": "Make this app beautiful \u2014 full aesthetic replacement chosen by user: direction 'Ink Garden' over five rejected alternatives; pure visual re-skin, zero behavior changes",
   "coverageThreshold": 80,
   "stories": [
@@ -604,7 +604,7 @@
       "priority": 7,
       "complexity": 79,
       "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
-      "status": "pending",
+      "status": "passed",
       "dependsOn": [
         "US-209",
         "US-204"
@@ -625,7 +625,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 markup composition; formatter logic already tested in US-209",
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -641,7 +641,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 presentational CSS",
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -695,14 +695,14 @@
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T23:13:55.723034+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T23:13:55.723034+00:00"
         }
       },
       "retries": {
@@ -710,7 +710,8 @@
         "maxAttempts": 3,
         "failureLog": []
       },
-      "notes": "dependsOn US-204 added at plan time: US-204 T-005 owns the TaskList.tsx half of the empty-state AC, and sequencing also guarantees rows are flat before the chrome pixel check."
+      "notes": "dependsOn US-204 added at plan time: US-204 T-005 owns the TaskList.tsx half of the empty-state AC, and sequencing also guarantees rows are flat before the chrome pixel check.",
+      "startedAt": null
     },
     {
       "id": "US-210",
@@ -1468,6 +1469,21 @@
         "src/components/Cheatsheet.css"
       ],
       "learnings": "Ink-rule motif (linear-gradient(90deg, fg 60%, transparent)) is the shared masthead_rule contract; reused here via header::after."
+    },
+    {
+      "timestamp": "2026-06-15T23:13:55.723034+00:00",
+      "iteration": 6,
+      "storyId": "US-201",
+      "action": "story_passed",
+      "details": "Bilingual masthead (\u516d\u6708\u5341\u65e5 display + English h2 muted, own line at 375), ink-rule gradient draw (motion-slow, reduced-motion safe), view tabs wide-tracked caps body font + crimson active underline, enso \u25ef empty states across TaskList + All/Upcoming/Done views (no italic). Verified desktop+mobile renders. Fixed pre-existing stale speed.spec dark-bg assertion (#1A1611->#171613).",
+      "filesChanged": [
+        "src/App.tsx",
+        "src/App.css",
+        "src/views/AllView.tsx",
+        "src/views/UpcomingView.tsx",
+        "src/views/DoneView.tsx"
+      ],
+      "learnings": "CRITICAL: a stale node_modules/.vite cache / lingering dev server can make playwright --update-snapshots render OLD code while vite serves NEW source. Symptom: baseline mtime unchanged + screenshot shows old UI. Fix: kill all :5273 listeners + rm -rf node_modules/.vite before regen, or delete the baseline to force a write. US-208 final regen MUST run against a clean server."
     }
   ],
   "codebasePatterns": [

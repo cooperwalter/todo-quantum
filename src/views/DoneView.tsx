@@ -6,7 +6,10 @@ export function DoneView() {
   const tasks = doneItems(state.data);
 
   if (tasks.length === 0) {
-    return <p className="empty-state">Nothing done yet — finish something today.</p>;
+    return <p className="empty-state">
+        <span className="empty-state-glyph" aria-hidden="true">◯</span>
+        <span className="empty-state-copy">Nothing done yet — finish something today.</span>
+      </p>;
   }
 
   function reopen(id: string) {
