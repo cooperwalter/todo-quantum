@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-ink-garden-reskin.md",
   "designPath": "DESIGN-SYSTEM.md",
   "createdAt": "2026-06-12T20:52:09Z",
-  "updatedAt": "2026-06-15T22:46:05.985201+00:00",
+  "updatedAt": "2026-06-15T22:46:58.636284+00:00",
   "userIntent": "Make this app beautiful \u2014 full aesthetic replacement chosen by user: direction 'Ink Garden' over five rejected alternatives; pure visual re-skin, zero behavior changes",
   "coverageThreshold": 80,
   "stories": [
@@ -124,7 +124,7 @@
       "priority": 2,
       "complexity": 24,
       "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
-      "status": "pending",
+      "status": "passed",
       "dependsOn": [],
       "storyType": "logic",
       "tasks": [
@@ -139,7 +139,7 @@
             "pnpm exec vitest run src/lib/kanji-date.test.ts 2>&1 | grep -q 'failed\\|Cannot find' && echo RED-CONFIRMED"
           ],
           "testFirst": true,
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -157,19 +157,19 @@
           "consumedBy": [
             "US-201"
           ],
-          "status": "failed"
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T22:46:58.636284+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T22:46:58.636284+00:00"
         }
       },
       "retries": {
@@ -1414,6 +1414,18 @@
         "verification/a11y.spec.ts"
       ],
       "learnings": "App theming is pure prefers-color-scheme (no data-theme attr), so emulateMedia({colorScheme}) drives dark tokens directly. Stale vite dev server on :5273 must be killed before playwright (reuseExistingServer:false)."
+    },
+    {
+      "timestamp": "2026-06-15T22:46:58.636284+00:00",
+      "iteration": 2,
+      "storyId": "US-209",
+      "action": "story_passed",
+      "details": "formatKanjiDate(d) -> \u6708/\u65e5 kanji numerals, timezone-naive. 9 unit tests (incl. teens, round-tens, local-vs-UTC) pass.",
+      "filesChanged": [
+        "src/lib/kanji-date.ts",
+        "src/lib/kanji-date.test.ts"
+      ],
+      "learnings": "Kanji numerals for 1-31: units direct, \u5341 for ten, \u5341X teens, X\u5341(Y) for 20-31."
     }
   ],
   "codebasePatterns": [
