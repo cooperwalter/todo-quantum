@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-ink-garden-reskin.md",
   "designPath": "DESIGN-SYSTEM.md",
   "createdAt": "2026-06-12T20:52:09Z",
-  "updatedAt": "2026-06-15T23:13:55.723034+00:00",
+  "updatedAt": "2026-06-15T23:20:50.407919+00:00",
   "userIntent": "Make this app beautiful \u2014 full aesthetic replacement chosen by user: direction 'Ink Garden' over five rejected alternatives; pure visual re-skin, zero behavior changes",
   "coverageThreshold": 80,
   "stories": [
@@ -728,7 +728,7 @@
       "priority": 8,
       "complexity": 53,
       "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
-      "status": "pending",
+      "status": "passed",
       "dependsOn": [
         "US-204"
       ],
@@ -748,7 +748,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 presentational CSS; selection behavior covered by existing tests",
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -765,7 +765,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 presentational motion CSS; reduced-motion is gate-checked in a11y spec",
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -783,14 +783,14 @@
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T23:20:50.407919+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T23:20:50.407919+00:00"
         }
       },
       "retries": {
@@ -798,7 +798,8 @@
         "maxAttempts": 3,
         "failureLog": []
       },
-      "notes": ""
+      "notes": "",
+      "startedAt": null
     },
     {
       "id": "US-202",
@@ -1484,6 +1485,18 @@
         "src/views/DoneView.tsx"
       ],
       "learnings": "CRITICAL: a stale node_modules/.vite cache / lingering dev server can make playwright --update-snapshots render OLD code while vite serves NEW source. Symptom: baseline mtime unchanged + screenshot shows old UI. Fix: kill all :5273 listeners + rm -rf node_modules/.vite before regen, or delete the baseline to force a write. US-208 final regen MUST run against a clean server."
+    },
+    {
+      "timestamp": "2026-06-15T23:20:50.407919+00:00",
+      "iteration": 7,
+      "storyId": "US-210",
+      "action": "story_passed",
+      "details": "Hover/selected ink brush-tick in the left margin (::before, 4px hover / 6px selected + surface bg), token-driven transitions. Load stagger base delay moved from hardcoded 120ms to calc(var(--motion-slow)+steps*40ms) so the masthead rule finishes first; 40ms stagger preserved (today.spec passes). Skeleton AC N/A \u2014 app has no loading-skeleton component. Tick render pixel-verified.",
+      "filesChanged": [
+        "src/components/TaskList.css",
+        "src/views/TodayView.tsx"
+      ],
+      "learnings": "Playwright --update-snapshots skips rewriting byte-identical PNGs; a lingering stale dev server can chain stale baselines forward. Delete the target PNGs to force a fresh write, then read to verify the feature renders."
     }
   ],
   "codebasePatterns": [

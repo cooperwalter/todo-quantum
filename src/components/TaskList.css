@@ -41,8 +41,33 @@
   color: var(--color-muted);
 }
 
+/* Hover / selection read as an ink brush-tick in the left margin, outside the
+   text column (§6). Hover: 4px; keyboard-selected: thickens to 6px + the row
+   warms to surface. */
+.task-row::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--space-3));
+  top: var(--space-4);
+  bottom: var(--space-4);
+  width: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--ease), width var(--motion-fast) var(--ease);
+}
+
+.task-row:hover::before {
+  opacity: 1;
+}
+
 .task-row--selected {
   background: var(--color-surface);
+}
+
+.task-row--selected::before {
+  opacity: 1;
+  width: 6px;
 }
 
 .task-row:focus-visible {
