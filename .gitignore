@@ -26,6 +26,7 @@ dist-ssr
 # lens-design scratch
 tmp/
 .firecrawl/
+.superpowers/
 
 # quantum-loop runtime
 .ql-wt/

@@ -17,7 +17,7 @@
   "buildCommand": "pnpm run build",
   "gates": {
     "_comment": "Each value is a shell command run from the project root, or null to skip. Exit code 0 = pass. These become the verification commands quantum-loop's Iron Law demands as evidence.",
-    "typecheck": "pnpm run typecheck",
+    "typecheck": "pnpm run build",
     "lint": "pnpm run lint",
     "unit": "pnpm exec vitest run --coverage",
     "integration": "pnpm run test:integration",

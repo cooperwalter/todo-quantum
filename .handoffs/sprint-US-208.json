@@ -1,0 +1,132 @@
+{
+  "storyId": "US-208",
+  "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
+  "acs": [
+    "grep -rn 'shadow-print' src/ returns 0 matches; the --shadow-print definition and its deprecation comment are deleted from src/styles/tokens.css",
+    "grep -rn 'Fraunces\\|Newsreader\\|JetBrains' src/ index.html returns 0 matches (stale font preloads/links in index.html removed too)",
+    "grep -rnE '#[0-9A-Fa-f]{3,8}' src/components src/App.css returns 0 matches",
+    "All baselines under __screenshots__/ (verification + e2e state specs) regenerated via --update-snapshots with the frozen clock, including the new dark-axis files from US-200",
+    "Per the Pixel Law, every regenerated desktop PNG (both themes) is rendered, looked at, and checked against DESIGN-SYSTEM.md §6/§8 before blessing; one line of inspection notes per PNG written to verification/baseline-inspection-2026-06.md [NEW] (grep-checkable: line count ≥ PNG count)",
+    "Full gate run passes fresh: typecheck, lint, unit (coverage ≥ 80), e2e, visual.regression, visual.a11y, visual.lighthouse (thresholds §8)",
+    "Verify in browser"
+  ],
+  "contracts": {
+    "design_tokens": {
+      "color-accent": {
+        "value": "--color-accent",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-fg": {
+        "value": "--color-fg",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-danger": {
+        "value": "--color-danger",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "shadow-wash": {
+        "value": "--shadow-wash"
+      },
+      "space-scale": {
+        "value": "[4,8,12,16,24,32,48,64,96]"
+      },
+      "type-display": {
+        "value": "--type-display",
+        "pattern": "^--type-[a-z0-9]+$"
+      },
+      "motion-slow": {
+        "value": "--motion-slow",
+        "pattern": "^--motion-[a-z]+$"
+      }
+    },
+    "css_classes": {
+      "empty_state": {
+        "value": "empty-state"
+      },
+      "empty_state_glyph": {
+        "value": "empty-state-glyph"
+      },
+      "masthead_rule": {
+        "value": "masthead-rule"
+      },
+      "prompt_bar": {
+        "value": "prompt-bar"
+      },
+      "task_priority": {
+        "value": "task-priority"
+      },
+      "brush_stroke": {
+        "value": "brush-stroke"
+      },
+      "task_section_label": {
+        "value": "task-section-label"
+      }
+    },
+    "config_keys": {
+      "visual_themes": {
+        "value": "visual.themes"
+      }
+    },
+    "aria_labels": {
+      "hanko_seal_progress": {
+        "value": "{done} of {total} tasks done today"
+      }
+    },
+    "shared_types": {
+      "kanji_date_formatter": {
+        "value": "formatKanjiDate",
+        "pattern": "^[a-z][a-zA-Z]*$",
+        "definitionFile": "src/lib/kanji-date.ts",
+        "owner": "US-209",
+        "consumers": [
+          "US-201"
+        ],
+        "shape": {
+          "properties": [],
+          "methods": [
+            {
+              "name": "formatKanjiDate",
+              "params": [
+                {
+                  "name": "d",
+                  "type": "Date"
+                }
+              ],
+              "returns": "string"
+            }
+          ]
+        },
+        "definition": "export function formatKanjiDate(d: Date): string;"
+      }
+    }
+  },
+  "files": [
+    "__screenshots__/",
+    "index.html",
+    "src/App.css",
+    "src/components/",
+    "src/styles/tokens.css",
+    "verification/baseline-inspection-2026-06.md"
+  ],
+  "expectedTests": [
+    "pnpm exec playwright test verification/visual.spec.ts e2e/ --update-snapshots",
+    "test $(grep -c '__screenshots__' verification/baseline-inspection-2026-06.md) -ge $(find __screenshots__ -name '*desktop*.png' | wc -l)",
+    "pnpm exec playwright test verification/visual.spec.ts",
+    "pnpm exec playwright test verification/a11y.spec.ts"
+  ],
+  "otherCommands": [
+    "! grep -rn 'shadow-print' src/",
+    "pnpm run build",
+    "! grep -rn 'Fraunces\\|Newsreader\\|JetBrains' src/ index.html",
+    "! grep -rnE '#[0-9A-Fa-f]{3,8}' src/components src/App.css",
+    "find __screenshots__ -name '*-dark*' | grep -q .",
+    "pnpm run build",
+    "pnpm run lint",
+    "pnpm exec vitest run --coverage",
+    "pnpm exec playwright test e2e/",
+    "pnpm exec lhci autorun",
+    "bash verification/run-visual-gate.sh /"
+  ],
+  "plannedBy": "ql-plan",
+  "plannedAt": "2026-06-12T21:08:49Z"
+}

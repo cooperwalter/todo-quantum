@@ -1,0 +1,121 @@
+{
+  "storyId": "US-206",
+  "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
+  "acs": [
+    "Toast: --color-fg bg, --color-bg text, bottom-left, --shadow-wash, radius-md; action label in --type-body, 'Undo ⌘Z' keycap in mono pill; slides at --motion-base; aria-live=polite preserved (§6)",
+    "Buttons in these components follow §6: primary = ink bg + bg-token text + wide-tracked caps 12 wght 500 + radius-md, hover opacity 0.88, active scale 0.98; secondary = transparent + 1px fg border; destructive = danger border/text, fills danger with bg-token text on hover",
+    "StorageBanner and ErrorBoundary surfaces use --color-surface + hairline border + --shadow-wash; all print shadows removed from src/components/Toast.css, src/components/StorageBanner.css, src/components/ErrorBoundary.css",
+    "No literal hex values remain in the three CSS files (grep check)",
+    "Typecheck/lint passes",
+    "Verify in browser (visual gate; toast state baseline re-blessed in US-208)"
+  ],
+  "contracts": {
+    "design_tokens": {
+      "color-accent": {
+        "value": "--color-accent",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-fg": {
+        "value": "--color-fg",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-danger": {
+        "value": "--color-danger",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "shadow-wash": {
+        "value": "--shadow-wash"
+      },
+      "space-scale": {
+        "value": "[4,8,12,16,24,32,48,64,96]"
+      },
+      "type-display": {
+        "value": "--type-display",
+        "pattern": "^--type-[a-z0-9]+$"
+      },
+      "motion-slow": {
+        "value": "--motion-slow",
+        "pattern": "^--motion-[a-z]+$"
+      }
+    },
+    "css_classes": {
+      "empty_state": {
+        "value": "empty-state"
+      },
+      "empty_state_glyph": {
+        "value": "empty-state-glyph"
+      },
+      "masthead_rule": {
+        "value": "masthead-rule"
+      },
+      "prompt_bar": {
+        "value": "prompt-bar"
+      },
+      "task_priority": {
+        "value": "task-priority"
+      },
+      "brush_stroke": {
+        "value": "brush-stroke"
+      },
+      "task_section_label": {
+        "value": "task-section-label"
+      }
+    },
+    "config_keys": {
+      "visual_themes": {
+        "value": "visual.themes"
+      }
+    },
+    "aria_labels": {
+      "hanko_seal_progress": {
+        "value": "{done} of {total} tasks done today"
+      }
+    },
+    "shared_types": {
+      "kanji_date_formatter": {
+        "value": "formatKanjiDate",
+        "pattern": "^[a-z][a-zA-Z]*$",
+        "definitionFile": "src/lib/kanji-date.ts",
+        "owner": "US-209",
+        "consumers": [
+          "US-201"
+        ],
+        "shape": {
+          "properties": [],
+          "methods": [
+            {
+              "name": "formatKanjiDate",
+              "params": [
+                {
+                  "name": "d",
+                  "type": "Date"
+                }
+              ],
+              "returns": "string"
+            }
+          ]
+        },
+        "definition": "export function formatKanjiDate(d: Date): string;"
+      }
+    }
+  },
+  "files": [
+    "src/components/ErrorBoundary.css",
+    "src/components/StorageBanner.css",
+    "src/components/Toast.css",
+    "src/components/Toast.tsx"
+  ],
+  "expectedTests": [
+    "pnpm exec vitest run src/components/Toast.test.tsx",
+    "pnpm exec vitest run src/components/ErrorBoundary.test.tsx",
+    "pnpm exec playwright test e2e/states-toast.spec.ts e2e/states-banner.spec.ts --update-snapshots"
+  ],
+  "otherCommands": [
+    "! grep -n 'shadow-print' src/components/Toast.css",
+    "! grep -n 'shadow-print' src/components/StorageBanner.css src/components/ErrorBoundary.css",
+    "! grep -nE '#[0-9A-Fa-f]{3,8}' src/components/Toast.css src/components/StorageBanner.css src/components/ErrorBoundary.css",
+    "bash verification/run-visual-gate.sh /"
+  ],
+  "plannedBy": "ql-plan",
+  "plannedAt": "2026-06-12T21:08:48Z"
+}

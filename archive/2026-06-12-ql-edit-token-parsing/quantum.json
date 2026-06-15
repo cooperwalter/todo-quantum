@@ -1,0 +1,1470 @@
+{
+  "project": ".",
+  "branchName": "ql/edit-token-parsing",
+  "description": "Token parsing in edit (edit/add symmetry): round-trip serialized edit field, last-wins chip overwrite in both flows, overflow menu removal",
+  "prdPath": "tasks/prd-edit-token-parsing.md",
+  "designPath": "docs/plans/2026-06-10-edit-token-parsing-design.md",
+  "createdAt": "2026-06-10T22:51:29Z",
+  "updatedAt": "2026-06-11T18:16:45.329414+00:00",
+  "userIntent": {
+    "text": "when editing an existing todo, typing things like #atag and tomorrow, etc, should function like when adding a new todo",
+    "timestamp": "2026-06-10T22:51:29Z",
+    "source_message_id": null
+  },
+  "userClarifications": [
+    {
+      "question": "Edit-token-parsing feature: overwrite semantics",
+      "answer": "adding a new chip should overwrite the related chip to its left (verbatim user message); applies to both add and edit; old text removed once the new token seals",
+      "stage": "brainstorm",
+      "timestamp": "2026-06-10T22:35:27Z"
+    },
+    {
+      "question": "Edit-token-parsing feature: three-dots menu",
+      "answer": "Also, as part of this, we will remove the three dots menu. All changes will be made via the keyboard ideally (verbatim user message); snooze becomes keyboard-only 1/2/3",
+      "stage": "brainstorm",
+      "timestamp": "2026-06-10T22:35:27Z"
+    },
+    {
+      "question": "Edit blur behavior",
+      "answer": "Save on blur (keeps current onBlur=saveEdit behavior); blur with empty extracted title cancels",
+      "stage": "spec",
+      "timestamp": "2026-06-10T22:35:27Z"
+    },
+    {
+      "question": "Round-trip mismatch at edit-open",
+      "answer": "Fall back to title-only edit with parsing disabled and a console error; never corrupt task data",
+      "stage": "spec",
+      "timestamp": "2026-06-10T22:35:27Z"
+    },
+    {
+      "question": "Whitespace at displaced-text removal seam",
+      "answer": "Collapse to a single space; live field never trimmed; trim only in extracted title",
+      "stage": "spec",
+      "timestamp": "2026-06-10T22:35:27Z"
+    },
+    {
+      "question": "Editing done tasks",
+      "answer": "Out of scope; open tasks only",
+      "stage": "spec",
+      "timestamp": "2026-06-10T22:35:27Z"
+    }
+  ],
+  "coverageThreshold": 80,
+  "stories": [
+    {
+      "id": "US-101",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 24,
+      "title": "Parser \u2014 explicit-year dates",
+      "description": "As a user editing a rolled-over task, I want past dates like `jun 3 2026` to parse to that exact date so that opening an edit never silently rewrites my due date to next year.",
+      "acceptanceCriteria": [
+        "parse('pay rent jun 3 2026', now) with now = 2026-06-10 yields dueDate: '2026-06-03' (no roll-forward) and a date chip covering 'jun 3 2026'",
+        "Both '<monthname> <day> <year>' and '<day> <monthname> <year>' forms parse; 4-digit years only; years outside 1970-2100 stay literal",
+        "Without a year, existing roll-forward behavior is unchanged ('jun 3' at 2026-06-10 -> 2027-06-03) \u2014 existing tests still pass",
+        "Chip display includes the year whenever the resolved date's year differs from now's year (covers explicit-year dates AND no-year dates that roll forward into next year): formatDateDisplay gains an optional now parameter \u2014 formatDateDisplay('2027-06-03', now) with now in 2026 renders 'Thu Jun 3, 2027'; same-year dates render without the year, unchanged",
+        "Unit tests in src/lib/parser.test.ts cover both word orders, year-boundary values, and the no-year regression",
+        "Typecheck/lint passes"
+      ],
+      "priority": 1,
+      "status": "passed",
+      "dependsOn": [],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Write failing tests for explicit-year date parsing and year-aware chip display",
+          "description": "In src/lib/parser.test.ts add tests: 'jun 3 2026' and '3 jun 2026' at now=2026-06-10 parse to dueDate 2026-06-03 with chip covering all three words; year 1969 and 2101 stay literal (date parses year-less or not at all per existing anchor rules); 'jun 3' (no year) still rolls forward to 2027-06-03; formatDateDisplay('2027-06-03', now) renders 'Thu Jun 3, 2027' while formatDateDisplay('2026-06-12', now) stays 'Fri Jun 12'. Include edge-case tests: boundary values (null fields, empty string), scale (1/10/100 tokens or tasks where applicable), and collision scenarios. Run tests, confirm the new ones fail (red).",
+          "filePaths": [
+            "src/lib/parser.test.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/parser.test.ts"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-002",
+          "title": "Implement explicit-year matching in matchDateAt and year-aware formatDateDisplay",
+          "description": "In src/lib/parser.ts extend matchDateAt(): after a '<monthname> <day>' or '<day> <monthname>' match, look ahead one word for a 4-digit year in 1970-2100; if present, consume it and use that exact year with no roll-forward. Add optional second parameter now?: Date to formatDateDisplay; when provided and the date's year !== now's year, append ', YYYY' to the display. Update parse() to pass now into formatDateDisplay for date chips. All tests from T-001 green; no existing test modified.",
+          "filePaths": [
+            "src/lib/parser.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/parser.test.ts",
+            "pnpm run typecheck",
+            "pnpm run lint"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T01:10:56.807713+00:00"
+        },
+        "codeQuality": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T01:10:56.807713+00:00"
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": "",
+      "startedAt": null
+    },
+    {
+      "id": "US-107",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 40,
+      "title": "Remove the overflow menu; keyboard-first row",
+      "description": "As a keyboard-first user, I want the three-dots menu gone so that the row is clean and every mutation has a single, predictable path.",
+      "acceptanceCriteria": [
+        "src/components/TaskRow.tsx no longer renders the '\u22ef' button or role=\"menu\"; menuOpen state is deleted",
+        "task-row-overflow* and task-row-menu* CSS rules are deleted from src/components/TaskList.css (where they live today); grep -rn \"task-row-overflow\\|task-row-menu\" src/ returns nothing",
+        "Snooze via keys 1/2/3 still works (existing keymap untouched); the '?' cheatsheet rows for snooze keys are unchanged (already present in src/components/Cheatsheet.tsx)",
+        "Overflow-menu tests are deleted from src/components/TaskRow.test.tsx; e2e/states-snooze.spec.ts is rewritten to exercise keyboard snooze only",
+        "Mouse paths that remain: checkbox completes, title click opens edit \u2014 both still covered by tests",
+        "Zero axe violations on the task list after removal",
+        "Typecheck/lint passes",
+        "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
+      ],
+      "priority": 2,
+      "status": "passed",
+      "dependsOn": [],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Delete the overflow button, menu, state, and CSS",
+          "description": "In src/components/TaskRow.tsx remove the menuOpen useState, the task-row-overflow <span>, the '\u22ef' <button>, and the role=\"menu\" block (lines ~120-154). Remove the now-unused snoozeOptions/snoozeTo code ONLY if nothing else references it (keyboard snooze lives in useKeymap, not TaskRow \u2014 verify with grep before deleting). Delete task-row-overflow* and task-row-menu* rules from src/components/TaskList.css. Verify: grep -rn 'task-row-overflow\\|task-row-menu' src/ returns nothing.",
+          "filePaths": [
+            "src/components/TaskRow.tsx",
+            "src/components/TaskList.css"
+          ],
+          "commands": [
+            "bash -c \"! grep -rn 'task-row-overflow\\\\|task-row-menu' src/\"",
+            "pnpm run typecheck",
+            "pnpm run lint"
+          ],
+          "testFirst": false,
+          "status": "passed",
+          "notes": "testFirst: false \u2014 pure deletion of UI affordance; behavior coverage updated in T-002"
+        },
+        {
+          "id": "T-002",
+          "title": "Update unit tests and rewrite the snooze states e2e spec for keyboard-only",
+          "description": "In src/components/TaskRow.test.tsx delete tests that click the '\u22ef' button or assert menu items; keep/ensure tests that checkbox-click completes and title-click opens edit. Rewrite e2e/states-snooze.spec.ts: seed an overdue task, select it with j, press 1, assert dueDate moved to tomorrow (row re-renders under Today/Upcoming accordingly), screenshot the post-snooze state; delete the snooze-menu-open-desktop.png baseline.",
+          "filePaths": [
+            "src/components/TaskRow.test.tsx",
+            "e2e/states-snooze.spec.ts",
+            "e2e/states-snooze.spec.ts-snapshots/"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/TaskRow.test.tsx",
+            "pnpm exec playwright test e2e/states-snooze.spec.ts"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-003",
+          "title": "Run the visual gate and re-bless the row baseline",
+          "description": "Run bash verification/run-visual-gate.sh / \u2014 the root-route baseline will diff (hover affordance removed). Regenerate with --update-snapshots, OPEN the new PNGs and visually confirm against DESIGN-SYSTEM.md before blessing. Axe must report zero violations.",
+          "filePaths": [
+            "verification/visual.spec.ts-snapshots/"
+          ],
+          "commands": [
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "status": "passed",
+          "notes": "testFirst: false \u2014 visual-gate verification task, no production logic"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T16:48:51.789629+00:00"
+        },
+        "codeQuality": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T16:48:51.789629+00:00"
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": "",
+      "startedAt": null
+    },
+    {
+      "id": "US-102",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 51,
+      "title": "Parser \u2014 last-wins with displaced ranges and reverted-ranges input",
+      "description": "As a user, I want typing a second date/list/priority/recurrence token to replace the earlier one so that the chip to the left is overwritten, in add and edit alike. CONTRACT-BREAKING: changes ParseResult (adds displaced) and supersedes the recorded first-wins parsing contract; consumers (US-103/104/105/106) all depend on this story.",
+      "acceptanceCriteria": [
+        "parse signature becomes parse(input: string, now: Date, reverted?: Array<{start: number; end: number}>); existing two-arg calls compile unchanged",
+        "ParseResult gains displaced: Array<{ start: number; end: number }> listing earlier same-kind token ranges superseded by a later token",
+        "parse('pay rent friday monday', now) yields the Monday date, a chip on 'monday', displaced containing the range of 'friday', and title === 'pay rent' \u2014 displaced ranges are excluded from the title exactly like chip ranges",
+        "Last-wins applies per kind to date, time, list, priority, and recurrence independently",
+        "Displacement compares pre-merge tokens: parse('dinner tomorrow 3pm 4pm', now) keeps the date, time becomes '16:00', and displaced contains only the '3pm' range",
+        "Tokens inside reverted ranges are never matched: with reverted covering 'tomorrow' in 'Email #invoices tomorrow friday', the result has the Friday date, displaced is empty, and 'tomorrow' remains in the title",
+        "FR-9 of tasks/prd-command-bar-todo.md (first-wins) is explicitly superseded; every existing first-wins test in src/lib/parser.test.ts is rewritten to assert last-wins + displacement",
+        "Date-anchor ambiguity tests ('Pay May invoice' stays literal) still pass unchanged",
+        "All non-duplicate-token grammar tests (anchored dates, yesterday/today/tomorrow, times, #list <=32 word chars, !p1-!p3, recurrence forms) pass unmodified \u2014 FR-105 invariance",
+        "Typecheck/lint passes"
+      ],
+      "priority": 3,
+      "status": "passed",
+      "dependsOn": [
+        "US-101"
+      ],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Write failing tests for last-wins, displaced ranges, title exclusion, and reverted input",
+          "description": "In src/lib/parser.test.ts: rewrite every first-wins duplicate-token test to assert last-wins (later token wins, earlier range in displaced); add: 'pay rent friday monday' -> Monday + displaced friday-range + title 'pay rent'; per-kind independence (duplicate #list, !p, recurrence each displace independently); pre-merge time displacement ('dinner tomorrow 3pm 4pm' -> dueTime 16:00, displaced only 3pm); reverted ranges make tokens unmatchable (covering 'tomorrow' in 'Email #invoices tomorrow friday' -> Friday date, displaced empty, 'tomorrow' in title); ambiguity anchors unchanged ('Pay May invoice'). Include edge-case tests: boundary values (null fields, empty string), scale (1/10/100 tokens or tasks where applicable), and collision scenarios. Confirm new tests fail. Do NOT weaken or delete any non-duplicate-token grammar test (FR-105 invariance) \u2014 only first-wins duplicate-token assertions may be rewritten.",
+          "filePaths": [
+            "src/lib/parser.test.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/parser.test.ts"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-002",
+          "title": "Implement Range export, reverted param, last-wins scan, displaced computation, title exclusion",
+          "description": "In src/lib/parser.ts: export interface Range { start: number; end: number } (contract). Change parse to accept optional reverted?: Range[]; words overlapping any reverted range are skipped by ALL matchers. Replace first-match-break loops: scan the whole input collecting every token occurrence per kind, keep the LAST occurrence of each kind, record earlier same-kind occurrences' ranges in displaced (computed on pre-merge tokens, before date+time chip merging). Exclude both chip ranges AND displaced ranges from title extraction. ParseResult gains displaced: Range[].",
+          "filePaths": [
+            "src/lib/parser.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/parser.test.ts",
+            "pnpm run typecheck",
+            "pnpm run lint"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-003",
+          "title": "Reconcile CommandBar call sites and assertions with last-wins parsing",
+          "description": "src/components/CommandBar.tsx compiles unchanged (optional param, extra field ignored) \u2014 verify, don't modify its logic. In src/components/CommandBar.test.tsx update any test asserting a second same-kind token stays literal to assert the new last-wins capture (title excludes displaced text). Run the full unit suite to catch any other first-wins assumption.",
+          "filePaths": [
+            "src/components/CommandBar.test.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/CommandBar.test.tsx",
+            "pnpm exec vitest run",
+            "pnpm run typecheck"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T17:04:28.408205+00:00"
+        },
+        "codeQuality": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T17:04:28.408205+00:00"
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 4,
+        "failureLog": []
+      },
+      "notes": "Plan-review sizing note: implementation task is a large unit; maxAttempts raised to 4.",
+      "contractBreaking": true,
+      "startedAt": null
+    },
+    {
+      "id": "US-103",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 66,
+      "title": "Serializer \u2014 serializeTask with round-trip property",
+      "description": "As a user opening edit, I want the task reconstructed as the text I would have typed so that everything about the task is editable as text.",
+      "acceptanceCriteria": [
+        "New file src/lib/serialize.ts (NEW) exports serializeTask(task: Task, now: Date): { text: string; revertedRanges: Array<{start: number; end: number}> }",
+        "Token order in the output is exactly: title, date, time, recurrence, list, priority",
+        "Date forms: yesterday/today/tomorrow when dueDate = now-1/now/now+1; 'jun 12' when within the next 12 months; 'jun 3 2026' (explicit year) otherwise. Time forms: '3pm' / '3:30pm'. Recurrence: 'every day', 'every 2 weeks', 'every monday', 'every month'. List: '#work'. Priority: '!p1'",
+        "revertedRanges covers every substring of the title that would otherwise parse as a token (verified: serializing a task titled 'Plan tomorrow standup' returns ranges such that parsing with them keeps 'tomorrow' in the title and dueDate unchanged)",
+        "Round-trip property test in src/lib/serialize.test.ts (NEW): for a generated grid of tasks (each field present/absent x dates in {now-1, now, now+1, now+30d, now-370d, now+370d} x times x recurrences from the grammar), parse(text, now, revertedRanges) reproduces every field and the exact title. Recurrence.byMonthDay is excluded from the domain (no grammar form exists; serializer ignores it)",
+        "Typecheck/lint passes"
+      ],
+      "priority": 4,
+      "status": "passed",
+      "dependsOn": [
+        "US-102"
+      ],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Write failing tests for serializeTask forms and token order",
+          "description": "Create src/lib/serialize.test.ts (NEW) with generator makeTask. Test each date form (yesterday/today/tomorrow/jun 12/jun 3 2026 for the -370d and +370d cases), time forms, every recurrence grammar form, list, priority, and the exact token order title-date-time-recurrence-list-priority with single-space separation. Test title-literal detection: 'Plan tomorrow standup' yields revertedRanges covering 'tomorrow'. Include edge-case tests: boundary values (null fields, empty string), scale (1/10/100 tokens or tasks where applicable), and collision scenarios.",
+          "filePaths": [
+            "src/lib/serialize.test.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/serialize.test.ts"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-002",
+          "title": "Implement serializeTask",
+          "description": "Create src/lib/serialize.ts (NEW): pure module, no React. export interface SerializeResult { text: string; revertedRanges: Range[] } (contract) and serializeTask(task, now). Build token strings per the forms in the ACs, join in canonical order. Compute revertedRanges by parsing the bare title with parse(title, now) and converting every chip/displaced range found there into a reverted range (offset 0 \u2014 title is the prefix). Reuse date helpers from src/lib/dates.ts and month names consistent with parser.ts.",
+          "filePaths": [
+            "src/lib/serialize.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/serialize.test.ts",
+            "pnpm run typecheck",
+            "pnpm run lint"
+          ],
+          "testFirst": true,
+          "status": "passed",
+          "consumedBy": [
+            "US-106"
+          ]
+        },
+        {
+          "id": "T-003",
+          "title": "Add the round-trip property grid",
+          "description": "In src/lib/serialize.test.ts add the property sweep: generate the task grid from the AC (field present/absent x the six date offsets x times x grammar recurrences, byMonthDay excluded), and for each assert parse(serializeTask(t, now).text, now, .revertedRanges) reproduces dueDate, dueTime, list, priority, recurrence, and exact title. Also sweep adversarial titles containing token-like words ('Email #invoices tomorrow', 'call mom 3pm sharp').",
+          "filePaths": [
+            "src/lib/serialize.test.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/serialize.test.ts",
+            "pnpm exec vitest run --coverage"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T17:16:20.211739+00:00"
+        },
+        "codeQuality": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T17:16:20.211739+00:00"
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": "",
+      "startedAt": null
+    },
+    {
+      "id": "US-104",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 80,
+      "title": "Extract controlled ParsedInput from CommandBar (no behavior change)",
+      "description": "As a developer, I want the parse/mirror/revert input extracted into one shared component so that add and edit cannot drift apart.",
+      "acceptanceCriteria": [
+        "New file src/components/ParsedInput.tsx (NEW) owning: the transparent input + chip-mirror overlay (mirrorSegments), live re-parse, revert state (relocated applyReverts logic now passing reverted ranges into parse), and the ARIA chip announcement",
+        "Controlled contract: value, onChange, onSubmit(result: ParseResult), onCancel?, parseEnabled, initialReverts?, now?, inputRef?, onKeyDown? (caller-first; returning true consumes the key), inputProps?, ariaLabel",
+        "CommandBar renders ParsedInput for the capture path; command mode ('>'), its list ARIA (aria-activedescendant, aria-controls), barRef attachment, and useKeymap typeahead via setBarText all still work",
+        "Chip CSS moves from src/components/CommandBar.css to a shared stylesheet src/components/ParsedInput.css (NEW); rendered chip appearance is unchanged (visual gate diff within tolerance)",
+        "All existing tests in src/components/CommandBar.test.tsx pass (updated imports only, not behavior); new src/components/ParsedInput.test.tsx (NEW) covers chips render, Esc revert, submit, and announcement text",
+        "e2e e2e/states-commandbar.spec.ts and e2e/states-commandmode.spec.ts pass unmodified",
+        "Typecheck/lint passes",
+        "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
+      ],
+      "priority": 5,
+      "status": "passed",
+      "dependsOn": [
+        "US-102"
+      ],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Create ParsedInput component and stylesheet",
+          "description": "Create src/components/ParsedInput.tsx (NEW) implementing the contracts.parsed_input_props interface exactly. Move from CommandBar.tsx: mirrorSegments, the transparent <input> + mirror overlay markup, live re-parse (useMemo on value/now/reverts), revert state \u2014 now passed INTO parse as the third arg instead of post-processing \u2014 Esc-revert handling, and the aria-describedby announcement. now prop defaults to live clock via a ref captured per parse. Create src/components/ParsedInput.css (NEW) and move the chip styles from CommandBar.css verbatim \u2014 class names unchanged (contracts.css_classes.chip_class).",
+          "filePaths": [
+            "src/components/ParsedInput.tsx",
+            "src/components/ParsedInput.css"
+          ],
+          "commands": [
+            "pnpm run typecheck"
+          ],
+          "testFirst": false,
+          "status": "passed",
+          "notes": "testFirst: false \u2014 extraction/move of existing covered behavior; component tests land in T-003 before any new behavior",
+          "consumedBy": [
+            "US-105",
+            "US-106"
+          ]
+        },
+        {
+          "id": "T-002",
+          "title": "Rewire CommandBar onto ParsedInput",
+          "description": "Refactor src/components/CommandBar.tsx to render <ParsedInput> for the capture path: pass barText/setBarText as value/onChange, barRef as inputRef, command-mode key handling via onKeyDown (returns true when command mode consumes the key), combobox ARIA via inputProps, parseEnabled={!commandMode}. Remove the moved machinery and chip CSS from CommandBar.tsx/CommandBar.css. Behavior must be pixel- and key-identical.",
+          "filePaths": [
+            "src/components/CommandBar.tsx",
+            "src/components/CommandBar.css"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/CommandBar.test.tsx",
+            "pnpm run typecheck",
+            "pnpm run lint"
+          ],
+          "testFirst": false,
+          "status": "passed",
+          "notes": "testFirst: false \u2014 refactor gated by the existing CommandBar.test.tsx suite passing unmodified (except imports)",
+          "wiring_verification": {
+            "file": "src/components/CommandBar.tsx",
+            "must_contain": [
+              "import { ParsedInput }",
+              "<ParsedInput"
+            ]
+          }
+        },
+        {
+          "id": "T-003",
+          "title": "Add ParsedInput component tests",
+          "description": "Create src/components/ParsedInput.test.tsx (NEW) with @vitest-environment jsdom pragma: chips render for 'report tomorrow #work !p1'; Esc demotes the last chip and the announcement updates; Enter calls onSubmit with the ParseResult; initialReverts suppress chipping of covered ranges; onKeyDown returning true consumes the key (input value unchanged).",
+          "filePaths": [
+            "src/components/ParsedInput.test.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/ParsedInput.test.tsx"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-004",
+          "title": "Prove zero behavior change",
+          "description": "Run the e2e specs unmodified and the visual gate; the root-route baseline must diff within tolerance WITHOUT --update-snapshots (no pixel change expected).",
+          "filePaths": [],
+          "commands": [
+            "pnpm exec playwright test e2e/states-commandbar.spec.ts e2e/states-commandmode.spec.ts",
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "status": "passed",
+          "notes": "testFirst: false \u2014 verification-only task"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T17:26:31.522350+00:00"
+        },
+        "codeQuality": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T17:26:31.522350+00:00"
+        }
+      },
+      "retries": {
+        "attempts": 2,
+        "maxAttempts": 4,
+        "failureLog": [
+          {
+            "attempt": 1,
+            "timestamp": "2026-06-11T17:12:54.946381+00:00",
+            "phase": "worktree_base_mismatch",
+            "error": "Worktree branched from 762af0b (old main, command-bar-todo state) instead of ql/edit-token-parsing tip; parser lacked Range/reverted/displaced (US-102 contract). Agent correctly refused to fabricate contract and reset clean. Environmental race in concurrent worktree creation, not an agent fault. Re-dispatching solo."
+          },
+          {
+            "attempt": 2,
+            "timestamp": "2026-06-11T17:15:00.576032+00:00",
+            "phase": "worktree_base_mismatch",
+            "error": "Solo re-spawn ALSO branched from 762af0b (old main) while US-103 worktree was active/locked. Hypothesis: new isolation worktree falls back to default branch when another worktree is active. Holding US-104 until US-103 merges and its worktree is removed, then retry with no active worktrees."
+          }
+        ]
+      },
+      "notes": "Plan-review sizing note: implementation task is a large unit; maxAttempts raised to 4.",
+      "startedAt": null
+    },
+    {
+      "id": "US-105",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 93,
+      "title": "Sealed displacement, session chips, and Esc two-tier in ParsedInput",
+      "description": "As a user, I want a newly typed token to overwrite the same-kind chip to its left \u2014 without ever losing text to half-typed words \u2014 so that correcting metadata is one gesture.",
+      "acceptanceCriteria": [
+        "While a displacing token is unsealed (not followed by whitespace and field not submitted), the displaced range renders demoted (plain text); nothing is deleted from value",
+        "Typing 'satchel' character-by-character into a field with an existing date chip never removes that chip's text; the chip re-activates when 'sat' stops being the parse",
+        "When the displacing token seals (space typed after it, or submit), the displaced range is removed from value via onChange; the seam collapses to a single space; trailing/leading trim happens only in the extracted title, never in the live field",
+        "Caret rule: removals left of the caret shift the caret offset down by the removed length (visually stationary); removals right of the caret leave it untouched",
+        "Fixpoint: immediately after a displacement removal, re-parse with the same reverted ranges yields displaced: [] (asserted in component tests)",
+        "Session chip defined as: a chip whose (kind, parsed value) pair is absent from the baseline ParseResult of the mount-time value with initialReverts. Esc with >=1 session chip reverts the most recent one; Esc with none calls onCancel",
+        "In CommandBar (no onCancel change): Esc behavior for chips is unchanged from the user's perspective; submit on Enter removes any unsealed-displaced ranges before capture",
+        "Component tests in src/components/ParsedInput.test.tsx cover: seal-on-space, seal-on-submit, transient prefix (satchel), caret offset both sides, fixpoint, session-chip discrimination (in-place friday->monday is revertible; untouched baseline chip is not)",
+        "Typecheck/lint passes",
+        "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
+      ],
+      "priority": 6,
+      "status": "passed",
+      "dependsOn": [
+        "US-104"
+      ],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Write failing tests for sealing, transient prefixes, caret, and fixpoint",
+          "description": "In src/components/ParsedInput.test.tsx: type 'satchel' char-by-char against a value containing a date chip \u2014 value never loses the old date text at any keystroke; 'monday' then space removes the displaced 'friday' text and collapses the seam to one space; submit before sealing also removes it; caret offset math asserted via input.selectionStart for removals left and right of the caret; after removal, parse(value, now, reverts).displaced is empty. Include edge-case tests: boundary values (null fields, empty string), scale (1/10/100 tokens or tasks where applicable), and collision scenarios. Confirm red.",
+          "filePaths": [
+            "src/components/ParsedInput.test.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/ParsedInput.test.tsx"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-002",
+          "title": "Implement sealed displacement removal",
+          "description": "In src/components/ParsedInput.tsx: render displaced ranges as demoted plain text in the mirror; on each parse, detect displaced ranges whose displacing token is sealed (a whitespace char follows the LAST same-kind token, or submit is in progress) and rewrite value: delete sealed displaced ranges, collapse whitespace runs at each seam to one space, never trim the field, adjust selectionStart/End per the caret rule (use requestAnimationFrame-free synchronous setSelectionRange after controlled update). Submit path strips remaining displaced ranges from the outgoing value before onSubmit re-parse.",
+          "filePaths": [
+            "src/components/ParsedInput.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/ParsedInput.test.tsx",
+            "pnpm run typecheck",
+            "pnpm run lint"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-003",
+          "title": "Implement session-chip baseline and Esc two-tier",
+          "description": "In src/components/ParsedInput.tsx: capture baseline = parse(value-at-mount, now, initialReverts) once. A chip is a session chip iff its (kind, parsed value) is absent from baseline chips. Esc: if any session chip exists, revert the most recent one (add its range to reverts, announce); else call onCancel if provided. Write tests first within this task: in-place friday->monday edit is Esc-revertible; untouched baseline chip is not; Esc with no session chips fires onCancel; CommandBar usage (no baseline chips at mount, empty initial value) behaves exactly as before.",
+          "filePaths": [
+            "src/components/ParsedInput.tsx",
+            "src/components/ParsedInput.test.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/ParsedInput.test.tsx",
+            "pnpm exec vitest run src/components/CommandBar.test.tsx"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-004",
+          "title": "Visual gate for the add bar with last-wins overwrite",
+          "description": "Run the visual gate; bar appearance unchanged (demoted text renders as plain text). Manually verify in browser: type 'call mom friday monday ' in the bar \u2014 friday text disappears on seal, Monday chip remains.",
+          "filePaths": [],
+          "commands": [
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "status": "passed",
+          "notes": "testFirst: false \u2014 verification-only task"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T17:45:59.532576+00:00"
+        },
+        "codeQuality": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T17:45:59.532576+00:00"
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 4,
+        "failureLog": []
+      },
+      "notes": "Plan-review sizing note: implementation task is a large unit; maxAttempts raised to 4.",
+      "startedAt": null
+    },
+    {
+      "id": "US-106",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 100,
+      "title": "TaskRow edit integration \u2014 serialize, frozen clock, diff-save, fallback",
+      "description": "As a user, I want to press Enter (or click a title) and edit the whole task as text so that changing a date or list is as fast as typing it.",
+      "acceptanceCriteria": [
+        "openEdit() (open tasks only) seeds draft state from serializeTask(task, now) \u2014 value = text, initialReverts = revertedRanges \u2014 and freezes now for the session (passed as the now prop; every re-parse and the save-parse use it)",
+        "Round-trip guard at open: if parse(text, now, revertedRanges) does not reproduce the task's fields exactly, log a console error and fall back to title-only editing (current behavior: plain value = task.title, parseEnabled = false; save updates title only)",
+        "Save (Enter or blur) diffs the ParseResult against the task and dispatches a single edit action containing every changed field, with null for cleared ones (erasing #work text -> list: null)",
+        "Blur saves exactly like Enter; blur with an empty extracted title cancels instead of saving; Enter with an empty extracted title blocks save with the same inline feedback as add",
+        "Esc with no session chips cancels the edit (discard); with session chips it reverts per US-105",
+        "Toast for a parsed edit reads 'Task updated' with the undo affordance; one undo restores all changed fields at once \u2014 unit test in src/lib/store.test.ts asserts a multi-field edit inverse (date + list + priority + title changed, then undone, including null-clears)",
+        "If the task id no longer exists at save time (multi-tab deletion), the edit action is a no-op (existing reducer behavior; regression-tested)",
+        "Tests in src/components/TaskRow.test.tsx cover: chips present at open, token edit saves all fields, deletion clears fields, fallback path, blur-save, empty-title blur-cancel, and done-task guard (Enter / title click on a done row does not open the editor \u2014 verifies FR-120)",
+        "The chip ARIA announcement live region is present and updates in edit usage, identical to add (FR-115) \u2014 asserted in TaskRow tests",
+        "Typecheck/lint passes",
+        "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
+      ],
+      "priority": 7,
+      "status": "passed",
+      "dependsOn": [
+        "US-103",
+        "US-105",
+        "US-107"
+      ],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Write failing store tests for multi-field edit inverse",
+          "description": "In src/lib/store.test.ts: dispatch one edit action changing dueDate, list, priority, and title (including list: null clear); assert one undo restores all four to their prior values; assert edit on a missing id is a no-op (state unchanged, no inverse pushed). Carved out per PRD \u00a77 density note \u2014 no UI dependency.",
+          "filePaths": [
+            "src/lib/store.test.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/store.test.ts"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-002",
+          "title": "Write failing TaskRow edit tests",
+          "description": "In src/components/TaskRow.test.tsx: edit-open on a task with metadata shows the serialized text with chips; typing a date token and saving dispatches edit with all changed fields; erasing '#work' saves list: null; round-trip-mismatch fallback (mock serializeTask to emit non-round-tripping text) opens title-only with console.error; blur saves; blur with empty extracted title cancels; Enter with empty title blocks with inline feedback; Enter/title-click on a done row does not open the editor (FR-120). Import serializeTask from src/lib/serialize.ts (created by US-103) and ParsedInput (created by US-104) \u2014 do NOT create inline replacements. Also assert the chip ARIA announcement live region is present and updates in the edit usage (with initialReverts and baseline chips at mount) \u2014 FR-115 parity.",
+          "filePaths": [
+            "src/components/TaskRow.test.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/TaskRow.test.tsx"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-003",
+          "title": "Implement TaskRow edit integration",
+          "description": "In src/components/TaskRow.tsx: openEdit() (guarded to status==='open') computes const frozen = now; const { text, revertedRanges } = serializeTask(task, frozen); runs the round-trip guard (compare parse(text, frozen, revertedRanges) fields to task; on mismatch console.error + title-only mode). Replace the plain edit <input> with <ParsedInput value/onChange (local draft), now={frozen}, initialReverts, parseEnabled, onSubmit=saveParsed, onCancel=closeEdit, ariaLabel>. saveParsed diffs ParseResult vs task into Partial<Task> with nulls for cleared fields and dispatches one edit action; empty title blocks (Enter) or cancels (blur). Wire blur-save via onBlur calling the same submit path.",
+          "filePaths": [
+            "src/components/TaskRow.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/TaskRow.test.tsx",
+            "pnpm run typecheck",
+            "pnpm run lint"
+          ],
+          "testFirst": true,
+          "status": "passed",
+          "wiring_verification": {
+            "file": "src/components/TaskRow.tsx",
+            "must_contain": [
+              "import { serializeTask }",
+              "import { ParsedInput }",
+              "<ParsedInput"
+            ]
+          }
+        },
+        {
+          "id": "T-004",
+          "title": "Update edit toast copy to 'Task updated'",
+          "description": "In src/state/AppContext.tsx change the toastFor copy for the edit action from its current text to 'Task updated' (undo affordance unchanged). Update any test asserting the old copy (grep shows src/hooks/usePersistence.test.tsx references 'Saved'; verify and update if it asserts the edit toast).",
+          "filePaths": [
+            "src/state/AppContext.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/hooks/usePersistence.test.tsx",
+            "pnpm exec vitest run",
+            "pnpm run typecheck"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-005",
+          "title": "Visual gate with edit open",
+          "description": "Run bash verification/run-visual-gate.sh / and manually verify in browser: Enter on a row shows chips in the row-width editor; typing 'monday ' replaces a friday chip's text.",
+          "filePaths": [],
+          "commands": [
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "status": "passed",
+          "notes": "testFirst: false \u2014 verification-only task"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T17:59:22.134327+00:00"
+        },
+        "codeQuality": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T17:59:22.134327+00:00"
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": "",
+      "startedAt": null
+    },
+    {
+      "id": "US-108",
+      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+      "complexity": 100,
+      "title": "E2E journeys and visual baseline update",
+      "description": "As a maintainer, I want end-to-end proof of the edit/add symmetry so that regressions in the full flow are caught.",
+      "acceptanceCriteria": [
+        "New e2e/edit-tokens.spec.ts (NEW): create 'Send report friday 3pm #work' -> Enter to edit -> field shows serialized text with chips -> type ' monday ' (friday's text disappears after seal) -> erase '#work' -> Enter -> row shows Monday and no list -> Cmd+Z restores date and list together",
+        "Add-bar journey in the same spec: type 'call mom friday monday' -> only a Monday chip remains after seal -> Enter -> task due Monday",
+        "Edit-fallback journey is NOT e2e-tested (requires injecting a serializer bug); covered at unit level (US-106)",
+        "Visual gate passes: bash verification/run-visual-gate.sh / with baselines updated for (a) the row without '\u22ef' and (b) a new edit-mode-open state at 375/768/1280; new baselines rendered and visually confirmed against DESIGN-SYSTEM.md before blessing",
+        "Zero axe violations at every configured breakpoint; Lighthouse meets lens.config.json thresholds",
+        "Full suite green: typecheck, lint, unit, e2e"
+      ],
+      "priority": 8,
+      "status": "passed",
+      "dependsOn": [
+        "US-105",
+        "US-106",
+        "US-107"
+      ],
+      "storyType": "test",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Write the edit and add-bar e2e journeys",
+          "description": "Create e2e/edit-tokens.spec.ts (NEW) following the states-*.spec.ts seeding pattern: journey 1 \u2014 capture 'Send report friday 3pm #work', Enter on the row, assert serialized text + chips visible, type ' monday ' and assert friday text gone after the space, select-and-delete '#work', Enter, assert row shows the Monday date and no #work pill, press Meta+z, assert both restored. Journey 2 \u2014 type 'call mom friday monday ' in the bar, assert single Monday chip, Enter, assert the task's date.",
+          "filePaths": [
+            "e2e/edit-tokens.spec.ts"
+          ],
+          "commands": [
+            "pnpm exec playwright test e2e/edit-tokens.spec.ts"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-002",
+          "title": "Add the edit-mode-open visual state and re-bless baselines",
+          "description": "Create e2e/states-edit.spec.ts (NEW) mirroring the states pattern: seed a task with full metadata, open edit, freeze animations, screenshot at 375/768/1280. Run the visual gate; regenerate baselines that legitimately changed (row without '\u22ef', new edit state) with --update-snapshots, OPEN every new PNG and confirm against DESIGN-SYSTEM.md before blessing. Axe zero violations at all breakpoints; Lighthouse >= thresholds.",
+          "filePaths": [
+            "e2e/states-edit.spec.ts",
+            "verification/visual.spec.ts-snapshots/"
+          ],
+          "commands": [
+            "bash verification/run-visual-gate.sh /",
+            "pnpm exec playwright test e2e/states-edit.spec.ts"
+          ],
+          "testFirst": false,
+          "status": "passed",
+          "notes": "testFirst: false \u2014 visual-state capture and baseline blessing, no production logic"
+        },
+        {
+          "id": "T-003",
+          "title": "Full-suite green run",
+          "description": "Run every gate fresh and read the output (Iron Law): typecheck, lint, unit with coverage >= 80, full e2e, visual gate.",
+          "filePaths": [],
+          "commands": [
+            "pnpm run typecheck",
+            "pnpm run lint",
+            "pnpm exec vitest run --coverage",
+            "pnpm exec playwright test e2e/",
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "status": "passed",
+          "notes": "testFirst: false \u2014 verification-only task"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T18:16:45.329414+00:00"
+        },
+        "codeQuality": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-11T18:16:45.329414+00:00"
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": "",
+      "startedAt": null
+    }
+  ],
+  "fileConflicts": [
+    {
+      "file": "src/lib/parser.test.ts",
+      "stories": [
+        "US-101",
+        "US-102"
+      ],
+      "waves": [
+        1,
+        2
+      ],
+      "severity": "low",
+      "note": "Dependency-ordered (US-102 dependsOn US-101); intentional sequential parser rewrite"
+    },
+    {
+      "file": "src/lib/parser.ts",
+      "stories": [
+        "US-101",
+        "US-102"
+      ],
+      "waves": [
+        1,
+        2
+      ],
+      "severity": "low",
+      "note": "Dependency-ordered (US-102 dependsOn US-101); intentional sequential parser rewrite"
+    },
+    {
+      "file": "src/components/ParsedInput.tsx",
+      "stories": [
+        "US-104",
+        "US-105"
+      ],
+      "waves": [
+        3,
+        4
+      ],
+      "severity": "low",
+      "note": "Dependency-ordered (US-105 dependsOn US-104); extraction then new behavior"
+    },
+    {
+      "file": "src/components/ParsedInput.test.tsx",
+      "stories": [
+        "US-104",
+        "US-105"
+      ],
+      "waves": [
+        3,
+        4
+      ],
+      "severity": "low",
+      "note": "Dependency-ordered (US-105 dependsOn US-104)"
+    },
+    {
+      "file": "src/components/TaskRow.tsx",
+      "stories": [
+        "US-107",
+        "US-106"
+      ],
+      "waves": [
+        1,
+        5
+      ],
+      "severity": "low",
+      "note": "Dependency-ordered (US-106 dependsOn US-107); menu removal lands before edit integration"
+    },
+    {
+      "file": "src/components/TaskRow.test.tsx",
+      "stories": [
+        "US-107",
+        "US-106"
+      ],
+      "waves": [
+        1,
+        5
+      ],
+      "severity": "low",
+      "note": "Dependency-ordered (US-106 dependsOn US-107)"
+    },
+    {
+      "file": "verification/visual.spec.ts-snapshots/",
+      "stories": [
+        "US-107",
+        "US-108"
+      ],
+      "waves": [
+        1,
+        6
+      ],
+      "severity": "low",
+      "note": "Dependency-ordered (US-108 dependsOn US-107); baseline re-bless directory"
+    }
+  ],
+  "dagValidation": {
+    "timestamp": "2026-06-10T22:53:15Z",
+    "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
+    "complexityScored": true,
+    "complexityFormula": "min(100, task_count*10 + dependsOn_depth*15 + (has_security_tag ? 30 : 0) + filePaths_count*2)",
+    "bottlenecks": [
+      {
+        "type": "single_story_wave",
+        "wave": 2,
+        "story": "US-102",
+        "fix": "warning",
+        "reason": "Intentional serialization point: contract-breaking ParseResult change (adds displaced); US-103/104/105/106 must build against the new signature. storyType logic \u2014 not stub-extractable."
+      },
+      {
+        "type": "single_story_wave",
+        "wave": 4,
+        "story": "US-105",
+        "fix": "warning",
+        "reason": "US-105 modifies the same files US-104 creates (src/components/ParsedInput.tsx/.test.tsx); deliberate extraction-then-behavior split per PRD risk mitigation. Not parallelizable."
+      },
+      {
+        "type": "single_story_wave",
+        "wave": 5,
+        "story": "US-106",
+        "fix": "warning",
+        "reason": "Integration join of US-103 (serializer), US-105 (ParsedInput behavior), and US-107 (TaskRow ownership). storyType logic \u2014 not stub-extractable."
+      },
+      {
+        "type": "single_story_wave",
+        "wave": 6,
+        "story": "US-108",
+        "fix": "warning",
+        "reason": "Terminal e2e/visual-baseline story; must follow all feature work by design. storyType test."
+      }
+    ],
+    "duplicationRisks": [],
+    "fileConflictsComputed": 7,
+    "stubsCreated": [],
+    "timeouts": []
+  },
+  "progress": [
+    {
+      "timestamp": "2026-06-11T01:10:56.807713+00:00",
+      "iteration": 1,
+      "storyId": "US-101",
+      "action": "story_passed",
+      "details": "Explicit-year date parsing (matchExplicitYear, both word orders, 1970-2100) + year-aware formatDateDisplay(date, now?). Merged 241a209; post-merge gates: typecheck 0, lint 0, 353/353 tests (335 baseline + 18 new).",
+      "filesChanged": [
+        "src/lib/parser.ts",
+        "src/lib/parser.test.ts"
+      ],
+      "learnings": "formatDateDisplay optional now param is backward compatible; US-103/US-104 should pass now for year-aware display per date_serialization contract."
+    },
+    {
+      "timestamp": "2026-06-11T16:48:51.789629+00:00",
+      "iteration": 1,
+      "storyId": "US-107",
+      "action": "story_passed",
+      "details": "Removed overflow menu (button, role=menu, menuOpen state, unused snooze imports) from TaskRow.tsx; deleted task-row-overflow*/task-row-menu* CSS; rewrote states-snooze e2e for keyboard-only (3 pass). Orchestrator finished T-003 visual gate (agent hit session limit after T-002) and refined the absence test to role-based. Gates: grep clean, typecheck 0, lint 0, 350/350 unit, visual gate PASS (regression+a11y 0 violations+lighthouse).",
+      "filesChanged": [
+        "src/components/TaskRow.tsx",
+        "src/components/TaskList.css",
+        "src/components/TaskRow.test.tsx",
+        "e2e/states-snooze.spec.ts",
+        "__screenshots__/e2e/states-snooze.spec.ts/"
+      ],
+      "learnings": "Overflow button was hover/focus-only (opacity:0 default), so removing it did NOT diff the static root baseline \u2014 no re-bless needed. Snooze keymap (1/2/3) lives in useKeymap, fully decoupled from TaskRow; cheatsheet rows unchanged."
+    },
+    {
+      "timestamp": "2026-06-11T17:04:28.408205+00:00",
+      "iteration": 2,
+      "storyId": "US-102",
+      "action": "story_passed",
+      "details": "Last-wins parser: added Range + displaced:Range[] to ParseResult, parse(input,now,reverted?) signature. Whole-input occurrence scan per kind keeps LAST, earlier ranges \u2192 displaced. skip/used split: reverted words skipped by matchers but stay in title; consumed words excluded from title. Merged 1697b5d (FF). Gates: typecheck 0, lint 0, 366/366 unit (86 parser, 23 CommandBar).",
+      "filesChanged": [
+        "src/lib/parser.ts",
+        "src/lib/parser.test.ts",
+        "src/components/CommandBar.test.tsx"
+      ],
+      "learnings": "CommandBar.tsx unchanged \u2014 its applyReverts spreads {...result} so the new displaced field flows through automatically. prdSha c9d6908 reconciles via compute_prd_sha (normalized), not raw shasum. Worktree merges MUST run from project root \u2014 Bash cwd persists and can drift into a worktree, making git merge a silent no-op (already-up-to-date) against the wrong branch."
+    },
+    {
+      "timestamp": "2026-06-11T17:16:20.211739+00:00",
+      "iteration": 3,
+      "storyId": "US-103",
+      "action": "story_passed",
+      "details": "serializeTask(task,now): canonical token order title-date-time-recurrence-list-priority; bare <mon> <day> only when it round-trips else explicit year; byMonthDay excluded; revertedRanges from title parse chips+displaced. Merged dacb179 (FF). Gates: typecheck 0, lint 0, 3431/3431 unit (3024-case round-trip grid), coverage 93.96% (serialize.ts 95.94%).",
+      "filesChanged": [
+        "src/lib/serialize.ts",
+        "src/lib/serialize.test.ts"
+      ],
+      "learnings": "Agent worktree isolation branched from main (762af0b) not the feature tip; US-103 agent self-corrected via git reset --hard onto d7493f3. This is the reliable remediation pattern for the worktree-base bug. Times serialize to am/pm because parser flags 24h H:MM as needsDate=true."
+    },
+    {
+      "timestamp": "2026-06-11T17:26:31.522350+00:00",
+      "iteration": 3,
+      "storyId": "US-104",
+      "action": "story_passed",
+      "details": "Extracted controlled ParsedInput from CommandBar (owns ParsedInputProps; reverts now Range[] passed into parse() 3rd arg, old applyReverts deleted). Pixel-identical: 23/23 CommandBar tests unmodified, 10/10 e2e, visual gate PASS no re-bless. Merged 577ffe5 (FF). Attempts 1-2 failed on worktree-base-mismatch (branched from old main); attempt 3 succeeded via git reset --hard onto feature tip. Orchestrator then fixed a build regression: removed stray process.env.TZ line from serialize.test.ts (US-103) that broke tsc -b.",
+      "filesChanged": [
+        "src/components/ParsedInput.tsx",
+        "src/components/ParsedInput.css",
+        "src/components/ParsedInput.test.tsx",
+        "src/components/CommandBar.tsx",
+        "src/components/CommandBar.css",
+        "src/lib/serialize.test.ts"
+      ],
+      "learnings": "GATE BLINDNESS: pnpm run typecheck = tsc --noEmit against root tsconfig.json (files:[]) is a NO-OP \u2014 checks nothing. Real type errors only surface in pnpm run build (tsc -b). The orchestrator must run pnpm run build in the final integration gate. Worktree isolation branches from main, not the feature tip \u2014 every spawned agent must git reset --hard onto the passed base SHA first."
+    },
+    {
+      "timestamp": "2026-06-11T17:45:59.532576+00:00",
+      "iteration": 4,
+      "storyId": "US-105",
+      "action": "story_passed",
+      "details": "Sealed displacement (demoted-text mirror, seal-on-space/submit, seam\u21921 space, never-trim), caret-shift rule via pre-render caret snapshot + useLayoutEffect setSelectionRange, session-chip baseline (kind,display absent from mount parse), Esc two-tier (revert recent session chip else onCancel). Merged 964fdc4 (FF). Gates: lint 0, build 0 (tsc -b), 3458/3458 unit (30 ParsedInput, 23 CommandBar), visual gate PASS no re-bless.",
+      "filesChanged": [
+        "src/components/ParsedInput.tsx",
+        "src/components/ParsedInput.test.tsx",
+        "src/components/ParsedInput.css"
+      ],
+      "learnings": "react-refresh/only-export-components forbids exporting non-component helpers from component files \u2014 keep removeRanges internal, verify caret math via integration tests. react-hooks/immutability flags forwarded-ref .current writes in render-phase callback refs \u2014 use a module-scope assignForwardedRef helper. jsdom resets caret to end-of-field on each controlled write, so right-of-caret cases assert via integration not fireEvent. US-105 added inert .command-bar-demoted to ParsedInput.css (outside declared files, flagged, gate-confirmed inert)."
+    },
+    {
+      "timestamp": "2026-06-11T17:59:22.134327+00:00",
+      "iteration": 5,
+      "storyId": "US-106",
+      "action": "story_passed",
+      "details": "TaskRow edit integration: openEdit (open-only) freezes clock, serializeTask + round-trip guard (console.error + title-only fallback on mismatch), ParsedInput replaces plain input, saveParsed diffs ParseResult vs task into one edit action (nulls for clears), blur saves/empty-cancels, Enter-empty blocks, done-task FR-120 guard, FR-115 announcement parity. Edit toast Saved\u2192Task updated. Merged 58e388e (FF). Gates: lint 0, build 0, 3472/3472 (38 store, 20 TaskRow, 11 usePersistence), visual gate PASS.",
+      "filesChanged": [
+        "src/components/TaskRow.tsx",
+        "src/components/TaskRow.test.tsx",
+        "src/lib/store.test.ts",
+        "src/state/AppContext.tsx"
+      ],
+      "learnings": "Frozen edit-session clock (one Date for serializeTask + ParsedInput now + save-parse) is the round-trip-stability anchor. TaskRow edit tests freeze time via vi.useFakeTimers({toFake:[Date]}) + setSystemTime to avoid userEvent hangs. A metadata task now serializes to multi-token text (Send report yesterday 3pm #work), so pre-existing title-only inline-edit tests switched to makePlainTask."
+    },
+    {
+      "timestamp": "2026-06-11T18:16:45.329414+00:00",
+      "iteration": 6,
+      "storyId": "US-108",
+      "action": "story_passed",
+      "details": "E2E edit/add journeys (edit-tokens.spec.ts: seal-away friday->monday, erase #work->null, Cmd+Z restores both; add-bar single Monday chip) + edit-mode visual state (states-edit.spec.ts at 375/768/1280, PNGs Read & confirmed vs DESIGN-SYSTEM). Merged fc06ebd. Agent reported STORY_FAILED only due to an out-of-scope pre-existing date-flake in upcoming.spec.ts mobile baseline (clock rolled 06-10->06-11); orchestrator re-blessed it (5371088) after reading the PNG (date text only). Full e2e now 77/77.",
+      "filesChanged": [
+        "e2e/edit-tokens.spec.ts",
+        "e2e/states-edit.spec.ts",
+        "__screenshots__/e2e/states-edit.spec.ts/",
+        "__screenshots__/e2e/upcoming.spec.ts/upcoming-grouped-mobile.png"
+      ],
+      "learnings": "Date-relative screenshot baselines (upcoming.spec.ts uses plusDays from real new Date()) go stale at midnight rollover \u2014 a latent suite-wide flake; no e2e spec pins a browser clock. Recommend pinning page.clock for any date-text screenshot spec in a future hardening pass."
+    }
+  ],
+  "codebasePatterns": [
+    "All colors/spacing/type via CSS variables from DESIGN-SYSTEM.md \u2014 no literals in components",
+    "Every interactive element has a visible focus-visible style (2px accent ring, 2px offset)",
+    "src/lib/ modules are framework-free: no React imports, clocks/storage/ids injected as parameters",
+    "Unit tests use generator functions (makeTask, makeAppData, makeMemoryStorage), never beforeEach mutation",
+    "Test names state concrete behavior: 'snoozing with key 1 sets dueDate to tomorrow', never 'works correctly'",
+    "No `any` in TypeScript \u2014 use real types or unknown",
+    "Date math uses local-date components from src/lib/dates.ts \u2014 never UTC ms arithmetic across days",
+    "Same-wave stories own disjoint files: views live in src/views/<View>.tsx, components in src/components/, App.tsx is owned by exactly one in-flight story at a time",
+    "Date helpers use ISO weekday numbering 1=Mon..7=Sun; all date math via local components (new Date(y,m-1,d+n,12))",
+    "Parser: pass order recurrence->date->time->list->priority, LAST-wins per kind with displaced ranges (chip+displaced ranges excluded from title; reverted ranges unmatchable), word-level whole-token matching; chip displays: date \"Wed Jun 10\" (+year when != now year), time \"3:00 PM\", list \"#work\", priority \"P1\", recurrence source text",
+    "Store: reducer(state, action) pure; mutating payloads carry injected ids/dates (newId, completedAt, today); internal inverse action types restore/markDone/revertComplete",
+    "UI: classes shell-column/masthead/view-tabs/view-tab/keycap/empty-state in App.css; tokens only; aria-current=page marks active tab; useApp() from src/state/AppContext",
+    "Component tests: // @vitest-environment jsdom pragma + src/test-setup.ts localStorage shim; probe context state by rendering a JSON <pre> probe inside AppProvider",
+    "TaskList sections prop: [{label, tasks, rollover?}]; empty sections omitted; all-empty renders empty-state line. TaskRow classes: task-row--p1/--rollover/--selected/--done",
+    "Toast: useApp().toast + showToast; wrapped dispatch emits Captured/Completed/Done \u2014 next <date>/Deleted/Snoozed to <date>/Scheduled/Saved/Reopened/Undone/Redone",
+    "useKeymap config: callbacks (onComplete/onEdit/onDelete/onSnooze/onUndo/onRedo/onTypeahead) + getRowIds reads DOM .task-row[data-task-id]; today injectable",
+    "DST-sensitive tests rely on the GLOBAL TZ pin in vite.config.ts (env.TZ=America/New_York); individual test files must NOT set process.env.TZ (it breaks tsc -b / pnpm run build \u2014 node process global is not in the app tsconfig). Date math via local components: new Date(y,m,d+1,0,0,0), never +24h",
+    "New components get their own CSS file next to the component (StorageBanner.css pattern), tokens only"
+  ],
+  "contracts": {
+    "design_tokens": {
+      "color-accent": {
+        "value": "--color-accent",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-fg": {
+        "value": "--color-fg",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "space-scale": {
+        "value": "[4,8,12,16,24,32,48,64,96]"
+      },
+      "type-display": {
+        "value": "--type-display",
+        "pattern": "^--type-[a-z0-9]+$"
+      }
+    },
+    "routes": {
+      "home": {
+        "value": "/",
+        "pattern": "^/"
+      }
+    },
+    "storage_keys": {
+      "app_data": {
+        "value": "todo-quantum.v1",
+        "pattern": "^todo-quantum\\."
+      },
+      "recovery_prefix": {
+        "value": "todo-quantum.recovery.",
+        "pattern": "^todo-quantum\\.recovery\\."
+      }
+    },
+    "commands": {
+      "palette_set": {
+        "value": "today|upcoming|all|done|undo|redo|help"
+      }
+    },
+    "keybindings": {
+      "snooze_tomorrow": {
+        "value": "1"
+      },
+      "snooze_next_week": {
+        "value": "2"
+      },
+      "snooze_weekend": {
+        "value": "3"
+      },
+      "complete": {
+        "value": "x"
+      },
+      "cheatsheet": {
+        "value": "?"
+      }
+    },
+    "shared_types": {
+      "task": {
+        "value": "Task",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/types.ts",
+        "shape": {
+          "properties": [
+            {
+              "name": "id",
+              "type": "string"
+            },
+            {
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "name": "status",
+              "type": "'open' | 'done'"
+            },
+            {
+              "name": "dueDate",
+              "type": "string | null"
+            },
+            {
+              "name": "dueTime",
+              "type": "string | null"
+            },
+            {
+              "name": "list",
+              "type": "string | null"
+            },
+            {
+              "name": "priority",
+              "type": "1 | 2 | 3 | null"
+            },
+            {
+              "name": "recurrence",
+              "type": "Recurrence | null"
+            },
+            {
+              "name": "createdAt",
+              "type": "string"
+            },
+            {
+              "name": "completedAt",
+              "type": "string | null"
+            },
+            {
+              "name": "order",
+              "type": "number"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface Task {\n  id: string;\n  title: string;\n  status: 'open' | 'done';\n  dueDate: string | null;\n  dueTime: string | null;\n  list: string | null;\n  priority: 1 | 2 | 3 | null;\n  recurrence: Recurrence | null;\n  createdAt: string;\n  completedAt: string | null;\n  order: number;\n}"
+      },
+      "recurrence": {
+        "value": "Recurrence",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/types.ts",
+        "shape": {
+          "properties": [
+            {
+              "name": "freq",
+              "type": "'daily' | 'weekly' | 'monthly'"
+            },
+            {
+              "name": "interval",
+              "type": "number"
+            },
+            {
+              "name": "byWeekday",
+              "type": "number[] | null"
+            },
+            {
+              "name": "byMonthDay",
+              "type": "number | null"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface Recurrence {\n  freq: 'daily' | 'weekly' | 'monthly';\n  interval: number;\n  byWeekday: number[] | null;\n  byMonthDay: number | null;\n}"
+      },
+      "app_data": {
+        "value": "AppData",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/types.ts",
+        "shape": {
+          "properties": [
+            {
+              "name": "schemaVersion",
+              "type": "1"
+            },
+            {
+              "name": "tasks",
+              "type": "Task[]"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface AppData {\n  schemaVersion: 1;\n  tasks: Task[];\n}"
+      },
+      "chip": {
+        "value": "Chip",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/parser.ts",
+        "shape": {
+          "properties": [
+            {
+              "name": "start",
+              "type": "number"
+            },
+            {
+              "name": "end",
+              "type": "number"
+            },
+            {
+              "name": "kind",
+              "type": "'date' | 'time' | 'list' | 'priority' | 'recurrence'"
+            },
+            {
+              "name": "display",
+              "type": "string"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface Chip {\n  start: number;\n  end: number;\n  kind: 'date' | 'time' | 'list' | 'priority' | 'recurrence';\n  display: string;\n}"
+      },
+      "parse_result": {
+        "value": "ParseResult",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/parser.ts",
+        "owner": "US-102",
+        "consumers": [
+          "US-103",
+          "US-104",
+          "US-105",
+          "US-106"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "valid",
+              "type": "boolean"
+            },
+            {
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "name": "dueDate",
+              "type": "string | null"
+            },
+            {
+              "name": "dueTime",
+              "type": "string | null"
+            },
+            {
+              "name": "list",
+              "type": "string | null"
+            },
+            {
+              "name": "priority",
+              "type": "1 | 2 | 3 | null"
+            },
+            {
+              "name": "recurrence",
+              "type": "Recurrence | null"
+            },
+            {
+              "name": "chips",
+              "type": "Chip[]"
+            },
+            {
+              "name": "displaced",
+              "type": "Range[]"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface ParseResult {\n  valid: boolean;\n  title: string;\n  dueDate: string | null;\n  dueTime: string | null;\n  list: string | null;\n  priority: 1 | 2 | 3 | null;\n  recurrence: Recurrence | null;\n  chips: Chip[];\n  displaced: Range[];\n}"
+      },
+      "range": {
+        "value": "Range",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/parser.ts",
+        "owner": "US-102",
+        "consumers": [
+          "US-103",
+          "US-104",
+          "US-105",
+          "US-106"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "start",
+              "type": "number"
+            },
+            {
+              "name": "end",
+              "type": "number"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface Range {\n  start: number;\n  end: number;\n}"
+      },
+      "serialize_result": {
+        "value": "SerializeResult",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/lib/serialize.ts",
+        "owner": "US-103",
+        "consumers": [
+          "US-106"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "text",
+              "type": "string"
+            },
+            {
+              "name": "revertedRanges",
+              "type": "Range[]"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface SerializeResult {\n  text: string;\n  revertedRanges: Range[];\n}"
+      },
+      "parsed_input_props": {
+        "value": "ParsedInputProps",
+        "pattern": "^[A-Z][a-zA-Z]*$",
+        "definitionFile": "src/components/ParsedInput.tsx",
+        "owner": "US-104",
+        "consumers": [
+          "US-105",
+          "US-106"
+        ],
+        "shape": {
+          "properties": [
+            {
+              "name": "value",
+              "type": "string"
+            },
+            {
+              "name": "onChange",
+              "type": "(value: string) => void"
+            },
+            {
+              "name": "onSubmit",
+              "type": "(result: ParseResult) => void"
+            },
+            {
+              "name": "onCancel",
+              "type": "(() => void) | undefined"
+            },
+            {
+              "name": "parseEnabled",
+              "type": "boolean"
+            },
+            {
+              "name": "initialReverts",
+              "type": "Range[] | undefined"
+            },
+            {
+              "name": "now",
+              "type": "Date | undefined"
+            },
+            {
+              "name": "inputRef",
+              "type": "React.Ref<HTMLInputElement> | undefined"
+            },
+            {
+              "name": "onKeyDown",
+              "type": "((e: React.KeyboardEvent<HTMLInputElement>) => boolean) | undefined"
+            },
+            {
+              "name": "inputProps",
+              "type": "React.InputHTMLAttributes<HTMLInputElement> | undefined"
+            },
+            {
+              "name": "ariaLabel",
+              "type": "string"
+            }
+          ],
+          "methods": []
+        },
+        "definition": "export interface ParsedInputProps {\n  value: string;\n  onChange: (value: string) => void;\n  onSubmit: (result: ParseResult) => void;\n  onCancel?: () => void;\n  parseEnabled: boolean;\n  initialReverts?: Range[];\n  now?: Date;\n  inputRef?: React.Ref<HTMLInputElement>;\n  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => boolean;\n  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;\n  ariaLabel: string;\n}"
+      }
+    },
+    "parsing_rules": {
+      "token_precedence": {
+        "value": "pass order recurrence->date->time->list->priority; LAST-wins per kind (supersedes first-wins / old FR-9); earlier same-kind token ranges reported in ParseResult.displaced; chip AND displaced ranges are both excluded from title; tokens inside reverted ranges match nothing"
+      },
+      "sealing": {
+        "value": "displaced text is removed from the field only when the displacing token is sealed (followed by whitespace, or on submit); until sealed it renders demoted; seam collapses to a single space; live field is never trimmed"
+      },
+      "serializer_token_order": {
+        "value": "title, date, time, recurrence, list, priority"
+      },
+      "date_serialization": {
+        "value": "yesterday/today/tomorrow at now-1/now/now+1; '<mon> <day>' within next 12 months; '<mon> <day> <year>' otherwise; chip display shows year when date year != now year"
+      },
+      "esc_two_tier": {
+        "value": "Esc reverts the most recent session chip ((kind, parsed value) absent from mount-time baseline parse); with no session chips Esc invokes onCancel (edit: cancel; bar: existing behavior)"
+      }
+    },
+    "css_classes": {
+      "chip_class": {
+        "value": "command-bar-chip",
+        "notes": "class name intentionally unchanged when chip CSS moves to ParsedInput.css in US-104, keeping the visual baseline stable"
+      }
+    }
+  },
+  "execution": {
+    "baselineTypecheckErrors": 0
+  }
+}

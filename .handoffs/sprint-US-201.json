@@ -1,0 +1,133 @@
+{
+  "storyId": "US-201",
+  "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
+  "acs": [
+    "body/app background is var(--color-bg); content column max-width 720 centered at 1280, 640 at 768, full-width single column at 375 (§7)",
+    "Masthead renders the date bilingually: kanji date from formatKanjiDate (US-209) in --type-display 40/52 wght 600, English (e.g. \"Wednesday, June 10\" under the frozen test clock) beside/below it in --type-h2 size --color-muted (§2); at 375 the display drops to 30/40 and the English moves to its own line; both derive from one new Date()",
+    "The ink rule beneath the masthead is a 3px fg→transparent gradient bar that draws left→right at --motion-slow on load; with prefers-reduced-motion it renders fully drawn, no animation",
+    "View tabs are wide-tracked caps (letter-spacing 0.18em–0.22em, 12px, wght 500, --type-body family — NOT mono), muted; current view: --color-fg text + 2px --color-danger underline with 4px gap (§6)",
+    "Keycap hints keep radius-pill hairline boxes in --type-mono 12; hidden below 768",
+    "Empty states across all views (.empty-state style in src/App.css; markup in src/components/TaskList.tsx fallback [done by US-204 T-005] and src/views/AllView.tsx, src/views/UpcomingView.tsx, src/views/DoneView.tsx): single muted ◯ enso glyph at 24px above one line of muted --type-body copy + keycap hint; copy text verbatim-unchanged",
+    "All Morning Edition styles in src/App.css (double rule, print shadows, italic empty-state, serif font references) are removed",
+    "Typecheck/lint passes",
+    "Verify in browser (visual gate at 3 breakpoints × 2 themes)"
+  ],
+  "contracts": {
+    "design_tokens": {
+      "color-accent": {
+        "value": "--color-accent",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-fg": {
+        "value": "--color-fg",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-danger": {
+        "value": "--color-danger",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "shadow-wash": {
+        "value": "--shadow-wash"
+      },
+      "space-scale": {
+        "value": "[4,8,12,16,24,32,48,64,96]"
+      },
+      "type-display": {
+        "value": "--type-display",
+        "pattern": "^--type-[a-z0-9]+$"
+      },
+      "motion-slow": {
+        "value": "--motion-slow",
+        "pattern": "^--motion-[a-z]+$"
+      }
+    },
+    "css_classes": {
+      "empty_state": {
+        "value": "empty-state"
+      },
+      "empty_state_glyph": {
+        "value": "empty-state-glyph"
+      },
+      "masthead_rule": {
+        "value": "masthead-rule"
+      },
+      "prompt_bar": {
+        "value": "prompt-bar"
+      },
+      "task_priority": {
+        "value": "task-priority"
+      },
+      "brush_stroke": {
+        "value": "brush-stroke"
+      },
+      "task_section_label": {
+        "value": "task-section-label"
+      }
+    },
+    "config_keys": {
+      "visual_themes": {
+        "value": "visual.themes"
+      }
+    },
+    "aria_labels": {
+      "hanko_seal_progress": {
+        "value": "{done} of {total} tasks done today"
+      }
+    },
+    "shared_types": {
+      "kanji_date_formatter": {
+        "value": "formatKanjiDate",
+        "pattern": "^[a-z][a-zA-Z]*$",
+        "definitionFile": "src/lib/kanji-date.ts",
+        "owner": "US-209",
+        "consumers": [
+          "US-201"
+        ],
+        "shape": {
+          "properties": [],
+          "methods": [
+            {
+              "name": "formatKanjiDate",
+              "params": [
+                {
+                  "name": "d",
+                  "type": "Date"
+                }
+              ],
+              "returns": "string"
+            }
+          ]
+        },
+        "definition": "export function formatKanjiDate(d: Date): string;"
+      }
+    }
+  },
+  "files": [
+    "src/App.css",
+    "src/App.tsx",
+    "src/index.css",
+    "src/views/AllView.tsx",
+    "src/views/DoneView.tsx",
+    "src/views/UpcomingView.tsx"
+  ],
+  "expectedTests": [
+    "pnpm exec playwright test verification/visual.spec.ts --update-snapshots"
+  ],
+  "otherCommands": [
+    "grep -n \"formatKanjiDate\" src/App.tsx",
+    "pnpm run build",
+    "pnpm exec vitest run",
+    "! grep -n 'Fraunces\\|Newsreader\\|double' src/App.css",
+    "pnpm run lint",
+    "pnpm run lint",
+    "pnpm exec vitest run",
+    "grep -ln 'empty-state-glyph' src/views/AllView.tsx src/views/UpcomingView.tsx src/views/DoneView.tsx | wc -l | grep -x ' *3'",
+    "pnpm exec vitest run src/views/",
+    "! grep -n 'italic' src/App.css",
+    "pnpm run build",
+    "pnpm run lint",
+    "bash verification/run-visual-gate.sh /"
+  ],
+  "plannedBy": "ql-plan",
+  "plannedAt": "2026-06-12T21:08:49Z"
+}
