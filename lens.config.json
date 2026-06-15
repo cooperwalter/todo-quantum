@@ -42,7 +42,11 @@
       "performance": 0.9,
       "accessibility": 1,
       "best-practices": 0.95
-    }
+    },
+    "themes": [
+      "light",
+      "dark"
+    ]
   },
   "designSystem": "DESIGN-SYSTEM.md",
   "specChecklist": "SPEC-CHECKLIST.md"

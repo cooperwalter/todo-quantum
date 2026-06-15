@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-ink-garden-reskin.md",
   "designPath": "DESIGN-SYSTEM.md",
   "createdAt": "2026-06-12T20:52:09Z",
-  "updatedAt": "2026-06-15T22:42:33.610484+00:00",
+  "updatedAt": "2026-06-15T22:46:05.985201+00:00",
   "userIntent": "Make this app beautiful \u2014 full aesthetic replacement chosen by user: direction 'Ink Garden' over five rejected alternatives; pure visual re-skin, zero behavior changes",
   "coverageThreshold": 80,
   "stories": [
@@ -24,7 +24,7 @@
       "priority": 1,
       "complexity": 48,
       "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
-      "status": "pending",
+      "status": "passed",
       "dependsOn": [],
       "storyType": "logic",
       "tasks": [
@@ -40,7 +40,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 pure config change, no runtime logic",
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -59,7 +59,7 @@
           "consumedBy": [
             "US-208"
           ],
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -93,14 +93,14 @@
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T22:46:05.985201+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T22:46:05.985201+00:00"
         }
       },
       "retries": {
@@ -1400,6 +1400,20 @@
         "src/components/Toast.tsx"
       ],
       "learnings": "HEAD already contained the Ink Garden design system (tokens.css, DESIGN-SYSTEM.md) and US-206 from a prior session. Execution reconciles via verify-then-execute per story rather than assuming an all-Morning-Edition baseline."
+    },
+    {
+      "timestamp": "2026-06-15T22:46:05.985201+00:00",
+      "iteration": 1,
+      "storyId": "US-200",
+      "action": "story_passed",
+      "details": "Added dark-theme axis (visual.themes=[light,dark]) to visual.spec + a11y.spec via emulateMedia; transparent document.fonts.ready wait hooked into e2e/fixtures page.goto so all consumers inherit it. Verified: 6 visual baselines (3 bp x 2 themes, dark suffixed), 8 a11y tests pass axe-clean both themes, dark axis renders night-ink palette, build+lint green.",
+      "filesChanged": [
+        "lens.config.json",
+        "e2e/fixtures.ts",
+        "verification/visual.spec.ts",
+        "verification/a11y.spec.ts"
+      ],
+      "learnings": "App theming is pure prefers-color-scheme (no data-theme attr), so emulateMedia({colorScheme}) drives dark tokens directly. Stale vite dev server on :5273 must be killed before playwright (reuseExistingServer:false)."
     }
   ],
   "codebasePatterns": [
