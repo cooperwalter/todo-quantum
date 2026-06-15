@@ -121,9 +121,12 @@ export function useKeymap(config: UseKeymapConfig) {
         pendingG.current = null;
         if (event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
           // The user was typing a word starting with 'g' ("groceries") — the
-          // swallowed 'g' belongs in the bar ahead of this key.
+          // swallowed 'g' belongs in the bar ahead of this key. Moving to the bar
+          // ends the list selection, so clear it (else the row keeps its selected
+          // styling even though focus has left — same completeness rule as Esc).
           event.preventDefault();
           bar?.focus();
+          cfg.setSelectedId(null);
           cfg.onTypeahead('g');
           cfg.onTypeahead(event.key);
           return;
@@ -221,8 +224,12 @@ export function useKeymap(config: UseKeymapConfig) {
           return;
         default: {
           if (event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
+            // Typing into the bar ends the list selection: focusing the bar drops
+            // the row's focus-visible outline, but the --selected styling is driven
+            // by selectedId, so it must be cleared too (FR-17 completeness, as Esc).
             event.preventDefault();
             bar?.focus();
+            cfg.setSelectedId(null);
             cfg.onTypeahead(event.key);
           }
         }

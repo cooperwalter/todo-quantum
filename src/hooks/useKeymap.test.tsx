@@ -207,6 +207,25 @@ describe('list navigation (FR-16)', () => {
     expect(calls).toContain('typeahead:b');
   });
 
+  it('typing a printable character also clears the list selection so no select styling lingers', () => {
+    bar().focus();
+    fireEvent.keyDown(bar(), { key: 'ArrowDown' });
+    expect(row('t1').dataset.selected).toBe('true');
+    fireEvent.keyDown(row('t1'), { key: 'b' });
+    expect(row('t1').dataset.selected).toBe('false');
+  });
+
+  it("a 'g' followed by a non-view printable clears the selection while typing both into the bar", () => {
+    bar().focus();
+    fireEvent.keyDown(bar(), { key: 'ArrowDown' });
+    expect(row('t1').dataset.selected).toBe('true');
+    fireEvent.keyDown(row('t1'), { key: 'g' });
+    fireEvent.keyDown(row('t1'), { key: 'r' });
+    expect(calls).toContain('typeahead:g');
+    expect(calls).toContain('typeahead:r');
+    expect(row('t1').dataset.selected).toBe('false');
+  });
+
   it('Esc in the list clears the selection (FR-17 final step)', () => {
     bar().focus();
     fireEvent.keyDown(bar(), { key: 'ArrowDown' });
