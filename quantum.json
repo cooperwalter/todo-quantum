@@ -5,7 +5,7 @@
   "prdPath": "tasks/prd-ink-garden-reskin.md",
   "designPath": "DESIGN-SYSTEM.md",
   "createdAt": "2026-06-12T20:52:09Z",
-  "updatedAt": "2026-06-15T22:55:20.810382+00:00",
+  "updatedAt": "2026-06-15T22:58:36.363184+00:00",
   "userIntent": "Make this app beautiful \u2014 full aesthetic replacement chosen by user: direction 'Ink Garden' over five rejected alternatives; pure visual re-skin, zero behavior changes",
   "coverageThreshold": 80,
   "stories": [
@@ -332,7 +332,7 @@
       "priority": 4,
       "complexity": 48,
       "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
-      "status": "pending",
+      "status": "passed",
       "dependsOn": [],
       "storyType": "logic",
       "tasks": [
@@ -350,7 +350,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 glyph markup swap; existing tests assert behavior, not the glyph character",
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-002",
@@ -365,7 +365,7 @@
           ],
           "testFirst": false,
           "notes": "testFirst: false \u2014 presentational CSS",
-          "status": "failed"
+          "status": "passed"
         },
         {
           "id": "T-003",
@@ -398,14 +398,14 @@
       ],
       "review": {
         "specCompliance": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T22:58:36.363184+00:00"
         },
         "codeQuality": {
-          "status": "pending",
+          "status": "passed",
           "issues": [],
-          "reviewedAt": null
+          "reviewedAt": "2026-06-15T22:58:36.363184+00:00"
         }
       },
       "retries": {
@@ -1442,6 +1442,20 @@
         "e2e/shell.spec.ts"
       ],
       "learnings": "Empty-state copy must live in its own .empty-state-copy span so getByText/toHaveText(copy) survives the decorative \u25ef glyph. Rollover 'since' text stays lowercase in DOM; CSS text-transform handles caps so the exact-text test passes."
+    },
+    {
+      "timestamp": "2026-06-15T22:58:36.363184+00:00",
+      "iteration": 4,
+      "storyId": "US-203",
+      "action": "story_passed",
+      "details": "Command bar = surface card + hairline border + shadow-wash (radius-md); ink-bar prompt (3x18 indigo radius-pill, doubled in command mode) replaces glyph; chips indigo text + 2px underline + opacity parse-in; error state wide-tracked caps body danger; mobile full-bleed hairline-only. shadow-print removed. 53 tests pass; pixel-inspected 3 indigo chips.",
+      "filesChanged": [
+        "src/components/CommandBar.tsx",
+        "src/components/CommandBar.css",
+        "src/components/ParsedInput.css",
+        "src/components/CommandBar.test.tsx"
+      ],
+      "learnings": "Chip parse-in is opacity-only: mirror overlay must align char-for-char with the transparent textarea, so transform/inline-block (which breaks multi-word chip wrapping) is unsafe."
     }
   ],
   "codebasePatterns": [

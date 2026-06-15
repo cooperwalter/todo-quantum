@@ -95,7 +95,8 @@ export function CommandBar({ now, openCheatsheet }: { now?: Date; openCheatsheet
         className={`command-bar${error ? ' command-bar--error' : ''}${commandMode ? ' command-bar--command' : ''}`}
       >
         <span className="command-bar-prompt" aria-hidden="true">
-          {commandMode ? '❯' : '▸'}
+          <span className="prompt-bar" />
+          {commandMode && <span className="prompt-bar" />}
         </span>
         <ParsedInput
           value={barText}
