@@ -67,3 +67,20 @@ for (const [name, width] of BREAKPOINTS) {
     });
   });
 }
+
+test('opening the inline editor places the caret at the end of the text', async ({ page }) => {
+  await seedFullTask(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/', { waitUntil: 'networkidle' });
+  const row = page.locator('[data-task-id="edit-state-1"]');
+  await row.locator('.task-row-title').click();
+  const editInput = row.locator('.command-bar-input');
+  await expect(editInput).toBeFocused();
+  const caret = await editInput.evaluate((el: HTMLTextAreaElement) => ({
+    start: el.selectionStart,
+    end: el.selectionEnd,
+    len: el.value.length,
+  }));
+  expect(caret.start).toBe(caret.len);
+  expect(caret.end).toBe(caret.len);
+});
