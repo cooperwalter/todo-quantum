@@ -144,8 +144,25 @@ export function useKeymap(config: UseKeymapConfig) {
           focusRow(next);
           return;
         }
-        case 'k':
         case 'ArrowUp': {
+          event.preventDefault();
+          if (rows.length === 0) return;
+          const idx = selected !== null ? rows.indexOf(selected) : 0;
+          if (idx <= 0) {
+            // Topmost row: hand focus back to the capture bar — the inverse of
+            // ArrowDown-from-bar (FR-15). Leaving the list clears the selection.
+            cfg.setSelectedId(null);
+            bar?.focus();
+            return;
+          }
+          const prev = rows[idx - 1];
+          cfg.setSelectedId(prev);
+          focusRow(prev);
+          return;
+        }
+        case 'k': {
+          // Vim nav is list-internal: it clamps at the top rather than exiting to
+          // the bar (only the arrow keys cross the bar/list boundary).
           event.preventDefault();
           if (rows.length === 0) return;
           const idx = selected !== null ? rows.indexOf(selected) : 0;

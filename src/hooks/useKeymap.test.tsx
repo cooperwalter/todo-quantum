@@ -110,6 +110,32 @@ describe('list navigation (FR-16)', () => {
     expect(document.activeElement).toBe(row('t1'));
   });
 
+  it('ArrowUp on the topmost row hands focus back to the capture bar and clears the selection', () => {
+    bar().focus();
+    fireEvent.keyDown(bar(), { key: 'ArrowDown' }); // select t1 (topmost)
+    expect(row('t1').dataset.selected).toBe('true');
+    fireEvent.keyDown(row('t1'), { key: 'ArrowUp' });
+    expect(document.activeElement).toBe(bar());
+    expect(row('t1').dataset.selected).toBe('false');
+  });
+
+  it('ArrowUp below the top moves to the previous row, not the bar', () => {
+    bar().focus();
+    fireEvent.keyDown(bar(), { key: 'ArrowDown' }); // t1
+    fireEvent.keyDown(row('t1'), { key: 'j' }); // t2
+    fireEvent.keyDown(row('t2'), { key: 'ArrowUp' });
+    expect(document.activeElement).toBe(row('t1'));
+    expect(row('t1').dataset.selected).toBe('true');
+  });
+
+  it("'k' on the topmost row stays on it (vim nav is list-internal, never exits to the bar)", () => {
+    bar().focus();
+    fireEvent.keyDown(bar(), { key: 'ArrowDown' }); // t1
+    fireEvent.keyDown(row('t1'), { key: 'k' });
+    expect(document.activeElement).toBe(row('t1'));
+    expect(row('t1').dataset.selected).toBe('true');
+  });
+
   it('x dispatches complete for the selected row', () => {
     bar().focus();
     fireEvent.keyDown(bar(), { key: 'ArrowDown' });
