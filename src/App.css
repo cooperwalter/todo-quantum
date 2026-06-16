@@ -6,37 +6,22 @@
   padding: 0 var(--space-4) var(--space-7);
 }
 
-/* Masthead — today's date set bilingually (kanji display + English dateline),
-   over a drawn ink rule (§1/§2). */
+/* Masthead — today's date set large in the display serif, over a drawn ink rule (§1/§2). */
 .masthead {
   position: relative;
   padding: var(--space-6) 0 var(--space-4);
   animation: masthead-settle var(--motion-base) var(--ease) backwards;
 }
 
-.masthead-head {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-}
-
-.masthead-date-kanji {
+.masthead-date {
   margin: 0;
+  /* Leave room for the seal stamp so a long date never collides with it. */
+  padding-right: var(--space-7);
   font-family: var(--type-display);
   font-weight: 600;
   font-size: var(--text-display-size);
   line-height: var(--text-display-leading);
   color: var(--color-fg);
-}
-
-.masthead-date-en {
-  margin: 0;
-  font-family: var(--type-display);
-  font-weight: 600;
-  font-size: var(--text-h2-size);
-  line-height: var(--text-h2-leading);
-  color: var(--color-muted);
 }
 
 .masthead-rule {
@@ -196,15 +181,8 @@
     max-width: none;
   }
 
-  /* §7 mobile: display scales down one step; the English dateline drops to its
-     own line. */
-  .masthead-head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-1);
-  }
-
-  .masthead-date-kanji {
+  /* §7 mobile: display scales down one step. */
+  .masthead-date {
     font-size: 30px;
     line-height: 40px;
   }

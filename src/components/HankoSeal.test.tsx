@@ -44,26 +44,27 @@ beforeEach(() => {
 });
 
 describe('HankoSeal', () => {
-  it('renders the 今日 seal as a status region, not an interactive control', () => {
+  it('renders the seal as a status region, not an interactive control', () => {
     renderSeal([]);
-    expect(seal().textContent).toBe('今日');
     expect(seal().getAttribute('role')).toBe('status');
     expect(seal().hasAttribute('tabindex')).toBe(false);
     expect(seal().getAttribute('onclick')).toBeNull();
   });
 
-  it('stays outline (not filled) when today has zero dated tasks', () => {
+  it('stays an empty outline (no checkmark) when today has zero dated tasks', () => {
     renderSeal([makeTask({ id: 'anytime', dueDate: null })]);
     expect(seal().className).not.toContain('hanko-seal--filled');
+    expect(document.querySelector('.hanko-seal-mark')).toBeNull();
     expect(seal().getAttribute('aria-label')).toBe('0 of 0 tasks done today');
   });
 
-  it('fills crimson when every today + rollover task is done', () => {
+  it('fills crimson with a checkmark when every today + rollover task is done', () => {
     renderSeal([
       makeTask({ id: 'a', status: 'done' }),
       makeTask({ id: 'rollover', dueDate: LONG_AGO, status: 'done' }),
     ]);
     expect(seal().className).toContain('hanko-seal--filled');
+    expect(document.querySelector('.hanko-seal-mark')?.textContent).toBe('✓');
     expect(seal().getAttribute('aria-label')).toBe('2 of 2 tasks done today');
   });
 

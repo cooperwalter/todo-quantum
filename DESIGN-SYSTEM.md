@@ -14,7 +14,7 @@
 
 **The one unforgettable thing:** Completing a task draws a real sumi brushstroke through it —
 an organic, tapered ink stroke, not a CSS line-through — and the masthead carries a small
-rotated 今日 hanko seal that fills crimson when every task due today is done.
+rotated crimson stamp that fills with a checkmark when every task due today is done.
 
 Discipline in one line: **indigo is the hand, crimson is the seal.** Indigo marks everything
 interactive (chips, links, focus, selection). Crimson stamps what matters (the seal, the
@@ -32,10 +32,10 @@ never carries both.
 
 Rules: task titles are Shippori Mincho 17/26 wght 600 (the one serif moment in each row).
 ALL-CAPS strings (datelines, view tabs, metadata) are Zen Kaku Gothic New 12px wght 500 with
-`letter-spacing: 0.18em–0.22em` — wide tracking is the system's quiet voice. The masthead may
-set the date bilingually (六月十日 + English); the kanji form uses `type-display` at full size,
-the English at h2 muted. No other font families, ever. No italics anywhere — Mincho has no
-true italic; emphasis is done with weight, ink, or the brushstroke.
+`letter-spacing: 0.18em–0.22em` — wide tracking is the system's quiet voice. The masthead sets
+the date in English at `type-display` full size (e.g. "Wednesday, June 10, 2026"). No other font
+families, ever. No italics anywhere — Mincho has no true italic; emphasis is done with weight,
+ink, or the brushstroke.
 
 ## 3. Color tokens (these are quantum.json contracts — names are exact)
 
@@ -88,7 +88,7 @@ One well-orchestrated moment: on load, the ink rule beneath the masthead date dr
 left→right (`motion-slow`), then task rows fade up with a 40ms stagger. The signature
 interaction: task completion draws the sumi brushstroke left→right at `motion-base`, then the
 row settles to muted at `motion-fast`. Chips ink-in at `motion-fast` (opacity + 2px rise).
-Toast slides at `motion-base`. The hanko seal fill, when the day completes, is the only
+Toast slides at `motion-base`. The completion stamp fill, when the day completes, is the only
 `motion-slow` interaction moment. Nothing else animates. `prefers-reduced-motion` zeroes all
 three tokens (wired in tokens.css; the a11y gate checks it).
 
@@ -106,8 +106,8 @@ interactive element (a11y gate fails on invisible focus).
   not exist (capture is never disabled).
 - **Task row** — flat on bg (no card), hairline bottom border, `--space-4` vertical padding.
   Checkbox: 17px circle, 2px ink outline; fills ink when done. Title: Shippori Mincho 17/26
-  wght 600. Priority: a small kanji glyph after the title — 一 in crimson for priority 1; 二 / 三 in
-  muted for 2/3 (crimson stays reserved for the priority-1 mark, per §1/§3). Hover: a
+  wght 600. Priority: a small mono-caps mark after the title — `P1` in crimson for priority 1;
+  `P2` / `P3` in muted for 2/3 (crimson stays reserved for the priority-1 mark, per §1/§3). Hover: a
   4px indigo brush-tick appears in the left margin (outside the text column). Selected
   (keyboard): left margin tick thickens + title ink deepens to pure fg + row bg warms to
   surface. Active (completing): brushstroke draws at `motion-base` (see §5). Rollover: muted
@@ -125,18 +125,18 @@ interactive element (a11y gate fails on invisible focus).
 - **Cheatsheet overlay (`?`)** — surface sheet over a bg scrim at 80% opacity, `radius-lg`,
   header carries a small ink rule echoing the masthead, two-column key table (mono keys,
   body-font labels). Focus trapped; Esc closes.
-- **Hanko seal (masthead)** — 40px square, `2.5px solid var(--color-danger)`, `radius-md`,
-  rotated 4°, 今日 in display font wght 700 danger color. Filled state (all of today done):
-  danger bg, 今日 in surface-white in light theme (contrast 6.86) and in `--color-bg` night
-  ink in dark theme (5.65) — both verified. Has `aria-label` describing day progress; the fill
+- **Completion stamp (masthead)** — 40px square, `2.5px solid var(--color-danger)`, `radius-md`,
+  rotated 4°. Empty outline by default. Filled state (all of today done): danger bg with a
+  checkmark (`✓`) in surface-white in light theme (contrast 6.86) and in `--color-bg` night ink
+  in dark theme (5.65) — both verified. Has `aria-label` describing day progress; the fill
   transition runs at `motion-slow` and is suppressed by `prefers-reduced-motion`.
 - **Empty states** — muted body font, one line + one keycap hint (e.g. "Nothing on the desk —
   type to capture."), preceded by a single muted enso glyph (◯) at 24px. No illustrations.
 
 ## 7. Responsive intent
 
-- **375 (mobile):** single column; masthead 30/40 (display scales down one step) and drops the
-  English subtitle to its own line; hanko seal 32px; task row metadata wraps below the title;
+- **375 (mobile):** single column; masthead 30/40 (display scales down one step); completion
+  stamp 32px; task row metadata wraps below the title;
   view tabs become a horizontal scroll row; command bar sticks to top, full-bleed with hairline
   bottom rule only (sheds card chrome).
 - **768 (tablet):** single column at max-width 640 centered; masthead full 40/52; metadata
@@ -163,7 +163,7 @@ Every UI story must satisfy, per screen:
 Per-screen additions:
 
 - **Today view:** masthead shows today's date in Shippori Mincho with the ink rule beneath and
-  the 今日 seal top-right; rollover rows above dated rows, each with the muted SINCE annotation,
+  the completion stamp top-right; rollover rows above dated rows, each with the muted SINCE annotation,
   never crimson; command bar focused on load.
 - **Upcoming view:** day-group headers in wide-tracked caps with hairline rule; 7 day groups
   then week groups.

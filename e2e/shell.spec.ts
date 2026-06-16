@@ -29,7 +29,7 @@ function collectConsoleErrors(page: Page): string[] {
 
 test('masthead shows today\'s date', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('.masthead-date-en')).toHaveText(expectedMastheadDate());
+  await expect(page.locator('.masthead-date')).toHaveText(expectedMastheadDate());
 });
 
 test('all four view tabs render', async ({ page }) => {

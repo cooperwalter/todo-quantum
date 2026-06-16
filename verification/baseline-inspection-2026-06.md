@@ -40,3 +40,19 @@ Lighthouse (non-blocking gate, `lhci autorun || true`):
 - **Follow-up (non-goal #6):** self-host a subsetted Shippori Mincho woff2 containing only
   Latin + the date/seal glyphs (一二三四五六七八九十月日今) and preload it; this removes the
   ~260 KiB Japanese subset from the critical path and should restore performance ≥0.9.
+
+## 2026-06-16 update — Japanese characters removed
+
+Per user request ("remove the japanese characters but keep the rest of the design"), all CJK
+glyphs were removed while preserving the Ink Garden aesthetic (washi/sumi/aizome/crimson, Mincho
+type, flat rows, ink rule, sumi brushstroke):
+- Masthead: the **English date is now the headline** in display Mincho (the kanji date / `formatKanjiDate` was removed).
+- Completion stamp: the rotated crimson stamp now fills with a **✓ checkmark** when the day is
+  done (empty outline otherwise) — no 今日. Glyph contrast unchanged (paper-white light / night-ink dark).
+- Priority: **P1 / P2 / P3** mono caps after the title (P1 crimson, P2/P3 muted) — no 一二三.
+- All 39 baselines regenerated and re-inspected on a clean server.
+
+Gate impact: removing the CJK glyphs drops the heavy Japanese font subset from the critical path,
+so the **Lighthouse performance gate now passes** — perf measured 0.95–1.0 across runs (was 0.69),
+FCP ~1.2s, LCP ~1.2–3.0s; accessibility 1.0, best-practices 1.0. The non-goal #6 font follow-up is
+no longer needed.

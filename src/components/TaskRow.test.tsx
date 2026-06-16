@@ -70,26 +70,26 @@ describe('TaskRow rendering', () => {
     expect(document.querySelector('.task-row--p1')).toBeNull();
   });
 
-  it('renders priority 1 as a crimson 一 glyph after the title', () => {
+  it('renders priority 1 as a crimson P1 mark after the title', () => {
     renderRow(makeTask({ priority: 1 }));
     const glyph = document.querySelector('.task-priority');
-    expect(glyph?.textContent).toBe('一');
+    expect(glyph?.textContent).toBe('P1');
     expect(glyph?.className).toContain('task-priority--1');
     expect(glyph?.getAttribute('aria-label')).toBe('priority 1');
   });
 
-  it('renders priority 2 as a muted 二 glyph (crimson reserved for priority 1)', () => {
+  it('renders priority 2 as a muted P2 mark (crimson reserved for priority 1)', () => {
     renderRow(makeTask({ priority: 2 }));
     const glyph = document.querySelector('.task-priority');
-    expect(glyph?.textContent).toBe('二');
+    expect(glyph?.textContent).toBe('P2');
     expect(glyph?.className).toContain('task-priority--muted');
     expect(glyph?.className).not.toContain('task-priority--1');
   });
 
-  it('renders priority 3 as a muted 三 glyph', () => {
+  it('renders priority 3 as a muted P3 mark', () => {
     renderRow(makeTask({ priority: 3 }));
     const glyph = document.querySelector('.task-priority');
-    expect(glyph?.textContent).toBe('三');
+    expect(glyph?.textContent).toBe('P3');
     expect(glyph?.className).toContain('task-priority--muted');
   });
 

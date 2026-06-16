@@ -3,10 +3,11 @@ import { useToday } from '../hooks/useToday';
 import { selectTodayProgress } from '../lib/selectors';
 import { useApp } from '../state/AppContext';
 
-// The masthead's ceremonial mark: a rotated 今日 ("today") hanko seal that fills
-// crimson when every task due today (including rollovers) is done. Informative
-// only — a status region, never focusable or clickable. State is derived from the
-// store on every render, so adding a task or reopening one reverts it instantly.
+// The masthead's ceremonial mark: a rotated stamp that fills crimson with a
+// checkmark when every task due today (including rollovers) is done; an empty
+// outline otherwise. Informative only — a status region, never focusable or
+// clickable. State is derived from the store on every render, so adding a task or
+// reopening one reverts it instantly.
 export function HankoSeal() {
   const { state } = useApp();
   const today = useToday();
@@ -19,7 +20,11 @@ export function HankoSeal() {
       role="status"
       aria-label={`${done} of ${total} tasks done today`}
     >
-      今日
+      {filled && (
+        <span className="hanko-seal-mark" aria-hidden="true">
+          ✓
+        </span>
+      )}
     </div>
   );
 }

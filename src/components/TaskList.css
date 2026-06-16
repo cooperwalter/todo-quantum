@@ -133,9 +133,10 @@
 }
 
 .task-priority {
-  font-family: var(--type-display);
-  font-weight: 700;
-  font-size: 13px;
+  font-family: var(--type-mono);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.1em;
   line-height: 1;
   align-self: center;
 }

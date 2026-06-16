@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import './App.css';
-import { formatKanjiDate } from './lib/kanji-date';
 import { Cheatsheet } from './components/Cheatsheet';
 import { HankoSeal } from './components/HankoSeal';
 import { CommandBar } from './components/CommandBar';
@@ -24,13 +23,9 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
 });
 
 function Masthead() {
-  const now = new Date();
   return (
     <header className="masthead">
-      <div className="masthead-head">
-        <h1 className="masthead-date-kanji">{formatKanjiDate(now)}</h1>
-        <p className="masthead-date-en">{DATE_FORMAT.format(now)}</p>
-      </div>
+      <h1 className="masthead-date">{DATE_FORMAT.format(new Date())}</h1>
       <HankoSeal />
       <div className="masthead-rule" aria-hidden="true" />
     </header>

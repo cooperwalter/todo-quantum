@@ -1,5 +1,6 @@
-/* Hanko seal (今日) — DESIGN-SYSTEM.md §6. Tokens only.
-   Sits top-right in the masthead (which is position:relative). */
+/* Completion stamp — DESIGN-SYSTEM.md §6. Tokens only.
+   Sits top-right in the masthead (which is position:relative). A rotated crimson
+   outline that fills with a checkmark when all of today is done. */
 
 .hanko-seal {
   position: absolute;
@@ -13,29 +14,29 @@
   border: 2.5px solid var(--color-danger);
   border-radius: var(--radius-md);
   transform: rotate(4deg);
-  font-family: var(--type-display);
-  font-weight: 700;
-  font-size: 15px;
-  line-height: 1;
-  color: var(--color-danger);
-  transition:
-    background var(--motion-slow) var(--ease),
-    color var(--motion-slow) var(--ease);
+  transition: background var(--motion-slow) var(--ease);
 }
 
-/* Filled (all of today done): danger fill with the glyph in paper-white (light)
-   / night-ink (dark) — both contrast-checked in DESIGN-SYSTEM §6. */
+/* Filled (all of today done): danger fill with the checkmark in paper-white
+   (light) / night-ink (dark) — both contrast-checked in DESIGN-SYSTEM §6. */
 .hanko-seal--filled {
   background: var(--color-danger);
+}
+
+.hanko-seal-mark {
+  font-family: var(--type-display);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1;
   color: var(--color-surface);
 }
 
-[data-theme='dark'] .hanko-seal--filled {
+[data-theme='dark'] .hanko-seal-mark {
   color: var(--color-bg);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .hanko-seal--filled {
+  :root:not([data-theme='light']) .hanko-seal-mark {
     color: var(--color-bg);
   }
 }
@@ -44,7 +45,10 @@
   .hanko-seal {
     width: 32px;
     height: 32px;
-    font-size: 12px;
+  }
+
+  .hanko-seal-mark {
+    font-size: 16px;
   }
 }
 
