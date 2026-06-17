@@ -41,9 +41,9 @@
   color: var(--color-muted);
 }
 
-/* Hover / selection read as an ink brush-tick in the left margin, outside the
-   text column (§6). Hover: 4px; keyboard-selected: thickens to 6px + the row
-   warms to surface. */
+/* Hover and selection both read as a single ink brush-tick in the left margin,
+   outside the text column (§6) — no background, no surrounding outline box. The
+   tick is the row's focus indicator too. */
 .task-row::before {
   content: '';
   position: absolute;
@@ -54,25 +54,24 @@
   border-radius: var(--radius-pill);
   background: var(--color-accent);
   opacity: 0;
-  transition: opacity var(--motion-fast) var(--ease), width var(--motion-fast) var(--ease);
+  transition: opacity var(--motion-fast) var(--ease);
 }
 
-.task-row:hover::before {
+/* Hover preview — mouse mode only. Gating on pointer mode means the tick clears
+   the instant the user starts typing (focus jumps to the capture bar), instead of
+   lingering under the stationary cursor until the mouse next moves. */
+html:not([data-pointer='keyboard']) .task-row:hover::before {
   opacity: 1;
 }
 
-.task-row--selected {
-  background: var(--color-surface);
-}
-
-.task-row--selected::before {
+/* Keyboard selection and keyboard focus both show the tick — and nothing else. */
+.task-row--selected::before,
+.task-row:focus-visible::before {
   opacity: 1;
-  width: 6px;
 }
 
 .task-row:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline: none;
 }
 
 .task-row-checkbox {
@@ -98,7 +97,7 @@
   margin-top: var(--space-1);
 }
 
-.task-row:hover .task-row-checkbox,
+html:not([data-pointer='keyboard']) .task-row:hover .task-row-checkbox,
 .task-row:focus-within .task-row-checkbox,
 .task-row--selected .task-row-checkbox,
 .task-row--done .task-row-checkbox {

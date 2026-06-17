@@ -8,6 +8,7 @@ import { Toast } from './components/Toast';
 import { ViewTabs } from './components/ViewTabs';
 import { useKeymap } from './hooks/useKeymap';
 import { usePersistence } from './hooks/usePersistence';
+import { usePointerMode } from './hooks/usePointerMode';
 import { todayStr } from './lib/dates';
 import { AppProvider, useApp } from './state/AppContext';
 import { AllView } from './views/AllView';
@@ -50,6 +51,7 @@ function Shell() {
   const { dispatch, setView, setBarText, barRef, selectedTaskId, setSelectedTaskId } = useApp();
   const { saveFailed, dismissSaveFailure } = usePersistence();
   const [cheatsheetOpen, setCheatsheetOpen] = useState(false);
+  usePointerMode();
 
   useKeymap({
     barRef,
