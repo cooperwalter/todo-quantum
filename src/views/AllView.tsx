@@ -13,7 +13,10 @@ export function AllView() {
     <>
       {filtering && <p className="filter-hint">filtering — Enter captures</p>}
       {tasks.length === 0 ? (
-        <p className="empty-state">Nothing here — type to capture.</p>
+        <p className="empty-state">
+          <span className="empty-state-glyph" aria-hidden="true">◯</span>
+          <span className="empty-state-copy">Nothing here — type to capture.</span>
+        </p>
       ) : (
         <TaskList
           selectedId={selectedTaskId}

@@ -1,0 +1,114 @@
+{
+  "storyId": "US-209",
+  "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
+  "acs": [
+    "src/lib/kanji-date.ts [NEW] exports formatKanjiDate(d: Date): string using kanji numerals, no external dependency",
+    "src/lib/kanji-date.test.ts [NEW] covers at minimum: 六月十日 (June 10), 六月十二日 (June 12), 十二月三十一日 (Dec 31), 一月一日 (Jan 1), 十月二十日 (Oct 20)",
+    "Function is timezone-naive (formats the local calendar date of the Date passed in — same convention as src/lib/dates.ts)",
+    "Typecheck/lint passes"
+  ],
+  "contracts": {
+    "design_tokens": {
+      "color-accent": {
+        "value": "--color-accent",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-fg": {
+        "value": "--color-fg",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-danger": {
+        "value": "--color-danger",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "shadow-wash": {
+        "value": "--shadow-wash"
+      },
+      "space-scale": {
+        "value": "[4,8,12,16,24,32,48,64,96]"
+      },
+      "type-display": {
+        "value": "--type-display",
+        "pattern": "^--type-[a-z0-9]+$"
+      },
+      "motion-slow": {
+        "value": "--motion-slow",
+        "pattern": "^--motion-[a-z]+$"
+      }
+    },
+    "css_classes": {
+      "empty_state": {
+        "value": "empty-state"
+      },
+      "empty_state_glyph": {
+        "value": "empty-state-glyph"
+      },
+      "masthead_rule": {
+        "value": "masthead-rule"
+      },
+      "prompt_bar": {
+        "value": "prompt-bar"
+      },
+      "task_priority": {
+        "value": "task-priority"
+      },
+      "brush_stroke": {
+        "value": "brush-stroke"
+      },
+      "task_section_label": {
+        "value": "task-section-label"
+      }
+    },
+    "config_keys": {
+      "visual_themes": {
+        "value": "visual.themes"
+      }
+    },
+    "aria_labels": {
+      "hanko_seal_progress": {
+        "value": "{done} of {total} tasks done today"
+      }
+    },
+    "shared_types": {
+      "kanji_date_formatter": {
+        "value": "formatKanjiDate",
+        "pattern": "^[a-z][a-zA-Z]*$",
+        "definitionFile": "src/lib/kanji-date.ts",
+        "owner": "US-209",
+        "consumers": [
+          "US-201"
+        ],
+        "shape": {
+          "properties": [],
+          "methods": [
+            {
+              "name": "formatKanjiDate",
+              "params": [
+                {
+                  "name": "d",
+                  "type": "Date"
+                }
+              ],
+              "returns": "string"
+            }
+          ]
+        },
+        "definition": "export function formatKanjiDate(d: Date): string;"
+      }
+    }
+  },
+  "files": [
+    "src/lib/kanji-date.test.ts",
+    "src/lib/kanji-date.ts"
+  ],
+  "expectedTests": [
+    "pnpm exec vitest run src/lib/kanji-date.test.ts 2>&1 | grep -q 'failed\\|Cannot find' && echo RED-CONFIRMED",
+    "pnpm exec vitest run src/lib/kanji-date.test.ts"
+  ],
+  "otherCommands": [
+    "pnpm run build",
+    "pnpm run lint"
+  ],
+  "plannedBy": "ql-plan",
+  "plannedAt": "2026-06-12T21:08:48Z"
+}

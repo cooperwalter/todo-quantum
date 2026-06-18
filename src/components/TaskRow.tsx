@@ -4,11 +4,16 @@ import { isoWeekday, todayStr } from '../lib/dates';
 import { formatTimeDisplay, parse } from '../lib/parser';
 import type { ParseResult } from '../lib/parser';
 import { serializeTask } from '../lib/serialize';
+import { BrushStroke } from './BrushStroke';
 import { ParsedInput } from './ParsedInput';
 import { useApp } from '../state/AppContext';
 import type { Task } from '../lib/types';
 
 const WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+// Priority renders as a small mono caps mark after the title. Crimson is reserved
+// for priority 1 (the §1/§3 "seal" discipline); 2 and 3 are muted ink.
+const PRIORITY_LABEL: Record<1 | 2 | 3, string> = { 1: 'P1', 2: 'P2', 3: 'P3' };
 
 export interface TaskRowProps {
   task: Task;
@@ -56,6 +61,11 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
   // Set by keyboard-driven closes (Esc/Enter); consumed after the editor unmounts
   // so the focus lands on the row element, not the removed textarea.
   const pendingRowFocus = useRef(false);
+  // The sumi brushstroke draws on a fresh completion (set from the complete
+  // handler — a user event), then settles to muted via onDrawn. A row that mounts
+  // already-done (Done/All view on load) keeps justCompleted=false and shows the
+  // settled stroke.
+  const [justCompleted, setJustCompleted] = useState(false);
 
   useLayoutEffect(() => {
     if (!editing && pendingRowFocus.current) {
@@ -65,6 +75,7 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
   }, [editing]);
 
   function complete() {
+    setJustCompleted(true);
     dispatch({
       type: 'complete',
       id: task.id,
@@ -231,6 +242,17 @@ export function TaskRow({ task, rollover = false, selected = false, tabIndex = -
           }}
         >
           {task.title}
+          {task.status === 'done' && (
+            <BrushStroke drawing={justCompleted} onDrawn={() => setJustCompleted(false)} />
+          )}
+        </span>
+      )}
+      {!editing && task.priority !== null && (
+        <span
+          className={`task-priority ${task.priority === 1 ? 'task-priority--1' : 'task-priority--muted'}`}
+          aria-label={`priority ${task.priority}`}
+        >
+          {PRIORITY_LABEL[task.priority]}
         </span>
       )}
       {sinceLabel !== null && <span className="task-row-since">{sinceLabel}</span>}

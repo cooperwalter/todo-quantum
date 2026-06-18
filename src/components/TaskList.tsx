@@ -22,7 +22,12 @@ export function TaskList({ sections, selectedId, onSelect }: TaskListProps) {
 
   const visibleSections = sections.filter((s) => s.tasks.length > 0);
   if (visibleSections.length === 0) {
-    return <p className="empty-state">Nothing on deck — type to capture.</p>;
+    return (
+      <p className="empty-state">
+        <span className="empty-state-glyph" aria-hidden="true">◯</span>
+        <span className="empty-state-copy">Nothing on deck — type to capture.</span>
+      </p>
+    );
   }
 
   function handleSelect(id: string) {

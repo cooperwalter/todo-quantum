@@ -1,9 +1,9 @@
 /* quantum-lens design tokens — direction: "Ink Garden" (Japanese stationery calm:
    washi paper, sumi ink, aizome indigo for everything interactive, hanko crimson for marks).
    Chosen via /lens-design 2026-06-12, replacing "Morning Edition".
-   All fg/bg pairs contrast-checked WCAG AA — see DESIGN-SYSTEM.md §3. */
-
-@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=M+PLUS+1+Code:wght@400;500;600&display=swap');
+   All fg/bg pairs contrast-checked WCAG AA — see DESIGN-SYSTEM.md §3.
+   Font families are loaded via a non-blocking <link> in index.html (not @import
+   here — @import serialises the request waterfall and costs Lighthouse perf). */
 
 :root {
   /* type families */
@@ -41,9 +41,6 @@
   --ease: cubic-bezier(0.33, 0, 0.2, 1);
   /* ink-wash shadow: the only permitted depth (no hard offsets, no default browser shadows) */
   --shadow-wash: 0 2px 16px rgba(28, 28, 26, 0.07);
-  /* DEPRECATED (Morning Edition print shadow) — kept until the component re-skin
-     removes the last var(--shadow-print) reference; do not use in new styles */
-  --shadow-print: 3px 3px 0;
   /* color (light — canonical) */
   --color-bg: #F7F6F1;
   --color-surface: #FFFFFF;

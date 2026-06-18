@@ -265,6 +265,19 @@ export function ParsedInput({
     if (innerRef.current !== null) autosize(innerRef.current);
   }, [value]);
 
+  // When the field auto-focuses with prefilled text — opening the editor on an
+  // existing task — drop the caret at the END so editing continues from the tail
+  // rather than the start (browsers default an autofocused textarea to offset 0).
+  // No-op for the empty capture bar. Runs once on mount.
+  useLayoutEffect(() => {
+    if (inputProps?.autoFocus !== true) return;
+    const el = innerRef.current;
+    if (el === null) return;
+    const end = el.value.length;
+    el.setSelectionRange(end, end);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // When the field scrolls (content taller than MAX_LINES), keep the colored
   // mirror in lockstep so chips stay aligned with the caret.
   function syncMirrorScroll(event: React.UIEvent<HTMLTextAreaElement>) {

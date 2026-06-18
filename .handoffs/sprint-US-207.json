@@ -1,0 +1,118 @@
+{
+  "storyId": "US-207",
+  "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
+  "acs": [
+    "Sheet: --color-surface, radius-lg, --shadow-wash, over --color-bg scrim at 80% opacity; header carries the masthead's ink-rule motif (3px fg→transparent gradient bar), replacing the double rule (§6)",
+    "Key table: keys in --type-mono keycap pills, labels in --type-body; two columns at 1280, one below 768",
+    "Focus trap and Esc-to-close behavior unchanged (existing tests pass unmodified)",
+    "All Morning Edition references (double rule, print shadow, serif italics) removed from src/components/Cheatsheet.css",
+    "Typecheck/lint passes",
+    "Verify in browser (visual gate at 3 breakpoints × 2 themes)"
+  ],
+  "contracts": {
+    "design_tokens": {
+      "color-accent": {
+        "value": "--color-accent",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-fg": {
+        "value": "--color-fg",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-danger": {
+        "value": "--color-danger",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "shadow-wash": {
+        "value": "--shadow-wash"
+      },
+      "space-scale": {
+        "value": "[4,8,12,16,24,32,48,64,96]"
+      },
+      "type-display": {
+        "value": "--type-display",
+        "pattern": "^--type-[a-z0-9]+$"
+      },
+      "motion-slow": {
+        "value": "--motion-slow",
+        "pattern": "^--motion-[a-z]+$"
+      }
+    },
+    "css_classes": {
+      "empty_state": {
+        "value": "empty-state"
+      },
+      "empty_state_glyph": {
+        "value": "empty-state-glyph"
+      },
+      "masthead_rule": {
+        "value": "masthead-rule"
+      },
+      "prompt_bar": {
+        "value": "prompt-bar"
+      },
+      "task_priority": {
+        "value": "task-priority"
+      },
+      "brush_stroke": {
+        "value": "brush-stroke"
+      },
+      "task_section_label": {
+        "value": "task-section-label"
+      }
+    },
+    "config_keys": {
+      "visual_themes": {
+        "value": "visual.themes"
+      }
+    },
+    "aria_labels": {
+      "hanko_seal_progress": {
+        "value": "{done} of {total} tasks done today"
+      }
+    },
+    "shared_types": {
+      "kanji_date_formatter": {
+        "value": "formatKanjiDate",
+        "pattern": "^[a-z][a-zA-Z]*$",
+        "definitionFile": "src/lib/kanji-date.ts",
+        "owner": "US-209",
+        "consumers": [
+          "US-201"
+        ],
+        "shape": {
+          "properties": [],
+          "methods": [
+            {
+              "name": "formatKanjiDate",
+              "params": [
+                {
+                  "name": "d",
+                  "type": "Date"
+                }
+              ],
+              "returns": "string"
+            }
+          ]
+        },
+        "definition": "export function formatKanjiDate(d: Date): string;"
+      }
+    }
+  },
+  "files": [
+    "src/components/Cheatsheet.css",
+    "src/components/Cheatsheet.tsx"
+  ],
+  "expectedTests": [
+    "pnpm exec vitest run src/components/Cheatsheet.test.tsx",
+    "pnpm exec vitest run src/components/Cheatsheet.test.tsx",
+    "pnpm exec playwright test e2e/states-cheatsheet.spec.ts --update-snapshots"
+  ],
+  "otherCommands": [
+    "! grep -n 'shadow-print\\|italic' src/components/Cheatsheet.css",
+    "pnpm run build",
+    "bash verification/run-visual-gate.sh /"
+  ],
+  "plannedBy": "ql-plan",
+  "plannedAt": "2026-06-12T21:08:48Z"
+}

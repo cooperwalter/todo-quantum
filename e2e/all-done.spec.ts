@@ -72,7 +72,7 @@ test('Done view lists the completed task struck through and the checkbox reopens
 
   await page.getByLabel('Reopen Shipped feature').click();
   await expect(page.locator('.task-row')).toHaveCount(0);
-  await expect(page.locator('.empty-state')).toHaveText('Nothing done yet — finish something today.');
+  await expect(page.locator('.empty-state-copy')).toHaveText('Nothing done yet — finish something today.');
 
   await page.getByRole('button', { name: 'All' }).click();
   await expect(page.locator('.task-row-title')).toContainText(['Shipped feature']);

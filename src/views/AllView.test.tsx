@@ -116,7 +116,7 @@ describe('AllView', () => {
     expect(document.querySelector('.filter-hint')).toBeNull();
   });
 
-  it('Enter while filtering captures the bar text as a new task and clears the filter', () => {
+  it('Enter while filtering captures the bar text as a new task at the top of the list and clears the filter', () => {
     seedTasks([
       makeTask({ id: 't1', title: 'Send report', order: 1 }),
       makeTask({ id: 't2', title: 'Dentist appointment', order: 2 }),
@@ -127,13 +127,13 @@ describe('AllView', () => {
     fireEvent.keyDown(barInput(), { key: 'Enter' });
     expect(barInput().value).toBe('');
     expect(document.querySelector('.filter-hint')).toBeNull();
-    expect(rowTitles()).toEqual(['Send report', 'Dentist appointment', 'rep']);
+    expect(rowTitles()).toEqual(['rep', 'Send report', 'Dentist appointment']);
   });
 
   it('renders the italic empty state when no open task matches', () => {
     seedTasks([]);
     renderAll();
-    expect(document.querySelector('.empty-state')?.textContent).toBe(
+    expect(document.querySelector('.empty-state-copy')?.textContent).toBe(
       'Nothing here — type to capture.',
     );
   });

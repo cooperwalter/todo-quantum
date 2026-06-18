@@ -113,3 +113,19 @@ export function doneItems(data: AppData): Task[] {
       return ac < bc ? 1 : ac > bc ? -1 : 0;
     });
 }
+
+export interface TodayProgress {
+  done: number;
+  total: number;
+}
+
+// The masthead hanko seal's source of truth: how many of today's dated tasks
+// (due today plus rollovers — anything dated on or before today) are done.
+// Anytime/undated tasks are excluded (§6: "every task due today, incl. rollovers").
+export function selectTodayProgress(data: AppData, today: string): TodayProgress {
+  const dated = data.tasks.filter(
+    (t) => t.dueDate !== null && compareDates(t.dueDate, today) <= 0,
+  );
+  const done = dated.filter((t) => t.status === 'done').length;
+  return { done, total: dated.length };
+}

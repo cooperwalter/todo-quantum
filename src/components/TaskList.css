@@ -1,4 +1,6 @@
-/* Task list + rows — DESIGN-SYSTEM.md §6. Tokens only. */
+/* Task list + rows — DESIGN-SYSTEM.md §6 (Ink Garden). Tokens only.
+   Rows sit flat on the washi as inked lines: hairline separators, circular
+   checkboxes, Mincho titles, kanji priority marks. No cards, no boxes. */
 
 .task-list {
   list-style: none;
@@ -7,16 +9,16 @@
 }
 
 .task-section-label {
-  margin: var(--space-5) 0 var(--space-2);
-  font-family: var(--type-mono);
-  font-weight: 600;
+  margin: var(--space-6) 0 0;
+  font-family: var(--type-body);
+  font-weight: 500;
   font-size: var(--text-mono-size);
   line-height: var(--text-mono-leading);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.2em;
   color: var(--color-muted);
   border-bottom: 1px solid var(--color-border);
-  padding-bottom: var(--space-1);
+  padding-bottom: var(--space-2);
 }
 
 .task-section {
@@ -26,45 +28,66 @@
 }
 
 .task-row {
+  position: relative;
   display: flex;
   align-items: baseline;
   gap: var(--space-3);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-3) var(--space-4);
-  margin-bottom: var(--space-2);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--color-border);
   cursor: default;
 }
 
-.task-row--p1 {
-  border-left-color: var(--color-accent);
+.task-row--rollover .task-row-title {
+  color: var(--color-muted);
 }
 
-.task-row--rollover {
-  border-left-color: var(--color-muted);
+/* Hover and selection both read as a single ink brush-tick in the left margin,
+   outside the text column (§6) — no background, no surrounding outline box. The
+   tick is the row's focus indicator too. */
+.task-row::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--space-3));
+  top: var(--space-4);
+  bottom: var(--space-4);
+  width: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--ease);
 }
 
-.task-row--selected {
-  border-left: 3px solid var(--color-accent);
-  box-shadow: var(--shadow-print) var(--color-border);
+/* Hover preview — mouse mode only. Gating on pointer mode means the tick clears
+   the instant the user starts typing (focus jumps to the capture bar), instead of
+   lingering under the stationary cursor until the mouse next moves. */
+html:not([data-pointer='keyboard']) .task-row:hover::before {
+  opacity: 1;
 }
 
-.task-row:hover {
-  background: var(--color-bg);
+/* Keyboard selection and keyboard focus both show the tick — and nothing else. */
+.task-row--selected::before,
+.task-row:focus-visible::before {
+  opacity: 1;
 }
 
 .task-row:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline: none;
 }
 
 .task-row-checkbox {
-  opacity: 0;
-  accent-color: var(--color-accent);
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 17px;
+  height: 17px;
   margin: 0;
+  border: 2px solid var(--color-fg);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
   align-self: center;
+  transition: opacity var(--motion-fast) var(--ease);
 }
 
 /* While editing, the field can grow to several lines; pin the checkbox to the
@@ -74,11 +97,15 @@
   margin-top: var(--space-1);
 }
 
-.task-row:hover .task-row-checkbox,
+html:not([data-pointer='keyboard']) .task-row:hover .task-row-checkbox,
 .task-row:focus-within .task-row-checkbox,
 .task-row--selected .task-row-checkbox,
 .task-row--done .task-row-checkbox {
   opacity: 1;
+}
+
+.task-row--done .task-row-checkbox {
+  background: var(--color-fg);
 }
 
 .task-row-checkbox:focus-visible {
@@ -88,27 +115,46 @@
 }
 
 .task-row-title {
-  font-family: var(--type-body);
-  font-weight: 500;
+  position: relative;
+  font-family: var(--type-display);
+  font-weight: 600;
   font-size: 17px;
-  line-height: 24px;
+  line-height: 26px;
   color: var(--color-fg);
-  flex: 1;
   cursor: text;
 }
 
+/* Done titles settle to muted; the sumi brushstroke (BrushStroke) replaces the
+   old text-decoration line-through. */
 .task-row--done .task-row-title {
-  text-decoration: line-through;
-  text-decoration-color: var(--color-muted);
   color: var(--color-muted);
   transition: color var(--motion-base) var(--ease);
 }
 
+.task-priority {
+  font-family: var(--type-mono);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  align-self: center;
+}
+
+.task-priority--1 {
+  color: var(--color-danger);
+}
+
+.task-priority--muted {
+  color: var(--color-muted);
+}
+
 .task-row-since {
   font-family: var(--type-body);
-  font-style: italic;
-  font-size: var(--text-body-size);
-  line-height: var(--text-body-leading);
+  font-weight: 500;
+  font-size: var(--text-mono-size);
+  line-height: var(--text-mono-leading);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
   color: var(--color-muted);
   white-space: nowrap;
 }
@@ -116,10 +162,12 @@
 .task-row-meta {
   display: flex;
   gap: var(--space-3);
-  font-family: var(--type-mono);
+  font-family: var(--type-body);
+  font-weight: 500;
   font-size: var(--text-mono-size);
   line-height: var(--text-mono-leading);
-  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
   color: var(--color-muted);
   margin-left: auto;
   text-align: right;
@@ -127,10 +175,10 @@
 
 .task-row-edit {
   flex: 1;
-  font-family: var(--type-body);
-  font-weight: 500;
+  font-family: var(--type-display);
+  font-weight: 600;
   font-size: 17px;
-  line-height: 24px;
+  line-height: 26px;
   color: var(--color-fg);
   background: var(--color-surface);
   border: none;
@@ -142,17 +190,17 @@
   outline: none;
 }
 
-/* In-row editing keeps the task-title typography (Newsreader 17/24 wght 500) so
-   opening an edit never swaps fonts mid-read. The mono spec belongs to the
-   command bar; the transparent field and its chip mirror must share one font to
-   stay glyph-aligned, so both are overridden together. Chips keep their accent
-   underline treatment, set in the serif here. */
+/* In-row editing keeps the task-title typography (Shippori Mincho 17/26 wght 600)
+   so opening an edit never swaps fonts mid-read. The transparent field and its
+   chip mirror must share one font to stay glyph-aligned, so both are overridden
+   together. Chips keep their accent underline treatment. */
 .task-row-edit .command-bar-input,
 .task-row-edit .command-bar-mirror {
-  font-family: var(--type-body);
-  font-weight: 500;
+  font-family: var(--type-display);
+  font-weight: 600;
   font-size: 17px;
-  line-height: 24px;
+  line-height: 26px;
+  padding: 0 0 var(--space-1);
 }
 
 @media (max-width: 767px) {
@@ -161,7 +209,7 @@
   }
 
   .task-row-meta {
-    margin-left: calc(var(--space-3) + 13px);
+    margin-left: calc(var(--space-3) + 17px);
     width: 100%;
     text-align: left;
   }

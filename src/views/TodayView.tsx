@@ -5,11 +5,11 @@ import { todayItems } from '../lib/selectors';
 import { useApp } from '../state/AppContext';
 
 const ROW_STAGGER_MS = 40;
-const ROW_REVEAL_BASE_DELAY_MS = 120;
-// DESIGN-SYSTEM §5: the whole reveal fits within --motion-slow (480ms). With
-// long lists an uncapped stagger delays the largest paint by seconds and
-// blows the FR-48 performance budget under load.
-const ROW_REVEAL_MAX_DELAY_MS = 480;
+// DESIGN-SYSTEM §5: the ink rule draws first (--motion-slow), THEN rows fade up.
+// The base delay is the token itself — a contract with the masthead rule, never a
+// hardcoded ms — and the per-row stagger rides on top of it. The step count is
+// capped so a long list does not delay the last paint by seconds (FR-48 budget).
+const ROW_STAGGER_MAX_STEPS = 12;
 
 export function TodayView() {
   const { state, selectedTaskId, setSelectedTaskId } = useApp();
@@ -23,7 +23,8 @@ export function TodayView() {
     const rows = regionRef.current?.querySelectorAll<HTMLElement>('.task-row') ?? [];
     rows.forEach((row, index) => {
       row.classList.add('task-row--reveal');
-      row.style.animationDelay = `${Math.min(ROW_REVEAL_BASE_DELAY_MS + index * ROW_STAGGER_MS, ROW_REVEAL_MAX_DELAY_MS)}ms`;
+      const steps = Math.min(index, ROW_STAGGER_MAX_STEPS);
+      row.style.animationDelay = `calc(var(--motion-slow) + ${steps * ROW_STAGGER_MS}ms)`;
     });
     return () => {
       revealPlayed.current = false;

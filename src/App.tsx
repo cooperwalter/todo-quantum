@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import './App.css';
 import { Cheatsheet } from './components/Cheatsheet';
+import { HankoSeal } from './components/HankoSeal';
 import { CommandBar } from './components/CommandBar';
 import { StorageBanner } from './components/StorageBanner';
 import { Toast } from './components/Toast';
 import { ViewTabs } from './components/ViewTabs';
 import { useKeymap } from './hooks/useKeymap';
 import { usePersistence } from './hooks/usePersistence';
+import { usePointerMode } from './hooks/usePointerMode';
 import { todayStr } from './lib/dates';
 import { AppProvider, useApp } from './state/AppContext';
 import { AllView } from './views/AllView';
@@ -25,6 +27,8 @@ function Masthead() {
   return (
     <header className="masthead">
       <h1 className="masthead-date">{DATE_FORMAT.format(new Date())}</h1>
+      <HankoSeal />
+      <div className="masthead-rule" aria-hidden="true" />
     </header>
   );
 }
@@ -47,6 +51,7 @@ function Shell() {
   const { dispatch, setView, setBarText, barRef, selectedTaskId, setSelectedTaskId } = useApp();
   const { saveFailed, dismissSaveFailure } = usePersistence();
   const [cheatsheetOpen, setCheatsheetOpen] = useState(false);
+  usePointerMode();
 
   useKeymap({
     barRef,

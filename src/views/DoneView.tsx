@@ -1,3 +1,4 @@
+import { BrushStroke } from '../components/BrushStroke';
 import { doneItems } from '../lib/selectors';
 import { useApp } from '../state/AppContext';
 
@@ -6,7 +7,10 @@ export function DoneView() {
   const tasks = doneItems(state.data);
 
   if (tasks.length === 0) {
-    return <p className="empty-state">Nothing done yet — finish something today.</p>;
+    return <p className="empty-state">
+        <span className="empty-state-glyph" aria-hidden="true">◯</span>
+        <span className="empty-state-copy">Nothing done yet — finish something today.</span>
+      </p>;
   }
 
   function reopen(id: string) {
@@ -36,7 +40,10 @@ export function DoneView() {
               onChange={() => reopen(task.id)}
               aria-label={`Reopen ${task.title}`}
             />
-            <span className="task-row-title">{task.title}</span>
+            <span className="task-row-title">
+              {task.title}
+              <BrushStroke />
+            </span>
           </li>
         ))}
       </ul>

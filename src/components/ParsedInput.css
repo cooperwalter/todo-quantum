@@ -51,6 +51,20 @@
 .command-bar-chip {
   color: var(--color-accent);
   border-bottom: 2px solid var(--color-accent);
+  /* Parse-in: the chip inks in as the parser recognises a token. Opacity only —
+     the mirror must align char-for-char with the transparent textarea beneath,
+     so a transform (which would need inline-block and break multi-word chip
+     wrapping) is off the table. */
+  animation: chip-ink-in var(--motion-fast) var(--ease);
+}
+
+@keyframes chip-ink-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Displaced (about-to-be-overwritten) tokens render as ordinary mirror text —

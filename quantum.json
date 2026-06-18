@@ -1,101 +1,93 @@
 {
-  "project": ".",
-  "branchName": "ql/edit-token-parsing",
-  "description": "Token parsing in edit (edit/add symmetry): round-trip serialized edit field, last-wins chip overwrite in both flows, overflow menu removal",
-  "prdPath": "tasks/prd-edit-token-parsing.md",
-  "designPath": "docs/plans/2026-06-10-edit-token-parsing-design.md",
-  "createdAt": "2026-06-10T22:51:29Z",
-  "updatedAt": "2026-06-11T18:16:45.329414+00:00",
-  "userIntent": {
-    "text": "when editing an existing todo, typing things like #atag and tomorrow, etc, should function like when adding a new todo",
-    "timestamp": "2026-06-10T22:51:29Z",
-    "source_message_id": null
-  },
-  "userClarifications": [
-    {
-      "question": "Edit-token-parsing feature: overwrite semantics",
-      "answer": "adding a new chip should overwrite the related chip to its left (verbatim user message); applies to both add and edit; old text removed once the new token seals",
-      "stage": "brainstorm",
-      "timestamp": "2026-06-10T22:35:27Z"
-    },
-    {
-      "question": "Edit-token-parsing feature: three-dots menu",
-      "answer": "Also, as part of this, we will remove the three dots menu. All changes will be made via the keyboard ideally (verbatim user message); snooze becomes keyboard-only 1/2/3",
-      "stage": "brainstorm",
-      "timestamp": "2026-06-10T22:35:27Z"
-    },
-    {
-      "question": "Edit blur behavior",
-      "answer": "Save on blur (keeps current onBlur=saveEdit behavior); blur with empty extracted title cancels",
-      "stage": "spec",
-      "timestamp": "2026-06-10T22:35:27Z"
-    },
-    {
-      "question": "Round-trip mismatch at edit-open",
-      "answer": "Fall back to title-only edit with parsing disabled and a console error; never corrupt task data",
-      "stage": "spec",
-      "timestamp": "2026-06-10T22:35:27Z"
-    },
-    {
-      "question": "Whitespace at displaced-text removal seam",
-      "answer": "Collapse to a single space; live field never trimmed; trim only in extracted title",
-      "stage": "spec",
-      "timestamp": "2026-06-10T22:35:27Z"
-    },
-    {
-      "question": "Editing done tasks",
-      "answer": "Out of scope; open tasks only",
-      "stage": "spec",
-      "timestamp": "2026-06-10T22:35:27Z"
-    }
-  ],
+  "project": "todo-quantum",
+  "branchName": "ql/ink-garden-reskin",
+  "description": "Ink Garden re-skin: bring every component up to DESIGN-SYSTEM.md (2026-06-12) \u2014 bilingual masthead + hanko seal, ink-bar command prompt, flat hairline rows, sumi brushstroke completion, dark-theme gate axis, full baseline re-bless",
+  "prdPath": "tasks/prd-ink-garden-reskin.md",
+  "designPath": "DESIGN-SYSTEM.md",
+  "createdAt": "2026-06-12T20:52:09Z",
+  "updatedAt": "2026-06-15T23:42:19.848646+00:00",
+  "userIntent": "Make this app beautiful \u2014 full aesthetic replacement chosen by user: direction 'Ink Garden' over five rejected alternatives; pure visual re-skin, zero behavior changes",
   "coverageThreshold": 80,
   "stories": [
     {
-      "id": "US-101",
-      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
-      "complexity": 24,
-      "title": "Parser \u2014 explicit-year dates",
-      "description": "As a user editing a rolled-over task, I want past dates like `jun 3 2026` to parse to that exact date so that opening an edit never silently rewrites my due date to next year.",
+      "id": "US-200",
+      "title": "Visual gate prep \u2014 dark-theme axis + font readiness",
+      "description": "As the maintainer, I want the visual and a11y gates to verify both themes and wait for web fonts, so the re-skin's both-themes criteria are machine-checkable and screenshots don't flake on font swap.",
       "acceptanceCriteria": [
-        "parse('pay rent jun 3 2026', now) with now = 2026-06-10 yields dueDate: '2026-06-03' (no roll-forward) and a date chip covering 'jun 3 2026'",
-        "Both '<monthname> <day> <year>' and '<day> <monthname> <year>' forms parse; 4-digit years only; years outside 1970-2100 stay literal",
-        "Without a year, existing roll-forward behavior is unchanged ('jun 3' at 2026-06-10 -> 2027-06-03) \u2014 existing tests still pass",
-        "Chip display includes the year whenever the resolved date's year differs from now's year (covers explicit-year dates AND no-year dates that roll forward into next year): formatDateDisplay gains an optional now parameter \u2014 formatDateDisplay('2027-06-03', now) with now in 2026 renders 'Thu Jun 3, 2027'; same-year dates render without the year, unchanged",
-        "Unit tests in src/lib/parser.test.ts cover both word orders, year-boundary values, and the no-year regression",
+        "verification/visual.spec.ts captures each configured breakpoint in BOTH color schemes (light + dark via page.emulateMedia({ colorScheme })); baseline filenames gain a -dark suffix for the dark axis",
+        "verification/a11y.spec.ts runs axe at every breakpoint in both color schemes; violation budget stays 0",
+        "Every screenshot in verification/visual.spec.ts and the e2e state specs is preceded by an await of document.fonts.ready (added to the shared helper in e2e/fixtures.ts, not copy-pasted)",
+        "lens.config.json gains visual.themes: [\"light\", \"dark\"] consumed by the specs (no hardcoded theme list in spec files)",
+        "pnpm exec playwright test verification/visual.spec.ts --update-snapshots exits 0 and produces exactly breakpoints \u00d7 themes baseline PNGs (interim baselines are throwaway; US-208 blesses finals)",
         "Typecheck/lint passes"
       ],
       "priority": 1,
+      "complexity": 48,
+      "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
       "status": "passed",
       "dependsOn": [],
       "storyType": "logic",
       "tasks": [
         {
           "id": "T-001",
-          "title": "Write failing tests for explicit-year date parsing and year-aware chip display",
-          "description": "In src/lib/parser.test.ts add tests: 'jun 3 2026' and '3 jun 2026' at now=2026-06-10 parse to dueDate 2026-06-03 with chip covering all three words; year 1969 and 2101 stay literal (date parses year-less or not at all per existing anchor rules); 'jun 3' (no year) still rolls forward to 2027-06-03; formatDateDisplay('2027-06-03', now) renders 'Thu Jun 3, 2027' while formatDateDisplay('2026-06-12', now) stays 'Fri Jun 12'. Include edge-case tests: boundary values (null fields, empty string), scale (1/10/100 tokens or tasks where applicable), and collision scenarios. Run tests, confirm the new ones fail (red).",
+          "title": "Add visual.themes to lens.config.json",
+          "description": "Edit lens.config.json: inside the \"visual\" object add \"themes\": [\"light\", \"dark\"] (after \"breakpoints\"). Do not change any other key.",
           "filePaths": [
-            "src/lib/parser.test.ts"
+            "lens.config.json"
           ],
           "commands": [
-            "pnpm exec vitest run src/lib/parser.test.ts"
+            "jq -e '.visual.themes == [\"light\",\"dark\"]' lens.config.json"
           ],
-          "testFirst": true,
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 pure config change, no runtime logic",
           "status": "passed"
         },
         {
           "id": "T-002",
-          "title": "Implement explicit-year matching in matchDateAt and year-aware formatDateDisplay",
-          "description": "In src/lib/parser.ts extend matchDateAt(): after a '<monthname> <day>' or '<day> <monthname>' match, look ahead one word for a 4-digit year in 1970-2100; if present, consume it and use that exact year with no roll-forward. Add optional second parameter now?: Date to formatDateDisplay; when provided and the date's year !== now's year, append ', YYYY' to the display. Update parse() to pass now into formatDateDisplay for date chips. All tests from T-001 green; no existing test modified.",
+          "title": "Add shared fonts-ready wait to e2e/fixtures.ts",
+          "description": "Read e2e/fixtures.ts to find the shared page/test fixture the specs use. Instrument it so EVERY consumer inherits the wait transparently: wrap or hook page.goto inside the fixture (extend the page fixture so after goto resolves it awaits page.evaluate(() => document.fonts.ready)). Also export waitForFonts(page) for the verification specs. Do NOT edit the ~10 e2e/states-*.spec.ts files individually \u2014 coverage must come from the fixture so the AC (every screenshot in visual.spec.ts AND the e2e state specs is preceded by the wait) holds mechanically. Confirmed by review: NO fonts wait exists today.",
           "filePaths": [
-            "src/lib/parser.ts"
+            "e2e/fixtures.ts"
           ],
           "commands": [
-            "pnpm exec vitest run src/lib/parser.test.ts",
-            "pnpm run typecheck",
+            "grep -n 'fonts.ready' e2e/fixtures.ts",
+            "pnpm run build",
             "pnpm run lint"
           ],
-          "testFirst": true,
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 test-infrastructure helper; verified by the specs that consume it",
+          "consumedBy": [
+            "US-208"
+          ],
+          "status": "passed"
+        },
+        {
+          "id": "T-003",
+          "title": "Theme axis in verification/visual.spec.ts",
+          "description": "Wrap the existing breakpoint screenshot loop in a theme loop read from lens.config.json visual.themes. For each theme call page.emulateMedia({ colorScheme: theme }) before navigation; await the fonts-ready helper from e2e/fixtures.ts before each screenshot. Dark baselines append -dark to the screenshot name; light names stay EXACTLY as today (so only new files appear, no renames).",
+          "filePaths": [
+            "verification/visual.spec.ts"
+          ],
+          "commands": [
+            "pnpm exec playwright test verification/visual.spec.ts --update-snapshots",
+            "ls __screenshots__/verification/visual.spec.ts/ | wc -l | grep -x ' *6'"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 the spec IS the test; verified by running it",
+          "status": "passed"
+        },
+        {
+          "id": "T-004",
+          "title": "Theme axis in verification/a11y.spec.ts",
+          "description": "Same theme loop as T-003 in the axe spec: for each theme in lens.config.json visual.themes, emulateMedia colorScheme, await fonts-ready, run axe at every breakpoint, assert 0 violations. Keep the prefers-reduced-motion check intact.",
+          "filePaths": [
+            "verification/a11y.spec.ts"
+          ],
+          "commands": [
+            "pnpm exec playwright test verification/a11y.spec.ts"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 the spec IS the test; verified by running it",
           "status": "passed"
         }
       ],
@@ -103,12 +95,81 @@
         "specCompliance": {
           "status": "passed",
           "issues": [],
-          "reviewedAt": "2026-06-11T01:10:56.807713+00:00"
+          "reviewedAt": "2026-06-15T22:46:05.985201+00:00"
         },
         "codeQuality": {
           "status": "passed",
           "issues": [],
-          "reviewedAt": "2026-06-11T01:10:56.807713+00:00"
+          "reviewedAt": "2026-06-15T22:46:05.985201+00:00"
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": "Resolves the prd-review blocker: the gate had no dark axis. Visual gate is expected RED vs old baselines from here until US-208 re-blesses \u2014 interim --update-snapshots runs are throwaway evidence, not failures.",
+      "startedAt": null
+    },
+    {
+      "id": "US-209",
+      "title": "Kanji date formatter",
+      "description": "As a developer, I want a pure kanji date formatter so the masthead can render \u516d\u6708\u5341\u4e8c\u65e5 from the same Date the English masthead uses.",
+      "acceptanceCriteria": [
+        "src/lib/kanji-date.ts [NEW] exports formatKanjiDate(d: Date): string using kanji numerals, no external dependency",
+        "src/lib/kanji-date.test.ts [NEW] covers at minimum: \u516d\u6708\u5341\u65e5 (June 10), \u516d\u6708\u5341\u4e8c\u65e5 (June 12), \u5341\u4e8c\u6708\u4e09\u5341\u4e00\u65e5 (Dec 31), \u4e00\u6708\u4e00\u65e5 (Jan 1), \u5341\u6708\u4e8c\u5341\u65e5 (Oct 20)",
+        "Function is timezone-naive (formats the local calendar date of the Date passed in \u2014 same convention as src/lib/dates.ts)",
+        "Typecheck/lint passes"
+      ],
+      "priority": 2,
+      "complexity": 24,
+      "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
+      "status": "passed",
+      "dependsOn": [],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Write kanji-date tests first",
+          "description": "Create src/lib/kanji-date.test.ts with the five mandated cases (\u516d\u6708\u5341\u65e5, \u516d\u6708\u5341\u4e8c\u65e5, \u5341\u4e8c\u6708\u4e09\u5341\u4e00\u65e5, \u4e00\u6708\u4e00\u65e5, \u5341\u6708\u4e8c\u5341\u65e5) plus edge tests: \u5341\u4e00\u6708\u5341\u4e00\u65e5 (Nov 11, double-teen), \u4e8c\u6708\u4e8c\u65e5 (Feb 2). Construct Dates with new Date(2026, monthIndex, day) \u2014 local time, mirroring src/lib/dates.test.ts conventions. Tests fail (module doesn't exist yet).",
+          "filePaths": [
+            "src/lib/kanji-date.test.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/kanji-date.test.ts 2>&1 | grep -q 'failed\\|Cannot find' && echo RED-CONFIRMED"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-002",
+          "title": "Implement formatKanjiDate",
+          "description": "Create src/lib/kanji-date.ts exporting formatKanjiDate(d: Date): string per the contracts.shared_types.kanji_date_formatter definition. Kanji numeral composition: 1-10 direct (\u4e00..\u5341), 11-19 = \u5341 + unit, 20/30 = tens digit + \u5341 (+ unit). Format: {month}\u6708{day}\u65e5 using getMonth()+1 and getDate() (local, timezone-naive). No Intl, no dependency.",
+          "filePaths": [
+            "src/lib/kanji-date.ts"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/lib/kanji-date.test.ts",
+            "pnpm run build",
+            "pnpm run lint"
+          ],
+          "testFirst": true,
+          "consumedBy": [
+            "US-201"
+          ],
+          "status": "passed"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-15T22:46:58.636284+00:00"
+        },
+        "codeQuality": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-15T22:46:58.636284+00:00"
         }
       },
       "retries": {
@@ -120,84 +181,129 @@
       "startedAt": null
     },
     {
-      "id": "US-107",
-      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
-      "complexity": 40,
-      "title": "Remove the overflow menu; keyboard-first row",
-      "description": "As a keyboard-first user, I want the three-dots menu gone so that the row is clean and every mutation has a single, predictable path.",
+      "id": "US-204",
+      "title": "Task rows \u2014 static re-skin & section labels",
+      "description": "As a user, I want tasks to sit flat on the washi as inked lines \u2014 hairline separators, circular checkboxes, Mincho titles, kanji priority marks \u2014 so the list reads as a page, not a stack of cards.",
       "acceptanceCriteria": [
-        "src/components/TaskRow.tsx no longer renders the '\u22ef' button or role=\"menu\"; menuOpen state is deleted",
-        "task-row-overflow* and task-row-menu* CSS rules are deleted from src/components/TaskList.css (where they live today); grep -rn \"task-row-overflow\\|task-row-menu\" src/ returns nothing",
-        "Snooze via keys 1/2/3 still works (existing keymap untouched); the '?' cheatsheet rows for snooze keys are unchanged (already present in src/components/Cheatsheet.tsx)",
-        "Overflow-menu tests are deleted from src/components/TaskRow.test.tsx; e2e/states-snooze.spec.ts is rewritten to exercise keyboard snooze only",
-        "Mouse paths that remain: checkbox completes, title click opens edit \u2014 both still covered by tests",
-        "Zero axe violations on the task list after removal",
+        "Rows have no background card and no border box: flat on --color-bg, separated by 1px --color-border bottom hairlines, --space-4 vertical padding (\u00a74/\u00a76); the 3px left-rule treatment is removed",
+        "Checkbox is a 17px circle with 2px --color-fg outline; fills --color-fg when done",
+        "Task titles render --type-display family 17/26 wght 600; metadata is wide-tracked caps 12px --color-muted; no italics anywhere",
+        "Priority renders as a kanji glyph after the title: \u4e00 in --color-danger for p1; \u4e8c and \u4e09 in --color-muted for p2/p3 (crimson is reserved for the priority-1 mark \u2014 \u00a71/\u00a73 discipline; unit test covers all three + none)",
+        "Rollover rows: muted title + '\u2014 SINCE {DAY}' in wide-tracked caps muted (replaces italic annotation); never crimson",
+        "Section/day-group headers (.task-section-label, used by Today groups and Upcoming day groups): wide-tracked caps 12px --color-muted over a hairline rule (\u00a78 Upcoming)",
+        "Existing TaskRow/TaskList unit tests pass with behavior assertions unmodified (selector-only edits permitted per FR-8)",
         "Typecheck/lint passes",
-        "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
+        "Verify in browser (visual gate at 3 breakpoints \u00d7 2 themes)"
       ],
-      "priority": 2,
+      "priority": 3,
+      "complexity": 76,
+      "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
       "status": "passed",
       "dependsOn": [],
       "storyType": "logic",
       "tasks": [
         {
           "id": "T-001",
-          "title": "Delete the overflow button, menu, state, and CSS",
-          "description": "In src/components/TaskRow.tsx remove the menuOpen useState, the task-row-overflow <span>, the '\u22ef' <button>, and the role=\"menu\" block (lines ~120-154). Remove the now-unused snoozeOptions/snoozeTo code ONLY if nothing else references it (keyboard snooze lives in useKeymap, not TaskRow \u2014 verify with grep before deleting). Delete task-row-overflow* and task-row-menu* rules from src/components/TaskList.css. Verify: grep -rn 'task-row-overflow\\|task-row-menu' src/ returns nothing.",
+          "title": "Priority kanji glyph \u2014 test first",
+          "description": "In src/components/TaskRow.test.tsx add tests: p1 task renders \u4e00 with class task-priority--1; p2 renders \u4e8c with task-priority--muted; p3 renders \u4e09 with task-priority--muted; no-priority renders no .task-priority element. Behavior assertions elsewhere unchanged. Tests fail before T-002.",
+          "filePaths": [
+            "src/components/TaskRow.test.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/TaskRow.test.tsx 2>&1 | grep -q 'failed' && echo RED-CONFIRMED"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-002",
+          "title": "Priority kanji glyph markup in TaskRow",
+          "description": "In src/components/TaskRow.tsx replace the current priority indicator (!p1 text / left-rule signal) with a kanji glyph span after the title: \u4e00/\u4e8c/\u4e09 mapped from priority 1/2/3, aria-label 'priority {n}'. Class task-priority task-priority--1 (danger) for p1, task-priority--muted for 2/3. Style in TaskList.css using only tokens.",
           "filePaths": [
             "src/components/TaskRow.tsx",
             "src/components/TaskList.css"
           ],
           "commands": [
-            "bash -c \"! grep -rn 'task-row-overflow\\\\|task-row-menu' src/\"",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": false,
-          "status": "passed",
-          "notes": "testFirst: false \u2014 pure deletion of UI affordance; behavior coverage updated in T-002"
-        },
-        {
-          "id": "T-002",
-          "title": "Update unit tests and rewrite the snooze states e2e spec for keyboard-only",
-          "description": "In src/components/TaskRow.test.tsx delete tests that click the '\u22ef' button or assert menu items; keep/ensure tests that checkbox-click completes and title-click opens edit. Rewrite e2e/states-snooze.spec.ts: seed an overdue task, select it with j, press 1, assert dueDate moved to tomorrow (row re-renders under Today/Upcoming accordingly), screenshot the post-snooze state; delete the snooze-menu-open-desktop.png baseline.",
-          "filePaths": [
-            "src/components/TaskRow.test.tsx",
-            "e2e/states-snooze.spec.ts",
-            "e2e/states-snooze.spec.ts-snapshots/"
-          ],
-          "commands": [
             "pnpm exec vitest run src/components/TaskRow.test.tsx",
-            "pnpm exec playwright test e2e/states-snooze.spec.ts"
+            "pnpm run build"
           ],
           "testFirst": true,
           "status": "passed"
         },
         {
           "id": "T-003",
-          "title": "Run the visual gate and re-bless the row baseline",
-          "description": "Run bash verification/run-visual-gate.sh / \u2014 the root-route baseline will diff (hover affordance removed). Regenerate with --update-snapshots, OPEN the new PNGs and visually confirm against DESIGN-SYSTEM.md before blessing. Axe must report zero violations.",
+          "title": "Flat row layout + checkbox circle",
+          "description": "In src/components/TaskList.css: remove row background card, border box, 3px left rule, and print shadows. Rows: flat on var(--color-bg), border-bottom 1px solid var(--color-border), padding var(--space-4) 0. Checkbox: 17px circle (border-radius 50%), 2px solid var(--color-fg), background fills var(--color-fg) when row is done. Adjust TaskRow.tsx markup/classes only if the checkbox element needs a class hook.",
           "filePaths": [
-            "verification/visual.spec.ts-snapshots/"
+            "src/components/TaskList.css",
+            "src/components/TaskRow.tsx"
           ],
           "commands": [
+            "pnpm exec vitest run src/components/TaskRow.test.tsx src/components/TaskList.test.tsx",
+            "pnpm run lint"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 presentational CSS; behavior covered by existing component tests",
+          "status": "passed"
+        },
+        {
+          "id": "T-004",
+          "title": "Title/metadata typography + rollover annotation + section labels",
+          "description": "In src/components/TaskList.css: titles var(--type-display) 17px/26px wght 600; metadata var(--type-body) 12px wght 500 uppercase letter-spacing 0.18em var(--color-muted) (replaces mono metadata). Rollover annotation: remove italic, render '\u2014 SINCE {DAY}' in the same wide-tracked caps muted style (update TaskRow.tsx to uppercase the day token if needed; copy semantics unchanged). .task-section-label: same wide-tracked caps over border-bottom hairline. No font-style italic anywhere in the file afterwards (grep check).",
+          "filePaths": [
+            "src/components/TaskList.css",
+            "src/components/TaskRow.tsx"
+          ],
+          "commands": [
+            "! grep -n 'italic' src/components/TaskList.css",
+            "pnpm exec vitest run src/components/TaskRow.test.tsx src/components/TaskList.test.tsx"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 presentational CSS; rollover copy behavior already asserted in existing tests",
+          "status": "passed"
+        },
+        {
+          "id": "T-005",
+          "title": "Enso empty-state markup in TaskList fallback",
+          "description": "In src/components/TaskList.tsx empty-state fallback (currently <p className=\"empty-state\">\u2026), wrap with a container that adds <span className=\"empty-state-glyph\" aria-hidden=\"true\">\u25ef</span> above the existing copy (copy text verbatim-unchanged). Class names are contracts (css_classes.empty_state_glyph). Styling lands in US-201's App.css \u2014 unstyled glyph here is expected mid-feature.",
+          "filePaths": [
+            "src/components/TaskList.tsx"
+          ],
+          "commands": [
+            "grep -n 'empty-state-glyph' src/components/TaskList.tsx",
+            "pnpm exec vitest run src/components/TaskList.test.tsx"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 markup-only addition; copy assertions in existing tests still pass",
+          "consumedBy": [
+            "US-201"
+          ],
+          "status": "passed"
+        },
+        {
+          "id": "T-006",
+          "title": "Pixel check task rows",
+          "description": "Run the dev server, capture the Today view with seeded tasks (frozen clock) at 1280 light + dark via the visual spec --update-snapshots, open and LOOK at both PNGs: flat rows, hairlines, circle checkboxes, kanji priority, no left rule, no card boxes. Note findings in the story completion report.",
+          "filePaths": [],
+          "commands": [
+            "pnpm exec playwright test verification/visual.spec.ts --update-snapshots",
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "status": "passed",
-          "notes": "testFirst: false \u2014 visual-gate verification task, no production logic"
+          "notes": "testFirst: false \u2014 Pixel Law inspection step; interim baselines are throwaway until US-208",
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
           "status": "passed",
           "issues": [],
-          "reviewedAt": "2026-06-11T16:48:51.789629+00:00"
+          "reviewedAt": "2026-06-15T22:55:20.810382+00:00"
         },
         "codeQuality": {
           "status": "passed",
           "issues": [],
-          "reviewedAt": "2026-06-11T16:48:51.789629+00:00"
+          "reviewedAt": "2026-06-15T22:55:20.810382+00:00"
         }
       },
       "retries": {
@@ -205,528 +311,486 @@
         "maxAttempts": 3,
         "failureLog": []
       },
-      "notes": "",
+      "notes": "T-005 implements the TaskList.tsx half of US-201's empty-state AC (file is owned here to keep US-201 \u2225 US-204 disjoint; styling follows in US-201).",
       "startedAt": null
     },
     {
-      "id": "US-102",
-      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
-      "complexity": 51,
-      "title": "Parser \u2014 last-wins with displaced ranges and reverted-ranges input",
-      "description": "As a user, I want typing a second date/list/priority/recurrence token to replace the earlier one so that the chip to the left is overwritten, in add and edit alike. CONTRACT-BREAKING: changes ParseResult (adds displaced) and supersedes the recorded first-wins parsing contract; consumers (US-103/104/105/106) all depend on this story.",
+      "id": "US-203",
+      "title": "Command bar & chips re-skin",
+      "description": "As a user, I want the capture bar to read as a brush resting on paper \u2014 white card, ink-bar prompt, indigo underlined chips \u2014 so capture feels like the calmest part of the page.",
       "acceptanceCriteria": [
-        "parse signature becomes parse(input: string, now: Date, reverted?: Array<{start: number; end: number}>); existing two-arg calls compile unchanged",
-        "ParseResult gains displaced: Array<{ start: number; end: number }> listing earlier same-kind token ranges superseded by a later token",
-        "parse('pay rent friday monday', now) yields the Monday date, a chip on 'monday', displaced containing the range of 'friday', and title === 'pay rent' \u2014 displaced ranges are excluded from the title exactly like chip ranges",
-        "Last-wins applies per kind to date, time, list, priority, and recurrence independently",
-        "Displacement compares pre-merge tokens: parse('dinner tomorrow 3pm 4pm', now) keeps the date, time becomes '16:00', and displaced contains only the '3pm' range",
-        "Tokens inside reverted ranges are never matched: with reverted covering 'tomorrow' in 'Email #invoices tomorrow friday', the result has the Friday date, displaced is empty, and 'tomorrow' remains in the title",
-        "FR-9 of tasks/prd-command-bar-todo.md (first-wins) is explicitly superseded; every existing first-wins test in src/lib/parser.test.ts is rewritten to assert last-wins + displacement",
-        "Date-anchor ambiguity tests ('Pay May invoice' stays literal) still pass unchanged",
-        "All non-duplicate-token grammar tests (anchored dates, yesterday/today/tomorrow, times, #list <=32 word chars, !p1-!p3, recurrence forms) pass unmodified \u2014 FR-105 invariance",
-        "Typecheck/lint passes"
-      ],
-      "priority": 3,
-      "status": "passed",
-      "dependsOn": [
-        "US-101"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing tests for last-wins, displaced ranges, title exclusion, and reverted input",
-          "description": "In src/lib/parser.test.ts: rewrite every first-wins duplicate-token test to assert last-wins (later token wins, earlier range in displaced); add: 'pay rent friday monday' -> Monday + displaced friday-range + title 'pay rent'; per-kind independence (duplicate #list, !p, recurrence each displace independently); pre-merge time displacement ('dinner tomorrow 3pm 4pm' -> dueTime 16:00, displaced only 3pm); reverted ranges make tokens unmatchable (covering 'tomorrow' in 'Email #invoices tomorrow friday' -> Friday date, displaced empty, 'tomorrow' in title); ambiguity anchors unchanged ('Pay May invoice'). Include edge-case tests: boundary values (null fields, empty string), scale (1/10/100 tokens or tasks where applicable), and collision scenarios. Confirm new tests fail. Do NOT weaken or delete any non-duplicate-token grammar test (FR-105 invariance) \u2014 only first-wins duplicate-token assertions may be rewritten.",
-          "filePaths": [
-            "src/lib/parser.test.ts"
-          ],
-          "commands": [
-            "pnpm exec vitest run src/lib/parser.test.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement Range export, reverted param, last-wins scan, displaced computation, title exclusion",
-          "description": "In src/lib/parser.ts: export interface Range { start: number; end: number } (contract). Change parse to accept optional reverted?: Range[]; words overlapping any reverted range are skipped by ALL matchers. Replace first-match-break loops: scan the whole input collecting every token occurrence per kind, keep the LAST occurrence of each kind, record earlier same-kind occurrences' ranges in displaced (computed on pre-merge tokens, before date+time chip merging). Exclude both chip ranges AND displaced ranges from title extraction. ParseResult gains displaced: Range[].",
-          "filePaths": [
-            "src/lib/parser.ts"
-          ],
-          "commands": [
-            "pnpm exec vitest run src/lib/parser.test.ts",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-003",
-          "title": "Reconcile CommandBar call sites and assertions with last-wins parsing",
-          "description": "src/components/CommandBar.tsx compiles unchanged (optional param, extra field ignored) \u2014 verify, don't modify its logic. In src/components/CommandBar.test.tsx update any test asserting a second same-kind token stays literal to assert the new last-wins capture (title excludes displaced text). Run the full unit suite to catch any other first-wins assumption.",
-          "filePaths": [
-            "src/components/CommandBar.test.tsx"
-          ],
-          "commands": [
-            "pnpm exec vitest run src/components/CommandBar.test.tsx",
-            "pnpm exec vitest run",
-            "pnpm run typecheck"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-11T17:04:28.408205+00:00"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-11T17:04:28.408205+00:00"
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 4,
-        "failureLog": []
-      },
-      "notes": "Plan-review sizing note: implementation task is a large unit; maxAttempts raised to 4.",
-      "contractBreaking": true,
-      "startedAt": null
-    },
-    {
-      "id": "US-103",
-      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
-      "complexity": 66,
-      "title": "Serializer \u2014 serializeTask with round-trip property",
-      "description": "As a user opening edit, I want the task reconstructed as the text I would have typed so that everything about the task is editable as text.",
-      "acceptanceCriteria": [
-        "New file src/lib/serialize.ts (NEW) exports serializeTask(task: Task, now: Date): { text: string; revertedRanges: Array<{start: number; end: number}> }",
-        "Token order in the output is exactly: title, date, time, recurrence, list, priority",
-        "Date forms: yesterday/today/tomorrow when dueDate = now-1/now/now+1; 'jun 12' when within the next 12 months; 'jun 3 2026' (explicit year) otherwise. Time forms: '3pm' / '3:30pm'. Recurrence: 'every day', 'every 2 weeks', 'every monday', 'every month'. List: '#work'. Priority: '!p1'",
-        "revertedRanges covers every substring of the title that would otherwise parse as a token (verified: serializing a task titled 'Plan tomorrow standup' returns ranges such that parsing with them keeps 'tomorrow' in the title and dueDate unchanged)",
-        "Round-trip property test in src/lib/serialize.test.ts (NEW): for a generated grid of tasks (each field present/absent x dates in {now-1, now, now+1, now+30d, now-370d, now+370d} x times x recurrences from the grammar), parse(text, now, revertedRanges) reproduces every field and the exact title. Recurrence.byMonthDay is excluded from the domain (no grammar form exists; serializer ignores it)",
-        "Typecheck/lint passes"
+        "Bar is --color-surface, 1px solid var(--color-border), radius-md, --shadow-wash; at 375 it goes full-bleed with hairline bottom rule only (no card chrome) (\u00a77)",
+        "Prompt glyph: a 3\u00d718px radius-pill bar in --color-accent (replaces \u25b8); command mode (>) renders two such bars side by side and switches input to --type-mono wght 500 (\u00a76)",
+        "Chips render as --color-accent text with 2px accent underline, --type-mono 12px \u2014 no box, no fill; chip parse-in animates opacity + 2px rise at --motion-fast",
+        "Error state (empty title on Enter): border flashes --color-danger at --motion-fast; message below in wide-tracked caps --type-body (not mono, not italic); no shake animation",
+        "Focus-visible: 2px accent ring at 2px offset; border color deepens to accent",
+        "All print-shadow and Morning Edition references removed from src/components/CommandBar.css and src/components/ParsedInput.css",
+        "Existing CommandBar/ParsedInput unit tests pass with behavior assertions unmodified (selector-only edits permitted per FR-8)",
+        "Typecheck/lint passes",
+        "Verify in browser (visual gate; canonical chip string renders exactly three indigo-underlined chips)"
       ],
       "priority": 4,
+      "complexity": 48,
+      "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
       "status": "passed",
-      "dependsOn": [
-        "US-102"
-      ],
+      "dependsOn": [],
       "storyType": "logic",
       "tasks": [
         {
           "id": "T-001",
-          "title": "Write failing tests for serializeTask forms and token order",
-          "description": "Create src/lib/serialize.test.ts (NEW) with generator makeTask. Test each date form (yesterday/today/tomorrow/jun 12/jun 3 2026 for the -370d and +370d cases), time forms, every recurrence grammar form, list, priority, and the exact token order title-date-time-recurrence-list-priority with single-space separation. Test title-literal detection: 'Plan tomorrow standup' yields revertedRanges covering 'tomorrow'. Include edge-case tests: boundary values (null fields, empty string), scale (1/10/100 tokens or tasks where applicable), and collision scenarios.",
-          "filePaths": [
-            "src/lib/serialize.test.ts"
-          ],
-          "commands": [
-            "pnpm exec vitest run src/lib/serialize.test.ts"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-002",
-          "title": "Implement serializeTask",
-          "description": "Create src/lib/serialize.ts (NEW): pure module, no React. export interface SerializeResult { text: string; revertedRanges: Range[] } (contract) and serializeTask(task, now). Build token strings per the forms in the ACs, join in canonical order. Compute revertedRanges by parsing the bare title with parse(title, now) and converting every chip/displaced range found there into a reverted range (offset 0 \u2014 title is the prefix). Reuse date helpers from src/lib/dates.ts and month names consistent with parser.ts.",
-          "filePaths": [
-            "src/lib/serialize.ts"
-          ],
-          "commands": [
-            "pnpm exec vitest run src/lib/serialize.test.ts",
-            "pnpm run typecheck",
-            "pnpm run lint"
-          ],
-          "testFirst": true,
-          "status": "passed",
-          "consumedBy": [
-            "US-106"
-          ]
-        },
-        {
-          "id": "T-003",
-          "title": "Add the round-trip property grid",
-          "description": "In src/lib/serialize.test.ts add the property sweep: generate the task grid from the AC (field present/absent x the six date offsets x times x grammar recurrences, byMonthDay excluded), and for each assert parse(serializeTask(t, now).text, now, .revertedRanges) reproduces dueDate, dueTime, list, priority, recurrence, and exact title. Also sweep adversarial titles containing token-like words ('Email #invoices tomorrow', 'call mom 3pm sharp').",
-          "filePaths": [
-            "src/lib/serialize.test.ts"
-          ],
-          "commands": [
-            "pnpm exec vitest run src/lib/serialize.test.ts",
-            "pnpm exec vitest run --coverage"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-11T17:16:20.211739+00:00"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-11T17:16:20.211739+00:00"
-        }
-      },
-      "retries": {
-        "attempts": 0,
-        "maxAttempts": 3,
-        "failureLog": []
-      },
-      "notes": "",
-      "startedAt": null
-    },
-    {
-      "id": "US-104",
-      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
-      "complexity": 80,
-      "title": "Extract controlled ParsedInput from CommandBar (no behavior change)",
-      "description": "As a developer, I want the parse/mirror/revert input extracted into one shared component so that add and edit cannot drift apart.",
-      "acceptanceCriteria": [
-        "New file src/components/ParsedInput.tsx (NEW) owning: the transparent input + chip-mirror overlay (mirrorSegments), live re-parse, revert state (relocated applyReverts logic now passing reverted ranges into parse), and the ARIA chip announcement",
-        "Controlled contract: value, onChange, onSubmit(result: ParseResult), onCancel?, parseEnabled, initialReverts?, now?, inputRef?, onKeyDown? (caller-first; returning true consumes the key), inputProps?, ariaLabel",
-        "CommandBar renders ParsedInput for the capture path; command mode ('>'), its list ARIA (aria-activedescendant, aria-controls), barRef attachment, and useKeymap typeahead via setBarText all still work",
-        "Chip CSS moves from src/components/CommandBar.css to a shared stylesheet src/components/ParsedInput.css (NEW); rendered chip appearance is unchanged (visual gate diff within tolerance)",
-        "All existing tests in src/components/CommandBar.test.tsx pass (updated imports only, not behavior); new src/components/ParsedInput.test.tsx (NEW) covers chips render, Esc revert, submit, and announcement text",
-        "e2e e2e/states-commandbar.spec.ts and e2e/states-commandmode.spec.ts pass unmodified",
-        "Typecheck/lint passes",
-        "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
-      ],
-      "priority": 5,
-      "status": "passed",
-      "dependsOn": [
-        "US-102"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Create ParsedInput component and stylesheet",
-          "description": "Create src/components/ParsedInput.tsx (NEW) implementing the contracts.parsed_input_props interface exactly. Move from CommandBar.tsx: mirrorSegments, the transparent <input> + mirror overlay markup, live re-parse (useMemo on value/now/reverts), revert state \u2014 now passed INTO parse as the third arg instead of post-processing \u2014 Esc-revert handling, and the aria-describedby announcement. now prop defaults to live clock via a ref captured per parse. Create src/components/ParsedInput.css (NEW) and move the chip styles from CommandBar.css verbatim \u2014 class names unchanged (contracts.css_classes.chip_class).",
-          "filePaths": [
-            "src/components/ParsedInput.tsx",
-            "src/components/ParsedInput.css"
-          ],
-          "commands": [
-            "pnpm run typecheck"
-          ],
-          "testFirst": false,
-          "status": "passed",
-          "notes": "testFirst: false \u2014 extraction/move of existing covered behavior; component tests land in T-003 before any new behavior",
-          "consumedBy": [
-            "US-105",
-            "US-106"
-          ]
-        },
-        {
-          "id": "T-002",
-          "title": "Rewire CommandBar onto ParsedInput",
-          "description": "Refactor src/components/CommandBar.tsx to render <ParsedInput> for the capture path: pass barText/setBarText as value/onChange, barRef as inputRef, command-mode key handling via onKeyDown (returns true when command mode consumes the key), combobox ARIA via inputProps, parseEnabled={!commandMode}. Remove the moved machinery and chip CSS from CommandBar.tsx/CommandBar.css. Behavior must be pixel- and key-identical.",
+          "title": "Ink-bar prompt glyph",
+          "description": "In src/components/CommandBar.tsx replace the \u25b8 prompt glyph element with <span className=\"prompt-bar\" aria-hidden=\"true\"/> (command mode renders a second .prompt-bar sibling \u2014 keep the existing commandMode conditional). In CommandBar.css style .prompt-bar: 3px \u00d7 18px, border-radius var(--radius-pill), background var(--color-accent). Command mode: input font var(--type-mono) wght 500.",
           "filePaths": [
             "src/components/CommandBar.tsx",
             "src/components/CommandBar.css"
           ],
           "commands": [
             "pnpm exec vitest run src/components/CommandBar.test.tsx",
-            "pnpm run typecheck",
-            "pnpm run lint"
+            "pnpm run build"
           ],
           "testFirst": false,
-          "status": "passed",
-          "notes": "testFirst: false \u2014 refactor gated by the existing CommandBar.test.tsx suite passing unmodified (except imports)",
-          "wiring_verification": {
-            "file": "src/components/CommandBar.tsx",
-            "must_contain": [
-              "import { ParsedInput }",
-              "<ParsedInput"
-            ]
-          }
-        },
-        {
-          "id": "T-003",
-          "title": "Add ParsedInput component tests",
-          "description": "Create src/components/ParsedInput.test.tsx (NEW) with @vitest-environment jsdom pragma: chips render for 'report tomorrow #work !p1'; Esc demotes the last chip and the announcement updates; Enter calls onSubmit with the ParseResult; initialReverts suppress chipping of covered ranges; onKeyDown returning true consumes the key (input value unchanged).",
-          "filePaths": [
-            "src/components/ParsedInput.test.tsx"
-          ],
-          "commands": [
-            "pnpm exec vitest run src/components/ParsedInput.test.tsx"
-          ],
-          "testFirst": true,
-          "status": "passed"
-        },
-        {
-          "id": "T-004",
-          "title": "Prove zero behavior change",
-          "description": "Run the e2e specs unmodified and the visual gate; the root-route baseline must diff within tolerance WITHOUT --update-snapshots (no pixel change expected).",
-          "filePaths": [],
-          "commands": [
-            "pnpm exec playwright test e2e/states-commandbar.spec.ts e2e/states-commandmode.spec.ts",
-            "bash verification/run-visual-gate.sh /"
-          ],
-          "testFirst": false,
-          "status": "passed",
-          "notes": "testFirst: false \u2014 verification-only task"
-        }
-      ],
-      "review": {
-        "specCompliance": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-11T17:26:31.522350+00:00"
-        },
-        "codeQuality": {
-          "status": "passed",
-          "issues": [],
-          "reviewedAt": "2026-06-11T17:26:31.522350+00:00"
-        }
-      },
-      "retries": {
-        "attempts": 2,
-        "maxAttempts": 4,
-        "failureLog": [
-          {
-            "attempt": 1,
-            "timestamp": "2026-06-11T17:12:54.946381+00:00",
-            "phase": "worktree_base_mismatch",
-            "error": "Worktree branched from 762af0b (old main, command-bar-todo state) instead of ql/edit-token-parsing tip; parser lacked Range/reverted/displaced (US-102 contract). Agent correctly refused to fabricate contract and reset clean. Environmental race in concurrent worktree creation, not an agent fault. Re-dispatching solo."
-          },
-          {
-            "attempt": 2,
-            "timestamp": "2026-06-11T17:15:00.576032+00:00",
-            "phase": "worktree_base_mismatch",
-            "error": "Solo re-spawn ALSO branched from 762af0b (old main) while US-103 worktree was active/locked. Hypothesis: new isolation worktree falls back to default branch when another worktree is active. Holding US-104 until US-103 merges and its worktree is removed, then retry with no active worktrees."
-          }
-        ]
-      },
-      "notes": "Plan-review sizing note: implementation task is a large unit; maxAttempts raised to 4.",
-      "startedAt": null
-    },
-    {
-      "id": "US-105",
-      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
-      "complexity": 93,
-      "title": "Sealed displacement, session chips, and Esc two-tier in ParsedInput",
-      "description": "As a user, I want a newly typed token to overwrite the same-kind chip to its left \u2014 without ever losing text to half-typed words \u2014 so that correcting metadata is one gesture.",
-      "acceptanceCriteria": [
-        "While a displacing token is unsealed (not followed by whitespace and field not submitted), the displaced range renders demoted (plain text); nothing is deleted from value",
-        "Typing 'satchel' character-by-character into a field with an existing date chip never removes that chip's text; the chip re-activates when 'sat' stops being the parse",
-        "When the displacing token seals (space typed after it, or submit), the displaced range is removed from value via onChange; the seam collapses to a single space; trailing/leading trim happens only in the extracted title, never in the live field",
-        "Caret rule: removals left of the caret shift the caret offset down by the removed length (visually stationary); removals right of the caret leave it untouched",
-        "Fixpoint: immediately after a displacement removal, re-parse with the same reverted ranges yields displaced: [] (asserted in component tests)",
-        "Session chip defined as: a chip whose (kind, parsed value) pair is absent from the baseline ParseResult of the mount-time value with initialReverts. Esc with >=1 session chip reverts the most recent one; Esc with none calls onCancel",
-        "In CommandBar (no onCancel change): Esc behavior for chips is unchanged from the user's perspective; submit on Enter removes any unsealed-displaced ranges before capture",
-        "Component tests in src/components/ParsedInput.test.tsx cover: seal-on-space, seal-on-submit, transient prefix (satchel), caret offset both sides, fixpoint, session-chip discrimination (in-place friday->monday is revertible; untouched baseline chip is not)",
-        "Typecheck/lint passes",
-        "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
-      ],
-      "priority": 6,
-      "status": "passed",
-      "dependsOn": [
-        "US-104"
-      ],
-      "storyType": "logic",
-      "tasks": [
-        {
-          "id": "T-001",
-          "title": "Write failing tests for sealing, transient prefixes, caret, and fixpoint",
-          "description": "In src/components/ParsedInput.test.tsx: type 'satchel' char-by-char against a value containing a date chip \u2014 value never loses the old date text at any keystroke; 'monday' then space removes the displaced 'friday' text and collapses the seam to one space; submit before sealing also removes it; caret offset math asserted via input.selectionStart for removals left and right of the caret; after removal, parse(value, now, reverts).displaced is empty. Include edge-case tests: boundary values (null fields, empty string), scale (1/10/100 tokens or tasks where applicable), and collision scenarios. Confirm red.",
-          "filePaths": [
-            "src/components/ParsedInput.test.tsx"
-          ],
-          "commands": [
-            "pnpm exec vitest run src/components/ParsedInput.test.tsx"
-          ],
-          "testFirst": true,
+          "notes": "testFirst: false \u2014 glyph markup swap; existing tests assert behavior, not the glyph character",
           "status": "passed"
         },
         {
           "id": "T-002",
-          "title": "Implement sealed displacement removal",
-          "description": "In src/components/ParsedInput.tsx: render displaced ranges as demoted plain text in the mirror; on each parse, detect displaced ranges whose displacing token is sealed (a whitespace char follows the LAST same-kind token, or submit is in progress) and rewrite value: delete sealed displaced ranges, collapse whitespace runs at each seam to one space, never trim the field, adjust selectionStart/End per the caret rule (use requestAnimationFrame-free synchronous setSelectionRange after controlled update). Submit path strips remaining displaced ranges from the outgoing value before onSubmit re-parse.",
+          "title": "Bar card + responsive chrome + focus/error states",
+          "description": "In CommandBar.css: surface bg, 1px var(--color-border) border, var(--radius-md), var(--shadow-wash); replace the print-shadow. \u2264375: full-bleed, no border/radius/shadow, border-bottom hairline only. Focus-visible: 2px accent ring offset 2px + border-color accent. Error: border flashes var(--color-danger) at var(--motion-fast); error message uses var(--type-body) 12px uppercase letter-spacing 0.18em (remove mono+italic); delete any shake keyframes.",
           "filePaths": [
-            "src/components/ParsedInput.tsx"
+            "src/components/CommandBar.css"
           ],
           "commands": [
-            "pnpm exec vitest run src/components/ParsedInput.test.tsx",
-            "pnpm run typecheck",
-            "pnpm run lint"
+            "! grep -n 'shadow-print' src/components/CommandBar.css",
+            "pnpm exec vitest run src/components/CommandBar.test.tsx"
           ],
-          "testFirst": true,
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 presentational CSS",
           "status": "passed"
         },
         {
           "id": "T-003",
-          "title": "Implement session-chip baseline and Esc two-tier",
-          "description": "In src/components/ParsedInput.tsx: capture baseline = parse(value-at-mount, now, initialReverts) once. A chip is a session chip iff its (kind, parsed value) is absent from baseline chips. Esc: if any session chip exists, revert the most recent one (add its range to reverts, announce); else call onCancel if provided. Write tests first within this task: in-place friday->monday edit is Esc-revertible; untouched baseline chip is not; Esc with no session chips fires onCancel; CommandBar usage (no baseline chips at mount, empty initial value) behaves exactly as before.",
+          "title": "Indigo chips + parse-in motion",
+          "description": "In src/components/ParsedInput.css: chips become var(--color-accent) text with border-bottom 2px solid var(--color-accent), font var(--type-mono) 12px \u2014 remove any box/fill/background. Add parse-in animation: opacity 0\u21921 + translateY(2px)\u21920 at var(--motion-fast) var(--ease); no animation under prefers-reduced-motion (tokens already zero \u2014 just ensure the transition uses the tokens).",
           "filePaths": [
-            "src/components/ParsedInput.tsx",
-            "src/components/ParsedInput.test.tsx"
+            "src/components/ParsedInput.css"
           ],
           "commands": [
-            "pnpm exec vitest run src/components/ParsedInput.test.tsx",
-            "pnpm exec vitest run src/components/CommandBar.test.tsx"
+            "! grep -n 'shadow-print' src/components/ParsedInput.css",
+            "pnpm exec vitest run src/components/ParsedInput.test.tsx"
           ],
-          "testFirst": true,
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 presentational CSS",
           "status": "passed"
         },
         {
           "id": "T-004",
-          "title": "Visual gate for the add bar with last-wins overwrite",
-          "description": "Run the visual gate; bar appearance unchanged (demoted text renders as plain text). Manually verify in browser: type 'call mom friday monday ' in the bar \u2014 friday text disappears on seal, Monday chip remains.",
+          "title": "Pixel check command bar",
+          "description": "With the dev server and frozen clock, type the canonical string 'Send report tomorrow 3pm #work !p1' and capture the commandbar state screenshots (e2e/states-commandbar.spec.ts --update-snapshots). LOOK at the PNGs: three indigo-underlined chips, ink-bar prompt, no box chips, washi card. Note findings in the completion report.",
           "filePaths": [],
           "commands": [
+            "pnpm exec playwright test e2e/states-commandbar.spec.ts e2e/states-commandmode.spec.ts --update-snapshots",
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "status": "passed",
-          "notes": "testFirst: false \u2014 verification-only task"
+          "notes": "testFirst: false \u2014 Pixel Law inspection step; interim baselines throwaway until US-208",
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
           "status": "passed",
           "issues": [],
-          "reviewedAt": "2026-06-11T17:45:59.532576+00:00"
+          "reviewedAt": "2026-06-15T22:58:36.363184+00:00"
         },
         "codeQuality": {
           "status": "passed",
           "issues": [],
-          "reviewedAt": "2026-06-11T17:45:59.532576+00:00"
+          "reviewedAt": "2026-06-15T22:58:36.363184+00:00"
         }
       },
       "retries": {
         "attempts": 0,
-        "maxAttempts": 4,
+        "maxAttempts": 3,
         "failureLog": []
       },
-      "notes": "Plan-review sizing note: implementation task is a large unit; maxAttempts raised to 4.",
+      "notes": "",
       "startedAt": null
     },
     {
-      "id": "US-106",
-      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
-      "complexity": 100,
-      "title": "TaskRow edit integration \u2014 serialize, frozen clock, diff-save, fallback",
-      "description": "As a user, I want to press Enter (or click a title) and edit the whole task as text so that changing a date or list is as fast as typing it.",
+      "id": "US-206",
+      "title": "Toast, storage banner & error boundary",
+      "description": "As a user, I want the transient chrome \u2014 undo toast, storage banner, error screen \u2014 re-inked so no surface still speaks Morning Edition.",
       "acceptanceCriteria": [
-        "openEdit() (open tasks only) seeds draft state from serializeTask(task, now) \u2014 value = text, initialReverts = revertedRanges \u2014 and freezes now for the session (passed as the now prop; every re-parse and the save-parse use it)",
-        "Round-trip guard at open: if parse(text, now, revertedRanges) does not reproduce the task's fields exactly, log a console error and fall back to title-only editing (current behavior: plain value = task.title, parseEnabled = false; save updates title only)",
-        "Save (Enter or blur) diffs the ParseResult against the task and dispatches a single edit action containing every changed field, with null for cleared ones (erasing #work text -> list: null)",
-        "Blur saves exactly like Enter; blur with an empty extracted title cancels instead of saving; Enter with an empty extracted title blocks save with the same inline feedback as add",
-        "Esc with no session chips cancels the edit (discard); with session chips it reverts per US-105",
-        "Toast for a parsed edit reads 'Task updated' with the undo affordance; one undo restores all changed fields at once \u2014 unit test in src/lib/store.test.ts asserts a multi-field edit inverse (date + list + priority + title changed, then undone, including null-clears)",
-        "If the task id no longer exists at save time (multi-tab deletion), the edit action is a no-op (existing reducer behavior; regression-tested)",
-        "Tests in src/components/TaskRow.test.tsx cover: chips present at open, token edit saves all fields, deletion clears fields, fallback path, blur-save, empty-title blur-cancel, and done-task guard (Enter / title click on a done row does not open the editor \u2014 verifies FR-120)",
-        "The chip ARIA announcement live region is present and updates in edit usage, identical to add (FR-115) \u2014 asserted in TaskRow tests",
+        "Toast: --color-fg bg, --color-bg text, bottom-left, --shadow-wash, radius-md; action label in --type-body, 'Undo \u2318Z' keycap in mono pill; slides at --motion-base; aria-live=polite preserved (\u00a76)",
+        "Buttons in these components follow \u00a76: primary = ink bg + bg-token text + wide-tracked caps 12 wght 500 + radius-md, hover opacity 0.88, active scale 0.98; secondary = transparent + 1px fg border; destructive = danger border/text, fills danger with bg-token text on hover",
+        "StorageBanner and ErrorBoundary surfaces use --color-surface + hairline border + --shadow-wash; all print shadows removed from src/components/Toast.css, src/components/StorageBanner.css, src/components/ErrorBoundary.css",
+        "No literal hex values remain in the three CSS files (grep check)",
         "Typecheck/lint passes",
-        "Verify in browser: bash verification/run-visual-gate.sh / passes (screenshot diff within tolerance, 0 axe violations)"
+        "Verify in browser (visual gate; toast state baseline re-blessed in US-208)"
+      ],
+      "priority": 5,
+      "complexity": 38,
+      "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
+      "status": "passed",
+      "dependsOn": [],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Toast re-skin",
+          "description": "In src/components/Toast.css: bg var(--color-fg), text var(--color-bg), bottom-left position kept, var(--shadow-wash), var(--radius-md); action label var(--type-body); keycap stays var(--type-mono) in a radius-pill hairline box; slide animation at var(--motion-base) var(--ease). Remove print shadow. Toast.tsx only if a class hook is missing.",
+          "filePaths": [
+            "src/components/Toast.css",
+            "src/components/Toast.tsx"
+          ],
+          "commands": [
+            "! grep -n 'shadow-print' src/components/Toast.css",
+            "pnpm exec vitest run src/components/Toast.test.tsx"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 presentational CSS; aria-live behavior covered by existing tests",
+          "status": "passed"
+        },
+        {
+          "id": "T-002",
+          "title": "Button conventions in banner + error boundary",
+          "description": "In src/components/StorageBanner.css and src/components/ErrorBoundary.css restyle buttons per \u00a76: primary ink-bg/bg-text uppercase 12px wght 500 letter-spacing 0.18em radius-md, hover opacity .88, active transform scale(.98); secondary transparent + 1px fg border; destructive danger border/text filling danger on hover. Surfaces: var(--color-surface), 1px var(--color-border), var(--shadow-wash).",
+          "filePaths": [
+            "src/components/StorageBanner.css",
+            "src/components/ErrorBoundary.css"
+          ],
+          "commands": [
+            "! grep -n 'shadow-print' src/components/StorageBanner.css src/components/ErrorBoundary.css",
+            "! grep -nE '#[0-9A-Fa-f]{3,8}' src/components/Toast.css src/components/StorageBanner.css src/components/ErrorBoundary.css",
+            "pnpm exec vitest run src/components/ErrorBoundary.test.tsx"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 presentational CSS",
+          "status": "passed"
+        },
+        {
+          "id": "T-003",
+          "title": "Pixel check transient chrome",
+          "description": "Capture toast + banner states (e2e/states-toast.spec.ts, e2e/states-banner.spec.ts --update-snapshots) and LOOK at the PNGs: inverted-ink toast bottom-left with wash shadow, surface banner with hairline. Note findings in the completion report.",
+          "filePaths": [],
+          "commands": [
+            "pnpm exec playwright test e2e/states-toast.spec.ts e2e/states-banner.spec.ts --update-snapshots",
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 Pixel Law inspection step",
+          "status": "passed"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-15T22:42:33.610484+00:00"
+        },
+        "codeQuality": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-15T22:42:33.610484+00:00"
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": "| RECONCILED 2026-06-12: already implemented by prior session (commits f1fe4cb, 11e0069); verified live \u2014 no shadow-print, no literal hex, shadow-wash in all 3 files, 18 unit tests pass.",
+      "startedAt": null
+    },
+    {
+      "id": "US-207",
+      "title": "Cheatsheet overlay re-skin",
+      "description": "As a user, I want the ? cheatsheet to read as a washi sheet \u2014 soft corners, ink rule header, two quiet columns \u2014 consistent with the new system.",
+      "acceptanceCriteria": [
+        "Sheet: --color-surface, radius-lg, --shadow-wash, over --color-bg scrim at 80% opacity; header carries the masthead's ink-rule motif (3px fg\u2192transparent gradient bar), replacing the double rule (\u00a76)",
+        "Key table: keys in --type-mono keycap pills, labels in --type-body; two columns at 1280, one below 768",
+        "Focus trap and Esc-to-close behavior unchanged (existing tests pass unmodified)",
+        "All Morning Edition references (double rule, print shadow, serif italics) removed from src/components/Cheatsheet.css",
+        "Typecheck/lint passes",
+        "Verify in browser (visual gate at 3 breakpoints \u00d7 2 themes)"
+      ],
+      "priority": 6,
+      "complexity": 36,
+      "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
+      "status": "passed",
+      "dependsOn": [],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Sheet, scrim & ink-rule header",
+          "description": "In src/components/Cheatsheet.css: sheet var(--color-surface) var(--radius-lg) var(--shadow-wash); scrim color-mix or rgba of var(--color-bg) at 80%; replace the double-rule header with the ink-rule motif (3px bar, background linear-gradient(90deg, var(--color-fg) 60%, transparent), border-radius 2px \u2014 class cheatsheet-rule, same recipe as contracts css_classes.masthead_rule). Remove print shadows and italics.",
+          "filePaths": [
+            "src/components/Cheatsheet.css"
+          ],
+          "commands": [
+            "! grep -n 'shadow-print\\|italic' src/components/Cheatsheet.css",
+            "pnpm exec vitest run src/components/Cheatsheet.test.tsx"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 presentational CSS; focus-trap behavior covered by existing tests",
+          "status": "passed"
+        },
+        {
+          "id": "T-002",
+          "title": "Key table columns + keycap pills",
+          "description": "In Cheatsheet.css: key table two-column \u22651280 (CSS columns or grid), single column <768; keys var(--type-mono) 12 in radius-pill hairline boxes; labels var(--type-body). Cheatsheet.tsx only if a class hook is missing.",
+          "filePaths": [
+            "src/components/Cheatsheet.css",
+            "src/components/Cheatsheet.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/Cheatsheet.test.tsx",
+            "pnpm run build"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 presentational CSS",
+          "status": "passed"
+        },
+        {
+          "id": "T-003",
+          "title": "Pixel check cheatsheet",
+          "description": "Capture e2e/states-cheatsheet.spec.ts --update-snapshots; LOOK at desktop + mobile PNGs: washi sheet, ink-rule header, two columns at desktop, pill keycaps. Note findings in the completion report.",
+          "filePaths": [],
+          "commands": [
+            "pnpm exec playwright test e2e/states-cheatsheet.spec.ts --update-snapshots",
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 Pixel Law inspection step",
+          "status": "passed"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-15T23:00:34.982132+00:00"
+        },
+        "codeQuality": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-15T23:00:34.982132+00:00"
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": "",
+      "startedAt": null
+    },
+    {
+      "id": "US-201",
+      "title": "Canvas, masthead, view tabs & empty states",
+      "description": "As a user, I want the page chrome \u2014 background, bilingual masthead with ink rule, view tabs, and empty states \u2014 set in the Ink Garden language so the app's frame reads as washi and ink.",
+      "acceptanceCriteria": [
+        "body/app background is var(--color-bg); content column max-width 720 centered at 1280, 640 at 768, full-width single column at 375 (\u00a77)",
+        "Masthead renders the date bilingually: kanji date from formatKanjiDate (US-209) in --type-display 40/52 wght 600, English (e.g. \"Wednesday, June 10\" under the frozen test clock) beside/below it in --type-h2 size --color-muted (\u00a72); at 375 the display drops to 30/40 and the English moves to its own line; both derive from one new Date()",
+        "The ink rule beneath the masthead is a 3px fg\u2192transparent gradient bar that draws left\u2192right at --motion-slow on load; with prefers-reduced-motion it renders fully drawn, no animation",
+        "View tabs are wide-tracked caps (letter-spacing 0.18em\u20130.22em, 12px, wght 500, --type-body family \u2014 NOT mono), muted; current view: --color-fg text + 2px --color-danger underline with 4px gap (\u00a76)",
+        "Keycap hints keep radius-pill hairline boxes in --type-mono 12; hidden below 768",
+        "Empty states across all views (.empty-state style in src/App.css; markup in src/components/TaskList.tsx fallback [done by US-204 T-005] and src/views/AllView.tsx, src/views/UpcomingView.tsx, src/views/DoneView.tsx): single muted \u25ef enso glyph at 24px above one line of muted --type-body copy + keycap hint; copy text verbatim-unchanged",
+        "All Morning Edition styles in src/App.css (double rule, print shadows, italic empty-state, serif font references) are removed",
+        "Typecheck/lint passes",
+        "Verify in browser (visual gate at 3 breakpoints \u00d7 2 themes)"
       ],
       "priority": 7,
+      "complexity": 79,
+      "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
       "status": "passed",
       "dependsOn": [
-        "US-103",
-        "US-105",
-        "US-107"
+        "US-209",
+        "US-204"
       ],
       "storyType": "logic",
       "tasks": [
         {
           "id": "T-001",
-          "title": "Write failing store tests for multi-field edit inverse",
-          "description": "In src/lib/store.test.ts: dispatch one edit action changing dueDate, list, priority, and title (including list: null clear); assert one undo restores all four to their prior values; assert edit on a missing id is a no-op (state unchanged, no inverse pushed). Carved out per PRD \u00a77 density note \u2014 no UI dependency.",
+          "title": "Bilingual masthead markup",
+          "description": "In src/App.tsx: import { formatKanjiDate } from './lib/kanji-date' (created by US-209 \u2014 do NOT create an inline replacement). Masthead renders one const now = new Date() feeding BOTH the kanji h1 (class masthead-date-kanji) and the English subtitle (class masthead-date-en, the existing DATE_FORMAT). Add the ink-rule element <div className=\"masthead-rule\" aria-hidden=\"true\"/> below. Keep the h1 as the document's single h1 (kanji inside h1 with the English in a <p> \u2014 preserve heading semantics for axe).",
           "filePaths": [
-            "src/lib/store.test.ts"
+            "src/App.tsx"
           ],
           "commands": [
-            "pnpm exec vitest run src/lib/store.test.ts"
+            "grep -n \"formatKanjiDate\" src/App.tsx",
+            "pnpm run build",
+            "pnpm exec vitest run"
           ],
-          "testFirst": true,
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 markup composition; formatter logic already tested in US-209",
           "status": "passed"
         },
         {
           "id": "T-002",
-          "title": "Write failing TaskRow edit tests",
-          "description": "In src/components/TaskRow.test.tsx: edit-open on a task with metadata shows the serialized text with chips; typing a date token and saving dispatches edit with all changed fields; erasing '#work' saves list: null; round-trip-mismatch fallback (mock serializeTask to emit non-round-tripping text) opens title-only with console.error; blur saves; blur with empty extracted title cancels; Enter with empty title blocks with inline feedback; Enter/title-click on a done row does not open the editor (FR-120). Import serializeTask from src/lib/serialize.ts (created by US-103) and ParsedInput (created by US-104) \u2014 do NOT create inline replacements. Also assert the chip ARIA announcement live region is present and updates in the edit usage (with initialReverts and baseline chips at mount) \u2014 FR-115 parity.",
+          "title": "Canvas + masthead styles + ink-rule draw",
+          "description": "In src/App.css: bg var(--color-bg) everywhere the old paper token was; content column 720/640/full per breakpoints. masthead-date-kanji: var(--type-display) 40px/52px wght 600 (30/40 at \u2264375); masthead-date-en: var(--text-h2-size) var(--color-muted) (own line at \u2264375). .masthead-rule: height 3px, background linear-gradient(90deg, var(--color-fg) 60%, transparent), border-radius 2px; @keyframes draw from transform: scaleX(0) (transform-origin left) to scaleX(1) at var(--motion-slow) var(--ease) \u2014 with prefers-reduced-motion the bar renders static (no animation property when motion tokens are 0ms is acceptable since duration 0 = instant). Remove the double rule and Fraunces/Newsreader references.",
           "filePaths": [
-            "src/components/TaskRow.test.tsx"
+            "src/App.css",
+            "src/index.css"
           ],
           "commands": [
-            "pnpm exec vitest run src/components/TaskRow.test.tsx"
+            "! grep -n 'Fraunces\\|Newsreader\\|double' src/App.css",
+            "pnpm run lint"
           ],
-          "testFirst": true,
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 presentational CSS",
           "status": "passed"
         },
         {
           "id": "T-003",
-          "title": "Implement TaskRow edit integration",
-          "description": "In src/components/TaskRow.tsx: openEdit() (guarded to status==='open') computes const frozen = now; const { text, revertedRanges } = serializeTask(task, frozen); runs the round-trip guard (compare parse(text, frozen, revertedRanges) fields to task; on mismatch console.error + title-only mode). Replace the plain edit <input> with <ParsedInput value/onChange (local draft), now={frozen}, initialReverts, parseEnabled, onSubmit=saveParsed, onCancel=closeEdit, ariaLabel>. saveParsed diffs ParseResult vs task into Partial<Task> with nulls for cleared fields and dispatches one edit action; empty title blocks (Enter) or cancels (blur). Wire blur-save via onBlur calling the same submit path.",
+          "title": "View tabs + keycaps restyle",
+          "description": "In src/App.css: .view-tab \u2192 var(--type-body) 12px wght 500 uppercase letter-spacing 0.18em var(--color-muted); [aria-current='page'] \u2192 var(--color-fg) + border-bottom 2px solid var(--color-danger) with 4px padding-bottom gap; remove the mono font and accent underline. .keycap unchanged geometry (radius-pill hairline, var(--type-mono) 12), hidden <768 as today.",
           "filePaths": [
-            "src/components/TaskRow.tsx"
+            "src/App.css"
           ],
           "commands": [
-            "pnpm exec vitest run src/components/TaskRow.test.tsx",
-            "pnpm run typecheck",
-            "pnpm run lint"
+            "pnpm run lint",
+            "pnpm exec vitest run"
           ],
-          "testFirst": true,
-          "status": "passed",
-          "wiring_verification": {
-            "file": "src/components/TaskRow.tsx",
-            "must_contain": [
-              "import { serializeTask }",
-              "import { ParsedInput }",
-              "<ParsedInput"
-            ]
-          }
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 presentational CSS",
+          "status": "passed"
         },
         {
           "id": "T-004",
-          "title": "Update edit toast copy to 'Task updated'",
-          "description": "In src/state/AppContext.tsx change the toastFor copy for the edit action from its current text to 'Task updated' (undo affordance unchanged). Update any test asserting the old copy (grep shows src/hooks/usePersistence.test.tsx references 'Saved'; verify and update if it asserts the edit toast).",
+          "title": "Empty-state styles + view markup",
+          "description": "In src/App.css: .empty-state \u2192 var(--type-body) var(--color-muted), font-style normal (remove italic); .empty-state-glyph \u2192 display block, 24px, var(--color-muted), margin-bottom var(--space-3) (class is a contract \u2014 css_classes.empty_state_glyph; TaskList.tsx markup already added by US-204 T-005). Add the same \u25ef glyph markup to the empty-state paragraphs in src/views/AllView.tsx, src/views/UpcomingView.tsx, src/views/DoneView.tsx \u2014 copy text verbatim-unchanged.",
           "filePaths": [
-            "src/state/AppContext.tsx"
+            "src/App.css",
+            "src/views/AllView.tsx",
+            "src/views/UpcomingView.tsx",
+            "src/views/DoneView.tsx"
           ],
           "commands": [
-            "pnpm exec vitest run src/hooks/usePersistence.test.tsx",
-            "pnpm exec vitest run",
-            "pnpm run typecheck"
+            "grep -ln 'empty-state-glyph' src/views/AllView.tsx src/views/UpcomingView.tsx src/views/DoneView.tsx | wc -l | grep -x ' *3'",
+            "pnpm exec vitest run src/views/",
+            "! grep -n 'italic' src/App.css"
           ],
-          "testFirst": true,
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 markup + CSS; view tests assert copy, which is unchanged",
           "status": "passed"
         },
         {
           "id": "T-005",
-          "title": "Visual gate with edit open",
-          "description": "Run bash verification/run-visual-gate.sh / and manually verify in browser: Enter on a row shows chips in the row-width editor; typing 'monday ' replaces a friday chip's text.",
+          "title": "Pixel check chrome",
+          "description": "Run visual spec --update-snapshots; LOOK at all 6 PNGs (3 breakpoints \u00d7 2 themes): washi canvas, bilingual masthead, ink rule, crimson tab underline, enso empty state. Confirm masthead drops English to its own line at 375. Note findings in the completion report.",
           "filePaths": [],
           "commands": [
+            "pnpm exec playwright test verification/visual.spec.ts --update-snapshots",
+            "pnpm run build",
+            "pnpm run lint",
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "status": "passed",
-          "notes": "testFirst: false \u2014 verification-only task"
+          "notes": "testFirst: false \u2014 Pixel Law inspection step",
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
           "status": "passed",
           "issues": [],
-          "reviewedAt": "2026-06-11T17:59:22.134327+00:00"
+          "reviewedAt": "2026-06-15T23:13:55.723034+00:00"
         },
         "codeQuality": {
           "status": "passed",
           "issues": [],
-          "reviewedAt": "2026-06-11T17:59:22.134327+00:00"
+          "reviewedAt": "2026-06-15T23:13:55.723034+00:00"
+        }
+      },
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": "dependsOn US-204 added at plan time: US-204 T-005 owns the TaskList.tsx half of the empty-state AC, and sequencing also guarantees rows are flat before the chrome pixel check.",
+      "startedAt": null
+    },
+    {
+      "id": "US-210",
+      "title": "Task rows \u2014 interaction states & motion",
+      "description": "As a user, I want row hover/selection rendered as ink ticks and the list to settle in with a quiet stagger, so interaction feels like the same hand that set the page.",
+      "acceptanceCriteria": [
+        "Hover: 4px --color-accent tick appears in the left margin outside the text column; selected (keyboard): tick thickens to 6px + row bg becomes --color-surface (\u00a76)",
+        "On view load, rows fade up with 40ms stagger, delayed by var(--motion-slow) so the masthead rule (US-201) finishes first \u2014 the delay references the token, never a hardcoded ms value (no cross-story timing code dependency)",
+        "No stagger/fade under prefers-reduced-motion",
+        "Skeleton/loading rows are hairline underlines only \u2014 no shimmer, no boxes",
+        "Typecheck/lint passes",
+        "Verify in browser (visual gate at 3 breakpoints \u00d7 2 themes; keyboard-selected state screenshot in e2e states-tasklist spec)"
+      ],
+      "priority": 8,
+      "complexity": 53,
+      "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
+      "status": "passed",
+      "dependsOn": [
+        "US-204"
+      ],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Hover + selected margin ticks",
+          "description": "In src/components/TaskList.css: row hover shows a 4px \u00d7 100% var(--color-accent) tick in the left margin via ::before positioned at negative left offset (calc(-1 * var(--space-3))) so it sits outside the text column; selected row (existing selected class) thickens to 6px and sets row background var(--color-surface). Replace the old thickened-left-rule + print-shadow selected treatment. TaskRow.tsx only if a class hook is missing.",
+          "filePaths": [
+            "src/components/TaskList.css",
+            "src/components/TaskRow.tsx"
+          ],
+          "commands": [
+            "! grep -n 'shadow-print' src/components/TaskList.css",
+            "pnpm exec vitest run src/components/TaskRow.test.tsx src/components/TaskList.test.tsx"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 presentational CSS; selection behavior covered by existing tests",
+          "status": "passed"
+        },
+        {
+          "id": "T-002",
+          "title": "Load stagger + skeleton restyle",
+          "description": "In src/components/TaskList.css: rows animate opacity 0\u21921 + translateY(4px)\u21920, duration var(--motion-base), easing var(--ease), animation-delay calc(var(--motion-slow) + 40ms * row index) \u2014 index via existing inline custom property or nth-child up to a sane cap (first 12 rows staggered, rest immediate). The base delay MUST be var(--motion-slow) (token contract with US-201's masthead rule \u2014 never hardcode 560ms). With motion tokens at 0ms (reduced motion) every delay/duration computes to \u2264 40ms\u00b7i with zero duration \u2014 ensure animation 'none' under the media query anyway for axe cleanliness. Skeleton rows: remove shimmer/boxes; hairline underline blocks only.",
+          "filePaths": [
+            "src/components/TaskList.css",
+            "src/components/TaskList.tsx"
+          ],
+          "commands": [
+            "grep -n 'var(--motion-slow)' src/components/TaskList.css",
+            "! grep -n '560ms' src/components/TaskList.css",
+            "pnpm exec vitest run src/components/TaskList.test.tsx"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 presentational motion CSS; reduced-motion is gate-checked in a11y spec",
+          "status": "passed"
+        },
+        {
+          "id": "T-003",
+          "title": "Pixel check row states",
+          "description": "Capture e2e/states-tasklist.spec.ts and e2e/states-focus.spec.ts --update-snapshots; LOOK at the selected-row PNGs: 6px indigo tick + surface bg, no print shadow, no left rule. Note findings in the completion report.",
+          "filePaths": [],
+          "commands": [
+            "pnpm exec playwright test e2e/states-tasklist.spec.ts e2e/states-focus.spec.ts --update-snapshots",
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 Pixel Law inspection step",
+          "status": "passed"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-15T23:20:50.407919+00:00"
+        },
+        "codeQuality": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-15T23:20:50.407919+00:00"
         }
       },
       "retries": {
@@ -738,84 +802,104 @@
       "startedAt": null
     },
     {
-      "id": "US-108",
-      "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
-      "complexity": 100,
-      "title": "E2E journeys and visual baseline update",
-      "description": "As a maintainer, I want end-to-end proof of the edit/add symmetry so that regressions in the full flow are caught.",
+      "id": "US-202",
+      "title": "Hanko seal (\u4eca\u65e5) in the masthead",
+      "description": "As a user, I want a small rotated \u4eca\u65e5 seal in the masthead that fills crimson when everything due today is done, so finishing the day has a quiet ceremonial mark.",
       "acceptanceCriteria": [
-        "New e2e/edit-tokens.spec.ts (NEW): create 'Send report friday 3pm #work' -> Enter to edit -> field shows serialized text with chips -> type ' monday ' (friday's text disappears after seal) -> erase '#work' -> Enter -> row shows Monday and no list -> Cmd+Z restores date and list together",
-        "Add-bar journey in the same spec: type 'call mom friday monday' -> only a Monday chip remains after seal -> Enter -> task due Monday",
-        "Edit-fallback journey is NOT e2e-tested (requires injecting a serializer bug); covered at unit level (US-106)",
-        "Visual gate passes: bash verification/run-visual-gate.sh / with baselines updated for (a) the row without '\u22ef' and (b) a new edit-mode-open state at 375/768/1280; new baselines rendered and visually confirmed against DESIGN-SYSTEM.md before blessing",
-        "Zero axe violations at every configured breakpoint; Lighthouse meets lens.config.json thresholds",
-        "Full suite green: typecheck, lint, unit, e2e"
+        "New component src/components/HankoSeal.tsx [NEW] + src/components/HankoSeal.css [NEW] + src/components/HankoSeal.test.tsx [NEW]; mounted in the masthead (top-right) in src/App.tsx",
+        "Day-task derivation composes EXISTING exports from src/lib/selectors.ts / src/hooks/useToday.ts only; if a new selector export proves necessary, src/lib/selectors.ts + src/lib/selectors.test.ts join this story's filePaths and the export is named selectTodayProgress",
+        "Outline state: 40px square (32px at 375), 2.5px solid var(--color-danger), radius-md, rotated 4\u00b0, \u4eca\u65e5 in --type-display wght 700 --color-danger",
+        "Filled state: when every task due today (including rollovers) has status === 'done' AND at least one such task exists \u2014 danger bg; \u4eca\u65e5 in --color-surface (light) / --color-bg (dark) per \u00a76 (contrast 6.86 / 5.65, pre-verified)",
+        "State is derived on every render \u2014 unit tests: fills when last today-task completes; un-fills when a today-task is added after fill; un-fills when a done task reopens; stays outline when today has zero tasks",
+        "Fill/unfill transitions at --motion-slow; none under prefers-reduced-motion",
+        "Not focusable, no click handler; role=status with aria-label exactly '{done} of {total} tasks done today'; axe 0 violations",
+        "Typecheck/lint passes",
+        "Verify in browser (visual gate at 3 breakpoints \u00d7 2 themes)"
       ],
-      "priority": 8,
+      "priority": 9,
+      "complexity": 78,
+      "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
       "status": "passed",
       "dependsOn": [
-        "US-105",
-        "US-106",
-        "US-107"
+        "US-201"
       ],
-      "storyType": "test",
+      "storyType": "logic",
       "tasks": [
         {
           "id": "T-001",
-          "title": "Write the edit and add-bar e2e journeys",
-          "description": "Create e2e/edit-tokens.spec.ts (NEW) following the states-*.spec.ts seeding pattern: journey 1 \u2014 capture 'Send report friday 3pm #work', Enter on the row, assert serialized text + chips visible, type ' monday ' and assert friday text gone after the space, select-and-delete '#work', Enter, assert row shows the Monday date and no #work pill, press Meta+z, assert both restored. Journey 2 \u2014 type 'call mom friday monday ' in the bar, assert single Monday chip, Enter, assert the task's date.",
+          "title": "HankoSeal tests first",
+          "description": "Create src/components/HankoSeal.test.tsx covering: outline when today has zero tasks; fills when ALL today tasks (incl. a rollover fixture) are done and count \u2265 1; un-fills when an open today-task is added post-fill; un-fills when a done task reopens; aria-label exactly '{done} of {total} tasks done today' (e.g. '2 of 5 tasks done today'); role=status; element has no tabindex/onClick. Use the existing store/test utilities from src/components/TaskList.test.tsx as the fixture pattern. Tests fail (component doesn't exist).",
           "filePaths": [
-            "e2e/edit-tokens.spec.ts"
+            "src/components/HankoSeal.test.tsx"
           ],
           "commands": [
-            "pnpm exec playwright test e2e/edit-tokens.spec.ts"
+            "pnpm exec vitest run src/components/HankoSeal.test.tsx 2>&1 | grep -q 'failed\\|Cannot find' && echo RED-CONFIRMED"
           ],
           "testFirst": true,
           "status": "passed"
         },
         {
           "id": "T-002",
-          "title": "Add the edit-mode-open visual state and re-bless baselines",
-          "description": "Create e2e/states-edit.spec.ts (NEW) mirroring the states pattern: seed a task with full metadata, open edit, freeze animations, screenshot at 375/768/1280. Run the visual gate; regenerate baselines that legitimately changed (row without '\u22ef', new edit state) with --update-snapshots, OPEN every new PNG and confirm against DESIGN-SYSTEM.md before blessing. Axe zero violations at all breakpoints; Lighthouse >= thresholds.",
+          "title": "Implement HankoSeal component",
+          "description": "Create src/components/HankoSeal.tsx + HankoSeal.css. Derive {done, total} for today (due today + rollovers) by composing EXISTING exports from src/lib/selectors.ts / src/hooks/useToday.ts \u2014 read both files first; only if no composition works, add export selectTodayProgress to src/lib/selectors.ts (+ test) and declare the file addition in the completion report. Styles: 40px (32px \u2264375) square, 2.5px danger border, var(--radius-md), transform rotate(4deg); filled: bg var(--color-danger), glyph color var(--color-surface) with the dark override mirroring tokens.css DUAL dark wiring \u2014 BOTH [data-theme=dark] AND @media (prefers-color-scheme: dark) { :root:not([data-theme=light]) } scopes set the glyph to var(--color-bg); the gate drives dark via emulateMedia(prefers-color-scheme), which never matches the attribute selector alone; transition background/color var(--motion-slow) var(--ease). role=status, aria-label per contract.",
           "filePaths": [
-            "e2e/states-edit.spec.ts",
-            "verification/visual.spec.ts-snapshots/"
+            "src/components/HankoSeal.tsx",
+            "src/components/HankoSeal.css"
           ],
           "commands": [
-            "bash verification/run-visual-gate.sh /",
-            "pnpm exec playwright test e2e/states-edit.spec.ts"
+            "pnpm exec vitest run src/components/HankoSeal.test.tsx",
+            "pnpm run build",
+            "pnpm run lint"
           ],
-          "testFirst": false,
-          "status": "passed",
-          "notes": "testFirst: false \u2014 visual-state capture and baseline blessing, no production logic"
+          "testFirst": true,
+          "status": "passed"
         },
         {
           "id": "T-003",
-          "title": "Full-suite green run",
-          "description": "Run every gate fresh and read the output (Iron Law): typecheck, lint, unit with coverage >= 80, full e2e, visual gate.",
+          "title": "Wire HankoSeal into the masthead",
+          "description": "In src/App.tsx import HankoSeal and render it top-right inside the masthead header (flex row with the date block \u2014 masthead layout from US-201). Do not alter the h1 structure.",
+          "filePaths": [
+            "src/App.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run",
+            "pnpm run build"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 wiring task; component behavior tested in T-001/T-002",
+          "wiring_verification": {
+            "file": "src/App.tsx",
+            "must_contain": [
+              "import { HankoSeal }",
+              "<HankoSeal"
+            ]
+          },
+          "status": "passed"
+        },
+        {
+          "id": "T-004",
+          "title": "Pixel check seal",
+          "description": "Visual spec --update-snapshots; LOOK at desktop light + dark PNGs: rotated crimson outline seal beside the masthead; manually complete all seeded today-tasks in the dev server and confirm the fill renders with readable \u4eca\u65e5 in both themes. Note findings in the completion report.",
           "filePaths": [],
           "commands": [
-            "pnpm run typecheck",
-            "pnpm run lint",
-            "pnpm exec vitest run --coverage",
-            "pnpm exec playwright test e2e/",
+            "pnpm exec playwright test verification/visual.spec.ts verification/a11y.spec.ts --update-snapshots",
             "bash verification/run-visual-gate.sh /"
           ],
           "testFirst": false,
-          "status": "passed",
-          "notes": "testFirst: false \u2014 verification-only task"
+          "notes": "testFirst: false \u2014 Pixel Law inspection step",
+          "status": "passed"
         }
       ],
       "review": {
         "specCompliance": {
           "status": "passed",
           "issues": [],
-          "reviewedAt": "2026-06-11T18:16:45.329414+00:00"
+          "reviewedAt": "2026-06-15T23:26:12.953264+00:00"
         },
         "codeQuality": {
           "status": "passed",
           "issues": [],
-          "reviewedAt": "2026-06-11T18:16:45.329414+00:00"
+          "reviewedAt": "2026-06-15T23:26:12.953264+00:00"
         }
       },
       "retries": {
@@ -825,271 +909,275 @@
       },
       "notes": "",
       "startedAt": null
-    }
-  ],
-  "fileConflicts": [
-    {
-      "file": "src/lib/parser.test.ts",
-      "stories": [
-        "US-101",
-        "US-102"
-      ],
-      "waves": [
-        1,
-        2
-      ],
-      "severity": "low",
-      "note": "Dependency-ordered (US-102 dependsOn US-101); intentional sequential parser rewrite"
     },
     {
-      "file": "src/lib/parser.ts",
-      "stories": [
-        "US-101",
-        "US-102"
+      "id": "US-205",
+      "title": "Sumi brushstroke completion",
+      "description": "As a user, I want completing a task to draw a real tapered ink stroke through it \u2014 the signature interaction \u2014 so finishing something feels physically inked.",
+      "acceptanceCriteria": [
+        "New component src/components/BrushStroke.tsx [NEW] + src/components/BrushStroke.css [NEW] + src/components/BrushStroke.test.tsx [NEW]: an inline SVG tapered stroke (organic path, varying thickness 4\u20138px, NOT a straight rect) spanning the title width",
+        "On completion, the stroke draws left\u2192right at --motion-base via stroke-dashoffset (or clip-path) using --ease; the row then settles to muted at --motion-fast (\u00a75)",
+        "Stroke color is --color-fg at 0.85 opacity during the open\u2192done transition; settled rows show the static stroke in --color-muted",
+        "text-decoration: line-through is removed from its single declaration at src/components/TaskList.css:101 (DoneView inline rows inherit the shared .task-row--done rule \u2014 DoneView.tsx contains no line-through itself); BOTH render paths (TaskRow AND DoneView inline rows) must mount BrushStroke",
+        "Under prefers-reduced-motion, the stroke renders instantly with no draw animation",
+        "Stroke SVG is aria-hidden=true; completed state remains announced exactly as today (existing a11y assertions pass unmodified)",
+        "Undo (toast / \u2318Z) restores the row with the stroke removed; e2e completion journey passes with behavior assertions unmodified",
+        "Typecheck/lint passes",
+        "Verify in browser (visual gate at 3 breakpoints \u00d7 2 themes)"
       ],
-      "waves": [
-        1,
-        2
+      "priority": 10,
+      "complexity": 94,
+      "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
+      "status": "passed",
+      "dependsOn": [
+        "US-210",
+        "US-201"
       ],
-      "severity": "low",
-      "note": "Dependency-ordered (US-102 dependsOn US-101); intentional sequential parser rewrite"
-    },
-    {
-      "file": "src/components/ParsedInput.tsx",
-      "stories": [
-        "US-104",
-        "US-105"
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "BrushStroke tests first",
+          "description": "Create src/components/BrushStroke.test.tsx: renders an svg with aria-hidden=true; the path's d attribute contains curve commands (C or Q \u2014 organic, not a straight line); accepts a settled prop switching class brush-stroke--settled; spans width 100%. Tests fail (component doesn't exist).",
+          "filePaths": [
+            "src/components/BrushStroke.test.tsx"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/BrushStroke.test.tsx 2>&1 | grep -q 'failed\\|Cannot find' && echo RED-CONFIRMED"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-002",
+          "title": "Implement BrushStroke component",
+          "description": "Create src/components/BrushStroke.tsx + BrushStroke.css. Inline SVG (preserveAspectRatio=none, viewBox 0 0 100 10) with a single filled tapered path: top edge and bottom edge are offset cubic curves so thickness varies ~4\u20138px with a tapered tail \u2014 a closed filled path, not a stroked line. Draw-in via clip-path inset animation (right inset 100%\u21920) at var(--motion-base) var(--ease) on the .brush-stroke--drawing class; .brush-stroke--settled renders fully drawn. Colors: drawing fill var(--color-fg) opacity .85; settled fill var(--color-muted). prefers-reduced-motion: animation none, fully drawn. aria-hidden=true.",
+          "filePaths": [
+            "src/components/BrushStroke.tsx",
+            "src/components/BrushStroke.css"
+          ],
+          "commands": [
+            "pnpm exec vitest run src/components/BrushStroke.test.tsx",
+            "pnpm run build",
+            "pnpm run lint"
+          ],
+          "testFirst": true,
+          "status": "passed"
+        },
+        {
+          "id": "T-003",
+          "title": "Wire BrushStroke into TaskRow",
+          "description": "In src/components/TaskRow.tsx: render <BrushStroke/> absolutely positioned over the title span when the task is done (drawing variant during the completing transition \u2014 reuse the existing completing-state hook/class that drove the old strike animation; settled variant otherwise). Remove text-decoration line-through and the old strike animation from src/components/TaskList.css (line ~101). Existing completion behavior assertions must pass unmodified.",
+          "filePaths": [
+            "src/components/TaskRow.tsx",
+            "src/components/TaskList.css"
+          ],
+          "commands": [
+            "! grep -n 'line-through' src/components/TaskList.css",
+            "pnpm exec vitest run src/components/TaskRow.test.tsx src/components/TaskList.test.tsx"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 wiring task; stroke behavior tested in T-001/T-002, row behavior in existing tests",
+          "wiring_verification": {
+            "file": "src/components/TaskRow.tsx",
+            "must_contain": [
+              "import { BrushStroke }",
+              "<BrushStroke"
+            ]
+          },
+          "status": "passed"
+        },
+        {
+          "id": "T-004",
+          "title": "Wire BrushStroke into DoneView inline rows",
+          "description": "src/views/DoneView.tsx renders rows INLINE (task-row task-row--done markup at ~line 22), NOT via TaskRow. Import BrushStroke and render the settled variant over each done title; remove any line-through styling it relies on. Do NOT refactor DoneView to use TaskRow (non-goal #7).",
+          "filePaths": [
+            "src/views/DoneView.tsx"
+          ],
+          "commands": [
+            "grep -n 'BrushStroke' src/views/DoneView.tsx",
+            "pnpm exec vitest run src/views/DoneView.test.tsx"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 wiring task into second render path",
+          "wiring_verification": {
+            "file": "src/views/DoneView.tsx",
+            "must_contain": [
+              "import { BrushStroke }",
+              "<BrushStroke"
+            ]
+          },
+          "status": "passed"
+        },
+        {
+          "id": "T-005",
+          "title": "E2E completion journey + pixel check",
+          "description": "Run e2e/all-done.spec.ts and the completion/undo journeys; selector-only locator updates allowed (e.g. if .task-row-title structure gained a wrapper), behavior assertions frozen. Then capture states + visual specs --update-snapshots and LOOK at the PNGs: tapered organic stroke through done titles in Today and Done views, muted settled color, no CSS line-through anywhere.",
+          "filePaths": [
+            "e2e/all-done.spec.ts"
+          ],
+          "commands": [
+            "pnpm exec playwright test e2e/all-done.spec.ts",
+            "pnpm exec playwright test e2e/states-tasklist.spec.ts verification/visual.spec.ts --update-snapshots",
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 verification + Pixel Law inspection step",
+          "status": "passed"
+        }
       ],
-      "waves": [
-        3,
-        4
-      ],
-      "severity": "low",
-      "note": "Dependency-ordered (US-105 dependsOn US-104); extraction then new behavior"
-    },
-    {
-      "file": "src/components/ParsedInput.test.tsx",
-      "stories": [
-        "US-104",
-        "US-105"
-      ],
-      "waves": [
-        3,
-        4
-      ],
-      "severity": "low",
-      "note": "Dependency-ordered (US-105 dependsOn US-104)"
-    },
-    {
-      "file": "src/components/TaskRow.tsx",
-      "stories": [
-        "US-107",
-        "US-106"
-      ],
-      "waves": [
-        1,
-        5
-      ],
-      "severity": "low",
-      "note": "Dependency-ordered (US-106 dependsOn US-107); menu removal lands before edit integration"
-    },
-    {
-      "file": "src/components/TaskRow.test.tsx",
-      "stories": [
-        "US-107",
-        "US-106"
-      ],
-      "waves": [
-        1,
-        5
-      ],
-      "severity": "low",
-      "note": "Dependency-ordered (US-106 dependsOn US-107)"
-    },
-    {
-      "file": "verification/visual.spec.ts-snapshots/",
-      "stories": [
-        "US-107",
-        "US-108"
-      ],
-      "waves": [
-        1,
-        6
-      ],
-      "severity": "low",
-      "note": "Dependency-ordered (US-108 dependsOn US-107); baseline re-bless directory"
-    }
-  ],
-  "dagValidation": {
-    "timestamp": "2026-06-10T22:53:15Z",
-    "prdSha": "c9d69083c43da1b7bafa57f0f321f059577b1566c1e4f3ed7e6c85a357b996a2",
-    "complexityScored": true,
-    "complexityFormula": "min(100, task_count*10 + dependsOn_depth*15 + (has_security_tag ? 30 : 0) + filePaths_count*2)",
-    "bottlenecks": [
-      {
-        "type": "single_story_wave",
-        "wave": 2,
-        "story": "US-102",
-        "fix": "warning",
-        "reason": "Intentional serialization point: contract-breaking ParseResult change (adds displaced); US-103/104/105/106 must build against the new signature. storyType logic \u2014 not stub-extractable."
+      "review": {
+        "specCompliance": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-15T23:33:24.839256+00:00"
+        },
+        "codeQuality": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-15T23:33:24.839256+00:00"
+        }
       },
-      {
-        "type": "single_story_wave",
-        "wave": 4,
-        "story": "US-105",
-        "fix": "warning",
-        "reason": "US-105 modifies the same files US-104 creates (src/components/ParsedInput.tsx/.test.tsx); deliberate extraction-then-behavior split per PRD risk mitigation. Not parallelizable."
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
       },
-      {
-        "type": "single_story_wave",
-        "wave": 5,
-        "story": "US-106",
-        "fix": "warning",
-        "reason": "Integration join of US-103 (serializer), US-105 (ParsedInput behavior), and US-107 (TaskRow ownership). storyType logic \u2014 not stub-extractable."
+      "notes": "Signature interaction. dependsOn US-210 (TaskRow/TaskList files) and US-201 (DoneView.tsx empty-state edit lands first).",
+      "startedAt": null
+    },
+    {
+      "id": "US-208",
+      "title": "Deprecation cleanup & full baseline re-bless",
+      "description": "As the maintainer, I want the deprecated token removed and every visual baseline \u2014 now breakpoints \u00d7 themes \u2014 regenerated and human-verified, so the gate enforces Ink Garden from now on.",
+      "acceptanceCriteria": [
+        "grep -rn 'shadow-print' src/ returns 0 matches; the --shadow-print definition and its deprecation comment are deleted from src/styles/tokens.css",
+        "grep -rn 'Fraunces\\|Newsreader\\|JetBrains' src/ index.html returns 0 matches (stale font preloads/links in index.html removed too)",
+        "grep -rnE '#[0-9A-Fa-f]{3,8}' src/components src/App.css returns 0 matches",
+        "All baselines under __screenshots__/ (verification + e2e state specs) regenerated via --update-snapshots with the frozen clock, including the new dark-axis files from US-200",
+        "Per the Pixel Law, every regenerated desktop PNG (both themes) is rendered, looked at, and checked against DESIGN-SYSTEM.md \u00a76/\u00a78 before blessing; one line of inspection notes per PNG written to verification/baseline-inspection-2026-06.md [NEW] (grep-checkable: line count \u2265 PNG count)",
+        "Full gate run passes fresh: typecheck, lint, unit (coverage \u2265 80), e2e, visual.regression, visual.a11y, visual.lighthouse (thresholds \u00a78)",
+        "Verify in browser"
+      ],
+      "priority": 11,
+      "complexity": 100,
+      "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
+      "status": "passed",
+      "dependsOn": [
+        "US-200",
+        "US-209",
+        "US-201",
+        "US-202",
+        "US-203",
+        "US-204",
+        "US-205",
+        "US-206",
+        "US-207",
+        "US-210"
+      ],
+      "storyType": "logic",
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Remove deprecated --shadow-print token",
+          "description": "Verify zero consumers first: grep -rn 'shadow-print' src/ must show ONLY the tokens.css definition (all re-skin stories removed their usages; if any remain, fix that component's CSS first and report it). Then delete the --shadow-print line and its deprecation comment from src/styles/tokens.css.",
+          "filePaths": [
+            "src/styles/tokens.css"
+          ],
+          "commands": [
+            "! grep -rn 'shadow-print' src/",
+            "pnpm run build"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 token deletion with grep-gated precondition",
+          "status": "passed"
+        },
+        {
+          "id": "T-002",
+          "title": "Purge Morning Edition fonts + hex audit",
+          "description": "Remove stale Fraunces/Newsreader/JetBrains preload/link tags from index.html (check <head>). Run the hex audit grep across src/components and src/App.css; fix any straggler literal colors by replacing with tokens.",
+          "filePaths": [
+            "index.html",
+            "src/App.css",
+            "src/components/"
+          ],
+          "commands": [
+            "! grep -rn 'Fraunces\\|Newsreader\\|JetBrains' src/ index.html",
+            "! grep -rnE '#[0-9A-Fa-f]{3,8}' src/components src/App.css"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 cleanup with grep verification",
+          "status": "passed"
+        },
+        {
+          "id": "T-003",
+          "title": "Regenerate all baselines (frozen clock)",
+          "description": "Delete __screenshots__/ contents, then regenerate everything: pnpm exec playwright test verification/visual.spec.ts e2e/ --update-snapshots (frozen clock fixture applies). Expect breakpoints \u00d7 themes files for the visual spec plus every e2e state spec's shots.",
+          "filePaths": [
+            "__screenshots__/"
+          ],
+          "commands": [
+            "pnpm exec playwright test verification/visual.spec.ts e2e/ --update-snapshots",
+            "find __screenshots__ -name '*-dark*' | grep -q ."
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 baseline generation",
+          "status": "passed"
+        },
+        {
+          "id": "T-004",
+          "title": "Pixel Law inspection ledger",
+          "description": "Open and LOOK at every regenerated desktop PNG in both themes against DESIGN-SYSTEM.md \u00a76/\u00a78. Write verification/baseline-inspection-2026-06.md: one line per inspected PNG ('<path> \u2014 <verdict + one observation>'). A baseline you never looked at is not a baseline. If any PNG violates \u00a76, fix the component (report which story's surface) before blessing.",
+          "filePaths": [
+            "verification/baseline-inspection-2026-06.md"
+          ],
+          "commands": [
+            "test $(grep -c '__screenshots__' verification/baseline-inspection-2026-06.md) -ge $(find __screenshots__ -name '*desktop*.png' | wc -l)"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 human/agent visual inspection with grep-checkable ledger",
+          "status": "passed"
+        },
+        {
+          "id": "T-005",
+          "title": "Full gate run (Iron Law evidence)",
+          "description": "Run every gate fresh and capture output: pnpm run typecheck; pnpm run lint; pnpm exec vitest run --coverage (\u226580%); pnpm exec playwright test e2e/; pnpm exec playwright test verification/visual.spec.ts; pnpm exec playwright test verification/a11y.spec.ts; pnpm exec lhci autorun. All must pass thresholds (lighthouse: a11y 1.0, perf \u2265 0.9, best-practices \u2265 0.95). If lighthouse perf fails on font weight, surface it \u2014 non-goal #6 names subsetting as the follow-up, do NOT silently lower thresholds.",
+          "filePaths": [],
+          "commands": [
+            "pnpm run build",
+            "pnpm run lint",
+            "pnpm exec vitest run --coverage",
+            "pnpm exec playwright test e2e/",
+            "pnpm exec playwright test verification/visual.spec.ts",
+            "pnpm exec playwright test verification/a11y.spec.ts",
+            "pnpm exec lhci autorun",
+            "bash verification/run-visual-gate.sh /"
+          ],
+          "testFirst": false,
+          "notes": "testFirst: false \u2014 final verification run",
+          "status": "passed"
+        }
+      ],
+      "review": {
+        "specCompliance": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-15T23:42:19.848646+00:00"
+        },
+        "codeQuality": {
+          "status": "passed",
+          "issues": [],
+          "reviewedAt": "2026-06-15T23:42:19.848646+00:00"
+        }
       },
-      {
-        "type": "single_story_wave",
-        "wave": 6,
-        "story": "US-108",
-        "fix": "warning",
-        "reason": "Terminal e2e/visual-baseline story; must follow all feature work by design. storyType test."
-      }
-    ],
-    "duplicationRisks": [],
-    "fileConflictsComputed": 7,
-    "stubsCreated": [],
-    "timeouts": []
-  },
-  "progress": [
-    {
-      "timestamp": "2026-06-11T01:10:56.807713+00:00",
-      "iteration": 1,
-      "storyId": "US-101",
-      "action": "story_passed",
-      "details": "Explicit-year date parsing (matchExplicitYear, both word orders, 1970-2100) + year-aware formatDateDisplay(date, now?). Merged 241a209; post-merge gates: typecheck 0, lint 0, 353/353 tests (335 baseline + 18 new).",
-      "filesChanged": [
-        "src/lib/parser.ts",
-        "src/lib/parser.test.ts"
-      ],
-      "learnings": "formatDateDisplay optional now param is backward compatible; US-103/US-104 should pass now for year-aware display per date_serialization contract."
-    },
-    {
-      "timestamp": "2026-06-11T16:48:51.789629+00:00",
-      "iteration": 1,
-      "storyId": "US-107",
-      "action": "story_passed",
-      "details": "Removed overflow menu (button, role=menu, menuOpen state, unused snooze imports) from TaskRow.tsx; deleted task-row-overflow*/task-row-menu* CSS; rewrote states-snooze e2e for keyboard-only (3 pass). Orchestrator finished T-003 visual gate (agent hit session limit after T-002) and refined the absence test to role-based. Gates: grep clean, typecheck 0, lint 0, 350/350 unit, visual gate PASS (regression+a11y 0 violations+lighthouse).",
-      "filesChanged": [
-        "src/components/TaskRow.tsx",
-        "src/components/TaskList.css",
-        "src/components/TaskRow.test.tsx",
-        "e2e/states-snooze.spec.ts",
-        "__screenshots__/e2e/states-snooze.spec.ts/"
-      ],
-      "learnings": "Overflow button was hover/focus-only (opacity:0 default), so removing it did NOT diff the static root baseline \u2014 no re-bless needed. Snooze keymap (1/2/3) lives in useKeymap, fully decoupled from TaskRow; cheatsheet rows unchanged."
-    },
-    {
-      "timestamp": "2026-06-11T17:04:28.408205+00:00",
-      "iteration": 2,
-      "storyId": "US-102",
-      "action": "story_passed",
-      "details": "Last-wins parser: added Range + displaced:Range[] to ParseResult, parse(input,now,reverted?) signature. Whole-input occurrence scan per kind keeps LAST, earlier ranges \u2192 displaced. skip/used split: reverted words skipped by matchers but stay in title; consumed words excluded from title. Merged 1697b5d (FF). Gates: typecheck 0, lint 0, 366/366 unit (86 parser, 23 CommandBar).",
-      "filesChanged": [
-        "src/lib/parser.ts",
-        "src/lib/parser.test.ts",
-        "src/components/CommandBar.test.tsx"
-      ],
-      "learnings": "CommandBar.tsx unchanged \u2014 its applyReverts spreads {...result} so the new displaced field flows through automatically. prdSha c9d6908 reconciles via compute_prd_sha (normalized), not raw shasum. Worktree merges MUST run from project root \u2014 Bash cwd persists and can drift into a worktree, making git merge a silent no-op (already-up-to-date) against the wrong branch."
-    },
-    {
-      "timestamp": "2026-06-11T17:16:20.211739+00:00",
-      "iteration": 3,
-      "storyId": "US-103",
-      "action": "story_passed",
-      "details": "serializeTask(task,now): canonical token order title-date-time-recurrence-list-priority; bare <mon> <day> only when it round-trips else explicit year; byMonthDay excluded; revertedRanges from title parse chips+displaced. Merged dacb179 (FF). Gates: typecheck 0, lint 0, 3431/3431 unit (3024-case round-trip grid), coverage 93.96% (serialize.ts 95.94%).",
-      "filesChanged": [
-        "src/lib/serialize.ts",
-        "src/lib/serialize.test.ts"
-      ],
-      "learnings": "Agent worktree isolation branched from main (762af0b) not the feature tip; US-103 agent self-corrected via git reset --hard onto d7493f3. This is the reliable remediation pattern for the worktree-base bug. Times serialize to am/pm because parser flags 24h H:MM as needsDate=true."
-    },
-    {
-      "timestamp": "2026-06-11T17:26:31.522350+00:00",
-      "iteration": 3,
-      "storyId": "US-104",
-      "action": "story_passed",
-      "details": "Extracted controlled ParsedInput from CommandBar (owns ParsedInputProps; reverts now Range[] passed into parse() 3rd arg, old applyReverts deleted). Pixel-identical: 23/23 CommandBar tests unmodified, 10/10 e2e, visual gate PASS no re-bless. Merged 577ffe5 (FF). Attempts 1-2 failed on worktree-base-mismatch (branched from old main); attempt 3 succeeded via git reset --hard onto feature tip. Orchestrator then fixed a build regression: removed stray process.env.TZ line from serialize.test.ts (US-103) that broke tsc -b.",
-      "filesChanged": [
-        "src/components/ParsedInput.tsx",
-        "src/components/ParsedInput.css",
-        "src/components/ParsedInput.test.tsx",
-        "src/components/CommandBar.tsx",
-        "src/components/CommandBar.css",
-        "src/lib/serialize.test.ts"
-      ],
-      "learnings": "GATE BLINDNESS: pnpm run typecheck = tsc --noEmit against root tsconfig.json (files:[]) is a NO-OP \u2014 checks nothing. Real type errors only surface in pnpm run build (tsc -b). The orchestrator must run pnpm run build in the final integration gate. Worktree isolation branches from main, not the feature tip \u2014 every spawned agent must git reset --hard onto the passed base SHA first."
-    },
-    {
-      "timestamp": "2026-06-11T17:45:59.532576+00:00",
-      "iteration": 4,
-      "storyId": "US-105",
-      "action": "story_passed",
-      "details": "Sealed displacement (demoted-text mirror, seal-on-space/submit, seam\u21921 space, never-trim), caret-shift rule via pre-render caret snapshot + useLayoutEffect setSelectionRange, session-chip baseline (kind,display absent from mount parse), Esc two-tier (revert recent session chip else onCancel). Merged 964fdc4 (FF). Gates: lint 0, build 0 (tsc -b), 3458/3458 unit (30 ParsedInput, 23 CommandBar), visual gate PASS no re-bless.",
-      "filesChanged": [
-        "src/components/ParsedInput.tsx",
-        "src/components/ParsedInput.test.tsx",
-        "src/components/ParsedInput.css"
-      ],
-      "learnings": "react-refresh/only-export-components forbids exporting non-component helpers from component files \u2014 keep removeRanges internal, verify caret math via integration tests. react-hooks/immutability flags forwarded-ref .current writes in render-phase callback refs \u2014 use a module-scope assignForwardedRef helper. jsdom resets caret to end-of-field on each controlled write, so right-of-caret cases assert via integration not fireEvent. US-105 added inert .command-bar-demoted to ParsedInput.css (outside declared files, flagged, gate-confirmed inert)."
-    },
-    {
-      "timestamp": "2026-06-11T17:59:22.134327+00:00",
-      "iteration": 5,
-      "storyId": "US-106",
-      "action": "story_passed",
-      "details": "TaskRow edit integration: openEdit (open-only) freezes clock, serializeTask + round-trip guard (console.error + title-only fallback on mismatch), ParsedInput replaces plain input, saveParsed diffs ParseResult vs task into one edit action (nulls for clears), blur saves/empty-cancels, Enter-empty blocks, done-task FR-120 guard, FR-115 announcement parity. Edit toast Saved\u2192Task updated. Merged 58e388e (FF). Gates: lint 0, build 0, 3472/3472 (38 store, 20 TaskRow, 11 usePersistence), visual gate PASS.",
-      "filesChanged": [
-        "src/components/TaskRow.tsx",
-        "src/components/TaskRow.test.tsx",
-        "src/lib/store.test.ts",
-        "src/state/AppContext.tsx"
-      ],
-      "learnings": "Frozen edit-session clock (one Date for serializeTask + ParsedInput now + save-parse) is the round-trip-stability anchor. TaskRow edit tests freeze time via vi.useFakeTimers({toFake:[Date]}) + setSystemTime to avoid userEvent hangs. A metadata task now serializes to multi-token text (Send report yesterday 3pm #work), so pre-existing title-only inline-edit tests switched to makePlainTask."
-    },
-    {
-      "timestamp": "2026-06-11T18:16:45.329414+00:00",
-      "iteration": 6,
-      "storyId": "US-108",
-      "action": "story_passed",
-      "details": "E2E edit/add journeys (edit-tokens.spec.ts: seal-away friday->monday, erase #work->null, Cmd+Z restores both; add-bar single Monday chip) + edit-mode visual state (states-edit.spec.ts at 375/768/1280, PNGs Read & confirmed vs DESIGN-SYSTEM). Merged fc06ebd. Agent reported STORY_FAILED only due to an out-of-scope pre-existing date-flake in upcoming.spec.ts mobile baseline (clock rolled 06-10->06-11); orchestrator re-blessed it (5371088) after reading the PNG (date text only). Full e2e now 77/77.",
-      "filesChanged": [
-        "e2e/edit-tokens.spec.ts",
-        "e2e/states-edit.spec.ts",
-        "__screenshots__/e2e/states-edit.spec.ts/",
-        "__screenshots__/e2e/upcoming.spec.ts/upcoming-grouped-mobile.png"
-      ],
-      "learnings": "Date-relative screenshot baselines (upcoming.spec.ts uses plusDays from real new Date()) go stale at midnight rollover \u2014 a latent suite-wide flake; no e2e spec pins a browser clock. Recommend pinning page.clock for any date-text screenshot spec in a future hardening pass."
+      "retries": {
+        "attempts": 0,
+        "maxAttempts": 3,
+        "failureLog": []
+      },
+      "notes": "Atomic and last. The visual gate is expected red for every story between US-200 and here; this story turns it green and makes it binding again.",
+      "startedAt": null
     }
-  ],
-  "codebasePatterns": [
-    "All colors/spacing/type via CSS variables from DESIGN-SYSTEM.md \u2014 no literals in components",
-    "Every interactive element has a visible focus-visible style (2px accent ring, 2px offset)",
-    "src/lib/ modules are framework-free: no React imports, clocks/storage/ids injected as parameters",
-    "Unit tests use generator functions (makeTask, makeAppData, makeMemoryStorage), never beforeEach mutation",
-    "Test names state concrete behavior: 'snoozing with key 1 sets dueDate to tomorrow', never 'works correctly'",
-    "No `any` in TypeScript \u2014 use real types or unknown",
-    "Date math uses local-date components from src/lib/dates.ts \u2014 never UTC ms arithmetic across days",
-    "Same-wave stories own disjoint files: views live in src/views/<View>.tsx, components in src/components/, App.tsx is owned by exactly one in-flight story at a time",
-    "Date helpers use ISO weekday numbering 1=Mon..7=Sun; all date math via local components (new Date(y,m-1,d+n,12))",
-    "Parser: pass order recurrence->date->time->list->priority, LAST-wins per kind with displaced ranges (chip+displaced ranges excluded from title; reverted ranges unmatchable), word-level whole-token matching; chip displays: date \"Wed Jun 10\" (+year when != now year), time \"3:00 PM\", list \"#work\", priority \"P1\", recurrence source text",
-    "Store: reducer(state, action) pure; mutating payloads carry injected ids/dates (newId, completedAt, today); internal inverse action types restore/markDone/revertComplete",
-    "UI: classes shell-column/masthead/view-tabs/view-tab/keycap/empty-state in App.css; tokens only; aria-current=page marks active tab; useApp() from src/state/AppContext",
-    "Component tests: // @vitest-environment jsdom pragma + src/test-setup.ts localStorage shim; probe context state by rendering a JSON <pre> probe inside AppProvider",
-    "TaskList sections prop: [{label, tasks, rollover?}]; empty sections omitted; all-empty renders empty-state line. TaskRow classes: task-row--p1/--rollover/--selected/--done",
-    "Toast: useApp().toast + showToast; wrapped dispatch emits Captured/Completed/Done \u2014 next <date>/Deleted/Snoozed to <date>/Scheduled/Saved/Reopened/Undone/Redone",
-    "useKeymap config: callbacks (onComplete/onEdit/onDelete/onSnooze/onUndo/onRedo/onTypeahead) + getRowIds reads DOM .task-row[data-task-id]; today injectable",
-    "DST-sensitive tests rely on the GLOBAL TZ pin in vite.config.ts (env.TZ=America/New_York); individual test files must NOT set process.env.TZ (it breaks tsc -b / pnpm run build \u2014 node process global is not in the app tsconfig). Date math via local components: new Date(y,m,d+1,0,0,0), never +24h",
-    "New components get their own CSS file next to the component (StorageBanner.css pattern), tokens only"
   ],
   "contracts": {
     "design_tokens": {
@@ -1101,370 +1189,368 @@
         "value": "--color-fg",
         "pattern": "^--color-[a-z-]+$"
       },
+      "color-danger": {
+        "value": "--color-danger",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "shadow-wash": {
+        "value": "--shadow-wash"
+      },
       "space-scale": {
         "value": "[4,8,12,16,24,32,48,64,96]"
       },
       "type-display": {
         "value": "--type-display",
         "pattern": "^--type-[a-z0-9]+$"
-      }
-    },
-    "routes": {
-      "home": {
-        "value": "/",
-        "pattern": "^/"
-      }
-    },
-    "storage_keys": {
-      "app_data": {
-        "value": "todo-quantum.v1",
-        "pattern": "^todo-quantum\\."
       },
-      "recovery_prefix": {
-        "value": "todo-quantum.recovery.",
-        "pattern": "^todo-quantum\\.recovery\\."
-      }
-    },
-    "commands": {
-      "palette_set": {
-        "value": "today|upcoming|all|done|undo|redo|help"
-      }
-    },
-    "keybindings": {
-      "snooze_tomorrow": {
-        "value": "1"
-      },
-      "snooze_next_week": {
-        "value": "2"
-      },
-      "snooze_weekend": {
-        "value": "3"
-      },
-      "complete": {
-        "value": "x"
-      },
-      "cheatsheet": {
-        "value": "?"
-      }
-    },
-    "shared_types": {
-      "task": {
-        "value": "Task",
-        "pattern": "^[A-Z][a-zA-Z]*$",
-        "definitionFile": "src/lib/types.ts",
-        "shape": {
-          "properties": [
-            {
-              "name": "id",
-              "type": "string"
-            },
-            {
-              "name": "title",
-              "type": "string"
-            },
-            {
-              "name": "status",
-              "type": "'open' | 'done'"
-            },
-            {
-              "name": "dueDate",
-              "type": "string | null"
-            },
-            {
-              "name": "dueTime",
-              "type": "string | null"
-            },
-            {
-              "name": "list",
-              "type": "string | null"
-            },
-            {
-              "name": "priority",
-              "type": "1 | 2 | 3 | null"
-            },
-            {
-              "name": "recurrence",
-              "type": "Recurrence | null"
-            },
-            {
-              "name": "createdAt",
-              "type": "string"
-            },
-            {
-              "name": "completedAt",
-              "type": "string | null"
-            },
-            {
-              "name": "order",
-              "type": "number"
-            }
-          ],
-          "methods": []
-        },
-        "definition": "export interface Task {\n  id: string;\n  title: string;\n  status: 'open' | 'done';\n  dueDate: string | null;\n  dueTime: string | null;\n  list: string | null;\n  priority: 1 | 2 | 3 | null;\n  recurrence: Recurrence | null;\n  createdAt: string;\n  completedAt: string | null;\n  order: number;\n}"
-      },
-      "recurrence": {
-        "value": "Recurrence",
-        "pattern": "^[A-Z][a-zA-Z]*$",
-        "definitionFile": "src/lib/types.ts",
-        "shape": {
-          "properties": [
-            {
-              "name": "freq",
-              "type": "'daily' | 'weekly' | 'monthly'"
-            },
-            {
-              "name": "interval",
-              "type": "number"
-            },
-            {
-              "name": "byWeekday",
-              "type": "number[] | null"
-            },
-            {
-              "name": "byMonthDay",
-              "type": "number | null"
-            }
-          ],
-          "methods": []
-        },
-        "definition": "export interface Recurrence {\n  freq: 'daily' | 'weekly' | 'monthly';\n  interval: number;\n  byWeekday: number[] | null;\n  byMonthDay: number | null;\n}"
-      },
-      "app_data": {
-        "value": "AppData",
-        "pattern": "^[A-Z][a-zA-Z]*$",
-        "definitionFile": "src/lib/types.ts",
-        "shape": {
-          "properties": [
-            {
-              "name": "schemaVersion",
-              "type": "1"
-            },
-            {
-              "name": "tasks",
-              "type": "Task[]"
-            }
-          ],
-          "methods": []
-        },
-        "definition": "export interface AppData {\n  schemaVersion: 1;\n  tasks: Task[];\n}"
-      },
-      "chip": {
-        "value": "Chip",
-        "pattern": "^[A-Z][a-zA-Z]*$",
-        "definitionFile": "src/lib/parser.ts",
-        "shape": {
-          "properties": [
-            {
-              "name": "start",
-              "type": "number"
-            },
-            {
-              "name": "end",
-              "type": "number"
-            },
-            {
-              "name": "kind",
-              "type": "'date' | 'time' | 'list' | 'priority' | 'recurrence'"
-            },
-            {
-              "name": "display",
-              "type": "string"
-            }
-          ],
-          "methods": []
-        },
-        "definition": "export interface Chip {\n  start: number;\n  end: number;\n  kind: 'date' | 'time' | 'list' | 'priority' | 'recurrence';\n  display: string;\n}"
-      },
-      "parse_result": {
-        "value": "ParseResult",
-        "pattern": "^[A-Z][a-zA-Z]*$",
-        "definitionFile": "src/lib/parser.ts",
-        "owner": "US-102",
-        "consumers": [
-          "US-103",
-          "US-104",
-          "US-105",
-          "US-106"
-        ],
-        "shape": {
-          "properties": [
-            {
-              "name": "valid",
-              "type": "boolean"
-            },
-            {
-              "name": "title",
-              "type": "string"
-            },
-            {
-              "name": "dueDate",
-              "type": "string | null"
-            },
-            {
-              "name": "dueTime",
-              "type": "string | null"
-            },
-            {
-              "name": "list",
-              "type": "string | null"
-            },
-            {
-              "name": "priority",
-              "type": "1 | 2 | 3 | null"
-            },
-            {
-              "name": "recurrence",
-              "type": "Recurrence | null"
-            },
-            {
-              "name": "chips",
-              "type": "Chip[]"
-            },
-            {
-              "name": "displaced",
-              "type": "Range[]"
-            }
-          ],
-          "methods": []
-        },
-        "definition": "export interface ParseResult {\n  valid: boolean;\n  title: string;\n  dueDate: string | null;\n  dueTime: string | null;\n  list: string | null;\n  priority: 1 | 2 | 3 | null;\n  recurrence: Recurrence | null;\n  chips: Chip[];\n  displaced: Range[];\n}"
-      },
-      "range": {
-        "value": "Range",
-        "pattern": "^[A-Z][a-zA-Z]*$",
-        "definitionFile": "src/lib/parser.ts",
-        "owner": "US-102",
-        "consumers": [
-          "US-103",
-          "US-104",
-          "US-105",
-          "US-106"
-        ],
-        "shape": {
-          "properties": [
-            {
-              "name": "start",
-              "type": "number"
-            },
-            {
-              "name": "end",
-              "type": "number"
-            }
-          ],
-          "methods": []
-        },
-        "definition": "export interface Range {\n  start: number;\n  end: number;\n}"
-      },
-      "serialize_result": {
-        "value": "SerializeResult",
-        "pattern": "^[A-Z][a-zA-Z]*$",
-        "definitionFile": "src/lib/serialize.ts",
-        "owner": "US-103",
-        "consumers": [
-          "US-106"
-        ],
-        "shape": {
-          "properties": [
-            {
-              "name": "text",
-              "type": "string"
-            },
-            {
-              "name": "revertedRanges",
-              "type": "Range[]"
-            }
-          ],
-          "methods": []
-        },
-        "definition": "export interface SerializeResult {\n  text: string;\n  revertedRanges: Range[];\n}"
-      },
-      "parsed_input_props": {
-        "value": "ParsedInputProps",
-        "pattern": "^[A-Z][a-zA-Z]*$",
-        "definitionFile": "src/components/ParsedInput.tsx",
-        "owner": "US-104",
-        "consumers": [
-          "US-105",
-          "US-106"
-        ],
-        "shape": {
-          "properties": [
-            {
-              "name": "value",
-              "type": "string"
-            },
-            {
-              "name": "onChange",
-              "type": "(value: string) => void"
-            },
-            {
-              "name": "onSubmit",
-              "type": "(result: ParseResult) => void"
-            },
-            {
-              "name": "onCancel",
-              "type": "(() => void) | undefined"
-            },
-            {
-              "name": "parseEnabled",
-              "type": "boolean"
-            },
-            {
-              "name": "initialReverts",
-              "type": "Range[] | undefined"
-            },
-            {
-              "name": "now",
-              "type": "Date | undefined"
-            },
-            {
-              "name": "inputRef",
-              "type": "React.Ref<HTMLInputElement> | undefined"
-            },
-            {
-              "name": "onKeyDown",
-              "type": "((e: React.KeyboardEvent<HTMLInputElement>) => boolean) | undefined"
-            },
-            {
-              "name": "inputProps",
-              "type": "React.InputHTMLAttributes<HTMLInputElement> | undefined"
-            },
-            {
-              "name": "ariaLabel",
-              "type": "string"
-            }
-          ],
-          "methods": []
-        },
-        "definition": "export interface ParsedInputProps {\n  value: string;\n  onChange: (value: string) => void;\n  onSubmit: (result: ParseResult) => void;\n  onCancel?: () => void;\n  parseEnabled: boolean;\n  initialReverts?: Range[];\n  now?: Date;\n  inputRef?: React.Ref<HTMLInputElement>;\n  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => boolean;\n  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;\n  ariaLabel: string;\n}"
-      }
-    },
-    "parsing_rules": {
-      "token_precedence": {
-        "value": "pass order recurrence->date->time->list->priority; LAST-wins per kind (supersedes first-wins / old FR-9); earlier same-kind token ranges reported in ParseResult.displaced; chip AND displaced ranges are both excluded from title; tokens inside reverted ranges match nothing"
-      },
-      "sealing": {
-        "value": "displaced text is removed from the field only when the displacing token is sealed (followed by whitespace, or on submit); until sealed it renders demoted; seam collapses to a single space; live field is never trimmed"
-      },
-      "serializer_token_order": {
-        "value": "title, date, time, recurrence, list, priority"
-      },
-      "date_serialization": {
-        "value": "yesterday/today/tomorrow at now-1/now/now+1; '<mon> <day>' within next 12 months; '<mon> <day> <year>' otherwise; chip display shows year when date year != now year"
-      },
-      "esc_two_tier": {
-        "value": "Esc reverts the most recent session chip ((kind, parsed value) absent from mount-time baseline parse); with no session chips Esc invokes onCancel (edit: cancel; bar: existing behavior)"
+      "motion-slow": {
+        "value": "--motion-slow",
+        "pattern": "^--motion-[a-z]+$"
       }
     },
     "css_classes": {
-      "chip_class": {
-        "value": "command-bar-chip",
-        "notes": "class name intentionally unchanged when chip CSS moves to ParsedInput.css in US-104, keeping the visual baseline stable"
+      "empty_state": {
+        "value": "empty-state"
+      },
+      "empty_state_glyph": {
+        "value": "empty-state-glyph"
+      },
+      "masthead_rule": {
+        "value": "masthead-rule"
+      },
+      "prompt_bar": {
+        "value": "prompt-bar"
+      },
+      "task_priority": {
+        "value": "task-priority"
+      },
+      "brush_stroke": {
+        "value": "brush-stroke"
+      },
+      "task_section_label": {
+        "value": "task-section-label"
+      }
+    },
+    "config_keys": {
+      "visual_themes": {
+        "value": "visual.themes"
+      }
+    },
+    "aria_labels": {
+      "hanko_seal_progress": {
+        "value": "{done} of {total} tasks done today"
+      }
+    },
+    "shared_types": {
+      "kanji_date_formatter": {
+        "value": "formatKanjiDate",
+        "pattern": "^[a-z][a-zA-Z]*$",
+        "definitionFile": "src/lib/kanji-date.ts",
+        "owner": "US-209",
+        "consumers": [
+          "US-201"
+        ],
+        "shape": {
+          "properties": [],
+          "methods": [
+            {
+              "name": "formatKanjiDate",
+              "params": [
+                {
+                  "name": "d",
+                  "type": "Date"
+                }
+              ],
+              "returns": "string"
+            }
+          ]
+        },
+        "definition": "export function formatKanjiDate(d: Date): string;"
       }
     }
   },
-  "execution": {
-    "baselineTypecheckErrors": 0
-  }
+  "fileConflicts": [
+    {
+      "file": "src/App.tsx",
+      "stories": [
+        "US-201",
+        "US-202"
+      ],
+      "severity": "none",
+      "resolution": "US-202 dependsOn US-201"
+    },
+    {
+      "file": "src/components/TaskList.css",
+      "stories": [
+        "US-204",
+        "US-210",
+        "US-205"
+      ],
+      "severity": "none",
+      "resolution": "chain US-204 -> US-210 -> US-205 via dependsOn"
+    },
+    {
+      "file": "src/components/TaskRow.tsx",
+      "stories": [
+        "US-204",
+        "US-210",
+        "US-205"
+      ],
+      "severity": "none",
+      "resolution": "chain US-204 -> US-210 -> US-205 via dependsOn"
+    },
+    {
+      "file": "src/components/TaskList.tsx",
+      "stories": [
+        "US-204",
+        "US-210"
+      ],
+      "severity": "none",
+      "resolution": "US-210 dependsOn US-204"
+    },
+    {
+      "file": "src/views/DoneView.tsx",
+      "stories": [
+        "US-201",
+        "US-205"
+      ],
+      "severity": "none",
+      "resolution": "US-205 dependsOn US-201"
+    },
+    {
+      "file": "__screenshots__/",
+      "stories": [
+        "US-200",
+        "US-203",
+        "US-204",
+        "US-210",
+        "US-202",
+        "US-205",
+        "US-206",
+        "US-207",
+        "US-208"
+      ],
+      "severity": "none",
+      "resolution": "interim --update-snapshots runs are throwaway evidence; only US-208 (dependsOn all) blesses binding baselines. Command-level writes, not tasks[].filePaths ownership (only US-208 declares __screenshots__/)."
+    }
+  ],
+  "dagValidation": {
+    "timestamp": "2026-06-12T21:00:56Z",
+    "prdSha": "94e82c3f2939a36bfeeb71684db7b78ecd5bcd4ad762b486372b3f55f9685007",
+    "bottlenecks": [
+      {
+        "type": "fan-in",
+        "storyId": "US-208",
+        "detail": "Fan-in of 10 (dependsOn all other stories)",
+        "fix": "warning",
+        "warning": "US-208 is the intentional terminal baseline-bless/cleanup story; extraction impossible by design (PRD: dependsOn all). No action.",
+        "reverted": false
+      },
+      {
+        "type": "chain",
+        "storyId": "US-205",
+        "detail": "Critical path US-204 -> US-210 -> US-205 -> US-208 (4 waves)",
+        "fix": "warning",
+        "warning": "Chain is file-bound (TaskRow.tsx/TaskList.css shared by all three row stories per PRD section 7 ownership map); extraction would not reduce wave count. No action.",
+        "reverted": false
+      }
+    ],
+    "duplicationRisks": [
+      {
+        "storyPair": [
+          "US-205",
+          "US-205"
+        ],
+        "concern": "BrushStroke mounted in two render paths (TaskRow + DoneView inline rows)",
+        "verdict": "dismissed",
+        "reason": "PRD non-goal #7 explicitly keeps both render paths; unifying is future work"
+      },
+      {
+        "storyPair": [
+          "US-201",
+          "US-207"
+        ],
+        "concern": "Ink-rule motif CSS recipe duplicated (masthead-rule / cheatsheet-rule)",
+        "verdict": "dismissed",
+        "reason": "3-line token-driven CSS recipe governed by contracts.css_classes.masthead_rule; shared-story extraction is over-engineering"
+      },
+      {
+        "storyPair": [
+          "US-201",
+          "US-203",
+          "US-204",
+          "US-206"
+        ],
+        "concern": "Wide-tracked caps 12px treatment repeated across surfaces",
+        "verdict": "dismissed",
+        "reason": "Design-system section 6 convention expressed via tokens, not duplicated functional logic"
+      }
+    ],
+    "fileConflictsComputed": 6,
+    "stubsCreated": [],
+    "timeouts": [],
+    "complexityScored": true,
+    "complexityFormula": "min(100, task_count*10 + dependsOn_depth*15 + (has_security_tag ? 30 : 0) + filePaths_count*2)"
+  },
+  "progress": [
+    {
+      "timestamp": "2026-06-15T22:42:33.610484+00:00",
+      "iteration": 0,
+      "storyId": "US-206",
+      "action": "story_passed",
+      "details": "Reconciled as already-complete: prior-session commits f1fe4cb/11e0069 re-skinned Toast/StorageBanner/ErrorBoundary to Ink Garden. Verified against ACs (no shadow-print, no hex, shadow-wash present, tests green).",
+      "filesChanged": [
+        "src/components/Toast.css",
+        "src/components/StorageBanner.css",
+        "src/components/ErrorBoundary.css",
+        "src/components/Toast.tsx"
+      ],
+      "learnings": "HEAD already contained the Ink Garden design system (tokens.css, DESIGN-SYSTEM.md) and US-206 from a prior session. Execution reconciles via verify-then-execute per story rather than assuming an all-Morning-Edition baseline."
+    },
+    {
+      "timestamp": "2026-06-15T22:46:05.985201+00:00",
+      "iteration": 1,
+      "storyId": "US-200",
+      "action": "story_passed",
+      "details": "Added dark-theme axis (visual.themes=[light,dark]) to visual.spec + a11y.spec via emulateMedia; transparent document.fonts.ready wait hooked into e2e/fixtures page.goto so all consumers inherit it. Verified: 6 visual baselines (3 bp x 2 themes, dark suffixed), 8 a11y tests pass axe-clean both themes, dark axis renders night-ink palette, build+lint green.",
+      "filesChanged": [
+        "lens.config.json",
+        "e2e/fixtures.ts",
+        "verification/visual.spec.ts",
+        "verification/a11y.spec.ts"
+      ],
+      "learnings": "App theming is pure prefers-color-scheme (no data-theme attr), so emulateMedia({colorScheme}) drives dark tokens directly. Stale vite dev server on :5273 must be killed before playwright (reuseExistingServer:false)."
+    },
+    {
+      "timestamp": "2026-06-15T22:46:58.636284+00:00",
+      "iteration": 2,
+      "storyId": "US-209",
+      "action": "story_passed",
+      "details": "formatKanjiDate(d) -> \u6708/\u65e5 kanji numerals, timezone-naive. 9 unit tests (incl. teens, round-tens, local-vs-UTC) pass.",
+      "filesChanged": [
+        "src/lib/kanji-date.ts",
+        "src/lib/kanji-date.test.ts"
+      ],
+      "learnings": "Kanji numerals for 1-31: units direct, \u5341 for ten, \u5341X teens, X\u5341(Y) for 20-31."
+    },
+    {
+      "timestamp": "2026-06-15T22:55:20.810382+00:00",
+      "iteration": 3,
+      "storyId": "US-204",
+      "action": "story_passed",
+      "details": "Flat hairline rows (no card/box/left-rule/print-shadow), 17px circle checkbox filling ink when done, Shippori Mincho 17/26 titles, kanji priority glyph (\u4e00 crimson / \u4e8c\u4e09 muted), wide-tracked caps meta+since (CSS uppercase, DOM text unchanged)+section labels, enso \u25ef empty-state markup. 34 component tests + 3495 unit suite pass; pixel-inspected desktop rows.",
+      "filesChanged": [
+        "src/components/TaskRow.tsx",
+        "src/components/TaskList.tsx",
+        "src/components/TaskList.css",
+        "src/components/TaskRow.test.tsx",
+        "e2e/states-tasklist.spec.ts",
+        "e2e/shell.spec.ts"
+      ],
+      "learnings": "Empty-state copy must live in its own .empty-state-copy span so getByText/toHaveText(copy) survives the decorative \u25ef glyph. Rollover 'since' text stays lowercase in DOM; CSS text-transform handles caps so the exact-text test passes."
+    },
+    {
+      "timestamp": "2026-06-15T22:58:36.363184+00:00",
+      "iteration": 4,
+      "storyId": "US-203",
+      "action": "story_passed",
+      "details": "Command bar = surface card + hairline border + shadow-wash (radius-md); ink-bar prompt (3x18 indigo radius-pill, doubled in command mode) replaces glyph; chips indigo text + 2px underline + opacity parse-in; error state wide-tracked caps body danger; mobile full-bleed hairline-only. shadow-print removed. 53 tests pass; pixel-inspected 3 indigo chips.",
+      "filesChanged": [
+        "src/components/CommandBar.tsx",
+        "src/components/CommandBar.css",
+        "src/components/ParsedInput.css",
+        "src/components/CommandBar.test.tsx"
+      ],
+      "learnings": "Chip parse-in is opacity-only: mirror overlay must align char-for-char with the transparent textarea, so transform/inline-block (which breaks multi-word chip wrapping) is unsafe."
+    },
+    {
+      "timestamp": "2026-06-15T23:00:34.982132+00:00",
+      "iteration": 5,
+      "storyId": "US-207",
+      "action": "story_passed",
+      "details": "Cheatsheet: radius-lg surface sheet + shadow-wash over 80% bg scrim; ink-rule gradient header (3px fg->transparent) replaces double rule; mono keycap pills (hairline, radius-pill); body-font labels; two-col >=768, one col <768. Focus-trap behavior untouched (7 tests pass). Pixel-inspected.",
+      "filesChanged": [
+        "src/components/Cheatsheet.css"
+      ],
+      "learnings": "Ink-rule motif (linear-gradient(90deg, fg 60%, transparent)) is the shared masthead_rule contract; reused here via header::after."
+    },
+    {
+      "timestamp": "2026-06-15T23:13:55.723034+00:00",
+      "iteration": 6,
+      "storyId": "US-201",
+      "action": "story_passed",
+      "details": "Bilingual masthead (\u516d\u6708\u5341\u65e5 display + English h2 muted, own line at 375), ink-rule gradient draw (motion-slow, reduced-motion safe), view tabs wide-tracked caps body font + crimson active underline, enso \u25ef empty states across TaskList + All/Upcoming/Done views (no italic). Verified desktop+mobile renders. Fixed pre-existing stale speed.spec dark-bg assertion (#1A1611->#171613).",
+      "filesChanged": [
+        "src/App.tsx",
+        "src/App.css",
+        "src/views/AllView.tsx",
+        "src/views/UpcomingView.tsx",
+        "src/views/DoneView.tsx"
+      ],
+      "learnings": "CRITICAL: a stale node_modules/.vite cache / lingering dev server can make playwright --update-snapshots render OLD code while vite serves NEW source. Symptom: baseline mtime unchanged + screenshot shows old UI. Fix: kill all :5273 listeners + rm -rf node_modules/.vite before regen, or delete the baseline to force a write. US-208 final regen MUST run against a clean server."
+    },
+    {
+      "timestamp": "2026-06-15T23:20:50.407919+00:00",
+      "iteration": 7,
+      "storyId": "US-210",
+      "action": "story_passed",
+      "details": "Hover/selected ink brush-tick in the left margin (::before, 4px hover / 6px selected + surface bg), token-driven transitions. Load stagger base delay moved from hardcoded 120ms to calc(var(--motion-slow)+steps*40ms) so the masthead rule finishes first; 40ms stagger preserved (today.spec passes). Skeleton AC N/A \u2014 app has no loading-skeleton component. Tick render pixel-verified.",
+      "filesChanged": [
+        "src/components/TaskList.css",
+        "src/views/TodayView.tsx"
+      ],
+      "learnings": "Playwright --update-snapshots skips rewriting byte-identical PNGs; a lingering stale dev server can chain stale baselines forward. Delete the target PNGs to force a fresh write, then read to verify the feature renders."
+    },
+    {
+      "timestamp": "2026-06-15T23:26:12.953264+00:00",
+      "iteration": 8,
+      "storyId": "US-202",
+      "action": "story_passed",
+      "details": "HankoSeal component: rotated \u4eca\u65e5 seal top-right of masthead, crimson outline -> fills crimson when all today+rollover tasks done (new selectTodayProgress selector). role=status, aria-label '{done} of {total} tasks done today', not focusable/clickable, axe-clean. Filled glyph readable in both themes (paper-white light / night-ink dark, dual prefers-color-scheme + data-theme wiring). 5 component + 4 selector tests pass; outline & filled states pixel-verified in both themes.",
+      "filesChanged": [
+        "src/components/HankoSeal.tsx",
+        "src/components/HankoSeal.css",
+        "src/components/HankoSeal.test.tsx",
+        "src/lib/selectors.ts",
+        "src/App.tsx"
+      ],
+      "learnings": "Gate drives dark via emulateMedia(prefers-color-scheme), so the seal's dark filled-glyph color needs BOTH [data-theme=dark] and the @media prefers-color-scheme:dark :root:not([data-theme=light]) selectors to match tokens.css."
+    },
+    {
+      "timestamp": "2026-06-15T23:33:24.839256+00:00",
+      "iteration": 9,
+      "storyId": "US-205",
+      "action": "story_passed",
+      "details": "BrushStroke component: tapered organic SVG path (preserveAspectRatio=none), aria-hidden. Draws left->right via clip-path inset at motion-base (fg 0.85), settles to muted; reduced-motion = instant. Wired into TaskRow (drawing on fresh completion via complete() handler, settles via onDrawn) and DoneView inline rows (settled). line-through removed from all of src. 45 unit tests + e2e all-done pass; Done-view stroke pixel-verified.",
+      "filesChanged": [
+        "src/components/BrushStroke.tsx",
+        "src/components/BrushStroke.css",
+        "src/components/BrushStroke.test.tsx",
+        "src/components/TaskRow.tsx",
+        "src/components/TaskList.css",
+        "src/views/DoneView.tsx"
+      ],
+      "learnings": "Project eslint forbids BOTH setState-in-effect AND ref-access-during-render, so open->done transition detection moved into the complete() event handler (a user event) rather than an effect/render-time ref."
+    },
+    {
+      "timestamp": "2026-06-15T23:42:19.848646+00:00",
+      "iteration": 10,
+      "storyId": "US-208",
+      "action": "story_passed",
+      "details": "Removed deprecated --shadow-print token (0 consumers) and the CSS @import (fonts now via non-blocking index.html link); swapped index.html to Ink Garden fonts. Grep audits clean: shadow-print/Morning-Edition-fonts/literal-hex all 0. Full authoritative baseline regen (39 PNGs) + Pixel Law inspection ledger (verification/baseline-inspection-2026-06.md, 15 desktop PNGs). Gates: build/lint PASS, unit 3509 @96.35%, e2e 77, visual 6, a11y 8 (0 violations). Lighthouse a11y 1.0 + best-practices pass; PERFORMANCE 0.69 < 0.9 SURFACED as non-goal #6 follow-up (CJK Shippori Mincho Japanese subset ~5s LCP on throttled net); threshold NOT lowered, gate non-blocking by design.",
+      "filesChanged": [
+        "src/styles/tokens.css",
+        "index.html",
+        "verification/baseline-inspection-2026-06.md",
+        "__screenshots__/**"
+      ],
+      "learnings": "Ink Garden CJK fonts regress Lighthouse perf (Morning Edition was all-Latin). Follow-up: self-host a Shippori Mincho subset (Latin + \u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u5341\u6708\u65e5\u4eca) to drop the ~260KiB Japanese subset off the critical path."
+    }
+  ],
+  "codebasePatterns": [
+    "Component CSS is colocated per component (Component.css imported by Component.tsx); shared chrome styles live in src/App.css",
+    "Visual baselines live under __screenshots__/<spec-path>/<name>-<breakpoint>.png; e2e specs pin the browser clock to FIXED_NOW = 2026-06-10 12:00 (a Wednesday) via e2e/fixtures.ts:12 \u2014 masthead baselines read \u516d\u6708\u5341\u65e5 / Wednesday, June 10",
+    "pnpm is the package manager; pnpm run typecheck is a NO-OP (tsconfig files: [] + references) \u2014 the real type gate is pnpm run build (tsc -b && vite build); e2e and verification specs both run through Playwright",
+    "Design tokens are the only permitted style values (DESIGN-SYSTEM.md \u00a78); the a11y gate checks prefers-reduced-motion zeroes all motion"
+  ]
 }

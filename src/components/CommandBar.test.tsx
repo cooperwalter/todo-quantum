@@ -160,11 +160,14 @@ function renderBarWithView() {
 }
 
 describe('CommandBar command mode (FR-18, FR-19)', () => {
-  it("flips to command mode on a leading '>' (prompt glyph and mono class)", async () => {
+  it("flips to command mode on a leading '>' (doubled ink-bar prompt and mono class)", async () => {
     const user = userEvent.setup();
     renderBarWithView();
+    // Default capture prompt is a single ink bar.
+    expect(document.querySelectorAll('.command-bar-prompt .prompt-bar')).toHaveLength(1);
     await user.type(screen.getByRole('textbox'), '>');
-    expect(document.querySelector('.command-bar-prompt')?.textContent).toBe('❯');
+    // Command mode doubles the prompt to two ink bars.
+    expect(document.querySelectorAll('.command-bar-prompt .prompt-bar')).toHaveLength(2);
     expect(document.querySelector('.command-bar--command')).toBeTruthy();
   });
 

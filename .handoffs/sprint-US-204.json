@@ -1,0 +1,128 @@
+{
+  "storyId": "US-204",
+  "prdSha": "088032d8853f07a2a8aea69be9adc3502ce3666bec25d2b116d93473a09c9698",
+  "acs": [
+    "Rows have no background card and no border box: flat on --color-bg, separated by 1px --color-border bottom hairlines, --space-4 vertical padding (§4/§6); the 3px left-rule treatment is removed",
+    "Checkbox is a 17px circle with 2px --color-fg outline; fills --color-fg when done",
+    "Task titles render --type-display family 17/26 wght 600; metadata is wide-tracked caps 12px --color-muted; no italics anywhere",
+    "Priority renders as a kanji glyph after the title: 一 in --color-danger for p1; 二 and 三 in --color-muted for p2/p3 (crimson is reserved for the priority-1 mark — §1/§3 discipline; unit test covers all three + none)",
+    "Rollover rows: muted title + '— SINCE {DAY}' in wide-tracked caps muted (replaces italic annotation); never crimson",
+    "Section/day-group headers (.task-section-label, used by Today groups and Upcoming day groups): wide-tracked caps 12px --color-muted over a hairline rule (§8 Upcoming)",
+    "Existing TaskRow/TaskList unit tests pass with behavior assertions unmodified (selector-only edits permitted per FR-8)",
+    "Typecheck/lint passes",
+    "Verify in browser (visual gate at 3 breakpoints × 2 themes)"
+  ],
+  "contracts": {
+    "design_tokens": {
+      "color-accent": {
+        "value": "--color-accent",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-fg": {
+        "value": "--color-fg",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "color-danger": {
+        "value": "--color-danger",
+        "pattern": "^--color-[a-z-]+$"
+      },
+      "shadow-wash": {
+        "value": "--shadow-wash"
+      },
+      "space-scale": {
+        "value": "[4,8,12,16,24,32,48,64,96]"
+      },
+      "type-display": {
+        "value": "--type-display",
+        "pattern": "^--type-[a-z0-9]+$"
+      },
+      "motion-slow": {
+        "value": "--motion-slow",
+        "pattern": "^--motion-[a-z]+$"
+      }
+    },
+    "css_classes": {
+      "empty_state": {
+        "value": "empty-state"
+      },
+      "empty_state_glyph": {
+        "value": "empty-state-glyph"
+      },
+      "masthead_rule": {
+        "value": "masthead-rule"
+      },
+      "prompt_bar": {
+        "value": "prompt-bar"
+      },
+      "task_priority": {
+        "value": "task-priority"
+      },
+      "brush_stroke": {
+        "value": "brush-stroke"
+      },
+      "task_section_label": {
+        "value": "task-section-label"
+      }
+    },
+    "config_keys": {
+      "visual_themes": {
+        "value": "visual.themes"
+      }
+    },
+    "aria_labels": {
+      "hanko_seal_progress": {
+        "value": "{done} of {total} tasks done today"
+      }
+    },
+    "shared_types": {
+      "kanji_date_formatter": {
+        "value": "formatKanjiDate",
+        "pattern": "^[a-z][a-zA-Z]*$",
+        "definitionFile": "src/lib/kanji-date.ts",
+        "owner": "US-209",
+        "consumers": [
+          "US-201"
+        ],
+        "shape": {
+          "properties": [],
+          "methods": [
+            {
+              "name": "formatKanjiDate",
+              "params": [
+                {
+                  "name": "d",
+                  "type": "Date"
+                }
+              ],
+              "returns": "string"
+            }
+          ]
+        },
+        "definition": "export function formatKanjiDate(d: Date): string;"
+      }
+    }
+  },
+  "files": [
+    "src/components/TaskList.css",
+    "src/components/TaskList.tsx",
+    "src/components/TaskRow.test.tsx",
+    "src/components/TaskRow.tsx"
+  ],
+  "expectedTests": [
+    "pnpm exec vitest run src/components/TaskRow.test.tsx 2>&1 | grep -q 'failed' && echo RED-CONFIRMED",
+    "pnpm exec vitest run src/components/TaskRow.test.tsx",
+    "pnpm exec vitest run src/components/TaskRow.test.tsx src/components/TaskList.test.tsx",
+    "pnpm exec vitest run src/components/TaskRow.test.tsx src/components/TaskList.test.tsx",
+    "pnpm exec vitest run src/components/TaskList.test.tsx",
+    "pnpm exec playwright test verification/visual.spec.ts --update-snapshots"
+  ],
+  "otherCommands": [
+    "pnpm run build",
+    "pnpm run lint",
+    "! grep -n 'italic' src/components/TaskList.css",
+    "grep -n 'empty-state-glyph' src/components/TaskList.tsx",
+    "bash verification/run-visual-gate.sh /"
+  ],
+  "plannedBy": "ql-plan",
+  "plannedAt": "2026-06-12T21:08:48Z"
+}

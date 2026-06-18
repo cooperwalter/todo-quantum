@@ -25,19 +25,31 @@
   max-width: 560px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-print) var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-wash);
   padding: var(--space-5) var(--space-5) var(--space-6);
 }
 
-/* Double-rule header echoing the masthead. */
+/* Header carries the masthead's ink-rule motif (a single drawn ink bar) instead
+   of the old double rule. */
 .cheatsheet-header {
+  position: relative;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  border-bottom: 3px double var(--color-fg);
-  padding-bottom: var(--space-2);
+  padding-bottom: var(--space-3);
   margin-bottom: var(--space-4);
+}
+
+.cheatsheet-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--color-fg) 60%, transparent);
 }
 
 .cheatsheet-title {
@@ -85,26 +97,31 @@
 
 .cheatsheet-row {
   display: grid;
-  grid-template-columns: 10ch 1fr;
-  align-items: baseline;
+  grid-template-columns: 11ch 1fr;
+  align-items: center;
   column-gap: var(--space-3);
 }
 
+/* Keys are mono keycap pills (hairline, pill radius) — the same keycap language
+   as the view-tab hints. */
 .cheatsheet-key {
+  justify-self: start;
   font-family: var(--type-mono);
-  font-weight: 600;
+  font-weight: 500;
   font-size: var(--text-mono-size);
   line-height: var(--text-mono-leading);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-2);
 }
 
 .cheatsheet-action {
   margin: 0;
-  font-family: var(--type-mono);
+  font-family: var(--type-body);
   font-size: var(--text-mono-size);
   line-height: var(--text-mono-leading);
-  letter-spacing: 0.04em;
   color: var(--color-muted);
 }
 

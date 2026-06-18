@@ -43,30 +43,30 @@ test('all four view tabs render', async ({ page }) => {
 
 test('clicking each tab switches the visible placeholder view', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('.empty-state')).toHaveText('Nothing on deck — type to capture.');
+  await expect(page.locator('.empty-state-copy')).toHaveText('Nothing on deck — type to capture.');
   await page.getByRole('button', { name: 'Upcoming' }).click();
-  await expect(page.locator('.empty-state')).toHaveText('Nothing ahead — type to capture.');
+  await expect(page.locator('.empty-state-copy')).toHaveText('Nothing ahead — type to capture.');
   await page.getByRole('button', { name: 'All' }).click();
-  await expect(page.locator('.empty-state')).toHaveText('Nothing here — type to capture.');
+  await expect(page.locator('.empty-state-copy')).toHaveText('Nothing here — type to capture.');
   await page.getByRole('button', { name: 'Done' }).click();
-  await expect(page.locator('.empty-state')).toHaveText('Nothing done yet — finish something today.');
+  await expect(page.locator('.empty-state-copy')).toHaveText('Nothing done yet — finish something today.');
   await page.getByRole('button', { name: 'Today' }).click();
-  await expect(page.locator('.empty-state')).toHaveText('Nothing on deck — type to capture.');
+  await expect(page.locator('.empty-state-copy')).toHaveText('Nothing on deck — type to capture.');
 });
 
-test('current tab carries the accent underline', async ({ page }) => {
+test('current tab carries the crimson underline', async ({ page }) => {
   await page.goto('/');
   await page.emulateMedia({ colorScheme: 'light' });
-  const accent = await page.evaluate(() =>
-    getComputedStyle(document.documentElement).getPropertyValue('--color-accent'),
+  const danger = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue('--color-danger'),
   );
   const current = page.locator('.view-tab[aria-current="page"]');
   await expect(current).toHaveText(/Today/i);
-  await expect(current).toHaveCSS('border-bottom-color', hexToRgb(accent));
+  await expect(current).toHaveCSS('border-bottom-color', hexToRgb(danger));
   await page.getByRole('button', { name: 'Upcoming' }).click();
   const newCurrent = page.locator('.view-tab[aria-current="page"]');
   await expect(newCurrent).toHaveText(/Upcoming/i);
-  await expect(newCurrent).toHaveCSS('border-bottom-color', hexToRgb(accent));
+  await expect(newCurrent).toHaveCSS('border-bottom-color', hexToRgb(danger));
 });
 
 test('page loads with no console errors', async ({ page }) => {
