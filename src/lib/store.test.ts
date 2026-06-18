@@ -48,12 +48,12 @@ function newTaskPayload(overrides: Partial<Omit<Task, 'order'>> = {}): Omit<Task
 }
 
 describe('add', () => {
-  it('appends the task with order = max existing order + 1', () => {
+  it('assigns the task order = min existing order - 1 so it sorts to the top', () => {
     const existing = makeTask({ order: 7 });
     const state = makeState([existing]);
     const next = reducer(state, { type: 'add', task: newTaskPayload({ id: 'new-1' }) });
     const added = next.data.tasks.find((t) => t.id === 'new-1');
-    expect(added?.order).toBe(8);
+    expect(added?.order).toBe(6);
   });
 
   it('assigns order 1 to the first task in an empty list', () => {
@@ -419,7 +419,7 @@ describe('scale', () => {
     expect(state.data.tasks).toHaveLength(100);
     expect(state.data.tasks[57]).toEqual(target);
     state = reducer(state, { type: 'add', task: newTaskPayload({ id: 'added-x' }) });
-    expect(state.data.tasks.find((t) => t.id === 'added-x')?.order).toBe(101);
+    expect(state.data.tasks.find((t) => t.id === 'added-x')?.order).toBe(0);
   });
 });
 

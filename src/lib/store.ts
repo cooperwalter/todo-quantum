@@ -34,6 +34,11 @@ function nextOrder(data: AppData): number {
   return data.tasks.reduce((max, t) => Math.max(max, t.order), 0) + 1;
 }
 
+function topOrder(data: AppData): number {
+  if (data.tasks.length === 0) return 1;
+  return data.tasks.reduce((min, t) => Math.min(min, t.order), Infinity) - 1;
+}
+
 function replaceTask(data: AppData, id: string, update: (task: Task) => Task): AppData {
   return { ...data, tasks: data.tasks.map((t) => (t.id === id ? update(t) : t)) };
 }
@@ -46,7 +51,7 @@ interface ApplyResult {
 function apply(data: AppData, action: MutatingAction): ApplyResult | null {
   switch (action.type) {
     case 'add': {
-      const task: Task = { ...action.task, order: nextOrder(data) };
+      const task: Task = { ...action.task, order: topOrder(data) };
       return {
         data: { ...data, tasks: [...data.tasks, task] },
         inverse: { type: 'delete', id: task.id },
