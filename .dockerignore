@@ -1,0 +1,12 @@
+# Allowlist: everything is excluded unless re-included below. Any new build
+# input (postcss/tailwind config, a new tsconfig, another asset dir) must be
+# added here, or the image builds successfully without it.
+*
+!Caddyfile
+!package.json
+!pnpm-lock.yaml
+!index.html
+!vite.config.ts
+!tsconfig*.json
+!src
+!public

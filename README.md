@@ -1,73 +1,62 @@
-# React + TypeScript + Vite
+# todo-quantum
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A keyboard-first todo app in the "Ink Garden" visual direction — cool washi white, sumi-ink
+type, aizome indigo for everything you touch, hanko crimson for the marks that matter. Tasks
+are captured through a single command bar with natural-language dates, priorities, and
+recurrence, and organised across Today / Upcoming / All / Done views.
 
-Currently, two official plugins are available:
+It is a fully client-side single-page app: React 19 + Vite, with all state persisted to
+`localStorage`. There is no backend, no database, and no environment variables.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Local development
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+pnpm install
+pnpm dev            # http://localhost:5273
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Verification
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+While working, `pnpm build` is the typecheck gate (`tsc -b` plus the production bundle),
+`pnpm lint` runs ESLint, and `pnpm test` runs the unit suite. For UI work,
+`bash verification/run-visual-gate.sh <route>` runs visual regression, axe, and Lighthouse.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+`lens.config.json` is the authoritative gate list — coverage thresholds, e2e, and the
+individual visual gates are defined there, and CI-equivalent runs should use those commands
+rather than the shorthands above.
+
+## Deployment (Railway)
+
+The app ships as a two-stage container: Node builds the static bundle, Caddy serves it.
+
+- `Dockerfile` — builds with `pnpm build`, copies `dist/` into a `caddy:2-alpine` image.
+- `Caddyfile` — binds to Railway's `$PORT`, gzip/zstd compression, SPA fallback to
+  `index.html`, `no-cache` by default with immutable caching for content-hashed `/assets/*`,
+  and security headers.
+- `railway.json` — pins the Dockerfile builder and healthchecks `/`, which fails if the built
+  bundle is missing (a static `/healthz` literal would not).
+
+### First deploy
+
+```bash
+railway login
+railway init            # or: railway link, to attach to an existing project
+railway up              # builds and deploys from the Dockerfile
+railway domain          # generate a public *.up.railway.app domain
 ```
+
+Subsequent pushes to the connected branch deploy automatically once the GitHub repo is
+linked in the Railway dashboard.
+
+### Verifying the image locally
+
+```bash
+docker build -t todo-quantum .
+docker run --rm -p 8080:8080 todo-quantum
+# then open http://localhost:8080
+```
+
+## Project conventions
+
+See `CLAUDE.md` for the agent guide and `DESIGN-SYSTEM.md` for the visual contract. Every
+visual decision derives from the design system's tokens, which live in `src/styles/tokens.css`.
