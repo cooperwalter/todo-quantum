@@ -49,10 +49,10 @@ export function memoryStorage(): StorageLike {
   };
 }
 
-export function load(storage: StorageLike, now: Date = new Date()): LoadResult {
+export function load(storage: StorageLike, now: Date = new Date(), key: string = STORAGE_KEY): LoadResult {
   let raw: string | null;
   try {
-    raw = storage.getItem(STORAGE_KEY);
+    raw = storage.getItem(key);
   } catch {
     return { ok: true, data: emptyData(), recovered: false };
   }
@@ -76,11 +76,11 @@ export function load(storage: StorageLike, now: Date = new Date()): LoadResult {
   return { ok: true, data: parsed, recovered: false };
 }
 
-export function save(storage: StorageLike, data: AppData): SaveResult {
+export function save(storage: StorageLike, data: AppData, key: string = STORAGE_KEY): SaveResult {
   const serialized = JSON.stringify(data);
   try {
-    storage.setItem(STORAGE_KEY, serialized);
-    const verification = storage.getItem(STORAGE_KEY);
+    storage.setItem(key, serialized);
+    const verification = storage.getItem(key);
     if (verification !== serialized) {
       return { ok: false, reason: 'unavailable' };
     }
