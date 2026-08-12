@@ -2,6 +2,7 @@ import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import './ErrorBoundary.css';
 import { RECOVERY_PREFIX, STORAGE_KEY, getLocalStorage } from '../lib/persistence';
+import { getStoredUsername, storageKeyFor } from '../lib/username';
 
 interface ErrorBoundaryState {
   error: Error | null;
@@ -36,14 +37,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   resetData = () => {
     const storage = getLocalStorage();
     if (storage !== null) {
-      const raw = storage.getItem(STORAGE_KEY);
+      const username = getStoredUsername(storage);
+      const key = username === null ? STORAGE_KEY : storageKeyFor(username);
+      const raw = storage.getItem(key);
       if (raw !== null) {
         try {
           storage.setItem(RECOVERY_PREFIX + new Date().toISOString(), raw);
         } catch {
           // Best-effort stash; reset must proceed regardless.
         }
-        storage.removeItem(STORAGE_KEY);
+        storage.removeItem(key);
       }
     }
     this.doReload();
