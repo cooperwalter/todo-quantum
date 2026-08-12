@@ -13,7 +13,10 @@ RUN corepack install
 # better-sqlite3 is a regular dependency (used by the server bundle), so this
 # full install compiles its native binding too; alpine/musl has no prebuild.
 RUN apk add --no-cache python3 make g++
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+# Railway's builder requires cache-mount ids to carry a service-scoped prefix
+# (s/<service-id>-...); Docker itself treats the id as an opaque cache key, so
+# the same value works locally.
+RUN --mount=type=cache,id=s/65a5f3ba-b162-4f56-8b82-abd736ba928a-pnpm,target=/pnpm/store \
 	pnpm config set store-dir /pnpm/store && pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm run build
@@ -28,7 +31,7 @@ RUN npm install -g corepack@0.35.0
 COPY package.json pnpm-lock.yaml ./
 RUN corepack install
 RUN apk add --no-cache python3 make g++
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+RUN --mount=type=cache,id=s/65a5f3ba-b162-4f56-8b82-abd736ba928a-pnpm-prod,target=/pnpm/store \
 	pnpm config set store-dir /pnpm/store && pnpm install --frozen-lockfile --prod
 
 FROM node:26-alpine
