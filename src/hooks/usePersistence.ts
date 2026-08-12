@@ -39,6 +39,7 @@ export function usePersistence(
   const fetchRef = useRef(fetchOverride);
   const mounted = useRef(false);
   const syncedOnce = useRef(false);
+  const skipNextSave = useRef(false);
 
   useEffect(() => {
     storageRef.current = storageOverride ?? storage;
@@ -92,8 +93,11 @@ export function usePersistence(
         return;
       }
       // Same contract as the quota path: hold the payload and retry, so a dead
-      // connection delays the upload rather than losing the change.
-      if (pendingData.current === null) pendingData.current = data;
+      // connection delays the upload rather than losing the change. A push that
+      // loses the race to a later one is dead weight — its payload is already
+      // superseded, so it must neither be re-armed nor raise an offline flag.
+      if (pendingData.current === null && dataRef.current === data) pendingData.current = data;
+      if (pendingData.current === null) return;
       setSaveFailed((prev) => (prev === false ? 'offline' : prev));
       if (timer.current === null) {
         timer.current = setTimeout(() => flushRef.current(), SAVE_RETRY_MS);
@@ -112,7 +116,9 @@ export function usePersistence(
     const result = save(storageRef.current, data, storageKeyRef.current);
     if (result.ok) {
       pendingData.current = null;
-      setSaveFailed(false);
+      // A local save says nothing about the connection: only a successful push
+      // clears 'offline', otherwise the banner blinks on every debounce cycle.
+      setSaveFailed((prev) => (prev === 'offline' ? prev : false));
       void pushCurrent(data);
       return true;
     }
@@ -155,6 +161,10 @@ export function usePersistence(
         return;
       }
       if (storageRef.current.getItem(syncKeyFor(usernameRef.current)) === result.updatedAt) return;
+      // The reload is written locally right here, so the save cycle it would
+      // otherwise trigger is skipped: echoing the blob back would bump the
+      // server's updatedAt and toast every other device for nothing.
+      skipNextSave.current = true;
       dispatch({ type: 'externalReload', data: result.data });
       save(storageRef.current, result.data, storageKeyRef.current);
       rememberSyncedAt(result.updatedAt);
@@ -166,6 +176,10 @@ export function usePersistence(
   useEffect(() => {
     if (!mounted.current) {
       mounted.current = true;
+      return;
+    }
+    if (skipNextSave.current) {
+      skipNextSave.current = false;
       return;
     }
     pendingData.current = state.data;

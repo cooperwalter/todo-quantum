@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { StrictMode, useEffect } from 'react';
 import { usePersistence } from './usePersistence';
+import type { SaveFailure } from './usePersistence';
 import { StorageBanner } from '../components/StorageBanner';
 import { storageKeyFor, syncKeyFor } from '../lib/username';
 import { AppProvider, useApp } from '../state/AppContext';
@@ -104,9 +106,20 @@ async function settleSync() {
   });
 }
 
-function Harness({ storage, fetchFn }: { storage: StorageLike; fetchFn: typeof fetch }) {
+function Harness({
+  storage,
+  fetchFn,
+  onSaveFailedChange,
+}: {
+  storage: StorageLike;
+  fetchFn: typeof fetch;
+  onSaveFailedChange?: (value: SaveFailure) => void;
+}) {
   const { saveFailed, dismissSaveFailure } = usePersistence(storage, fetchFn);
   const { state, dispatch, toast } = useApp();
+  useEffect(() => {
+    onSaveFailedChange?.(saveFailed);
+  }, [saveFailed, onSaveFailedChange]);
   return (
     <div>
       {saveFailed !== false && <StorageBanner reason={saveFailed} onDismiss={dismissSaveFailure} />}
@@ -128,10 +141,14 @@ function Harness({ storage, fetchFn }: { storage: StorageLike; fetchFn: typeof f
   );
 }
 
-function renderHarness(storage: StorageLike, fetchFn: typeof fetch = makeFakeFetch()) {
+function renderHarness(
+  storage: StorageLike,
+  fetchFn: typeof fetch = makeFakeFetch(),
+  onSaveFailedChange?: (value: SaveFailure) => void,
+) {
   return render(
     <AppProvider username="testuser">
-      <Harness storage={storage} fetchFn={fetchFn} />
+      <Harness storage={storage} fetchFn={fetchFn} onSaveFailedChange={onSaveFailedChange} />
     </AppProvider>,
   );
 }
@@ -507,5 +524,116 @@ describe('remote sync', () => {
     await settleSync();
 
     expect(screen.getByTestId('save-failed').textContent).toBe('quota');
+  });
+
+  it('should issue exactly one GET when React StrictMode double-invokes the mount effect', async () => {
+    const storage = makeMemoryStorage();
+    const fetchFn = makeFakeFetch({ get: () => fakeResponse(null, 404) });
+    render(
+      <StrictMode>
+        <AppProvider username="testuser">
+          <Harness storage={storage} fetchFn={fetchFn} />
+        </AppProvider>
+      </StrictMode>,
+    );
+    await settleSync();
+
+    expect(fetchFn.calls.filter((call) => call.method === 'GET')).toHaveLength(1);
+  });
+
+  it('should not resurrect the stale payload when an earlier push fails after a later push already succeeded', async () => {
+    const storage = makeMemoryStorage();
+    let releaseFirstPut: (() => void) | null = null;
+    const fetchFn = makeFakeFetch({
+      put: () => {
+        if (releaseFirstPut !== null) return fakeResponse({ updatedAt: '2026-06-09T12:00:00.000Z' });
+        return new Promise<Response>((resolve) => {
+          releaseFirstPut = () => resolve(fakeResponse(null, 500));
+        });
+      },
+    });
+    renderHarness(storage, fetchFn);
+    await settleSync();
+
+    fireEvent.click(screen.getByText('do-add'));
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    await settleSync();
+
+    fireEvent.click(screen.getByText('do-add'));
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    await settleSync();
+    const putsBeforeFailure = fetchFn.calls.filter((call) => call.method === 'PUT');
+    expect(putsBeforeFailure).toHaveLength(2);
+    expect(putsBeforeFailure[1].body?.tasks).toHaveLength(2);
+
+    act(() => {
+      releaseFirstPut?.();
+    });
+    await settleSync();
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    await settleSync();
+
+    const puts = fetchFn.calls.filter((call) => call.method === 'PUT');
+    expect(puts.slice(2).every((call) => call.body?.tasks.length === 2)).toBe(true);
+    expect(screen.getByTestId('save-failed').textContent).toBe('false');
+    const cached = JSON.parse(storage.store.get(STORAGE_KEY) ?? 'null') as AppData | null;
+    expect(cached?.tasks).toHaveLength(2);
+  });
+
+  it('should keep saveFailed at offline without flashing back to false across consecutive saves while the PUT keeps failing', async () => {
+    const storage = makeMemoryStorage();
+    const fetchFn = makeFakeFetch({
+      put: () => {
+        throw new Error('network down');
+      },
+    });
+    const seen: SaveFailure[] = [];
+    renderHarness(storage, fetchFn, (value) => {
+      seen.push(value);
+    });
+    await settleSync();
+
+    fireEvent.click(screen.getByText('do-add'));
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    await settleSync();
+    fireEvent.click(screen.getByText('do-add'));
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    await settleSync();
+
+    expect(screen.getByTestId('save-failed').textContent).toBe('offline');
+    const firstOffline = seen.indexOf('offline');
+    expect(firstOffline).toBeGreaterThanOrEqual(0);
+    expect(seen.slice(firstOffline)).toEqual(seen.slice(firstOffline).map(() => 'offline'));
+  });
+
+  it('should not PUT the server blob back after reloading state from the server', async () => {
+    const storage = makeMemoryStorage({ [SYNC_KEY]: '2026-06-01T00:00:00.000Z' });
+    const serverData: AppData = {
+      schemaVersion: 1,
+      tasks: [makeTask({ id: 'server-1', title: 'From the server' })],
+    };
+    const fetchFn = makeFakeFetch({
+      get: () => fakeResponse({ data: serverData, updatedAt: '2026-06-09T12:00:00.000Z' }),
+    });
+    renderHarness(storage, fetchFn);
+    await settleSync();
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    await settleSync();
+
+    expect(fetchFn.calls.filter((call) => call.method === 'PUT')).toEqual([]);
+    const tasks = JSON.parse(screen.getByTestId('tasks').textContent ?? '[]') as Task[];
+    expect(tasks.map((t) => t.id)).toEqual(['server-1']);
   });
 });
