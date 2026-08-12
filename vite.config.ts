@@ -18,7 +18,7 @@ export default defineConfig({
     strictPort: true,
   },
   test: {
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'server/**/*.test.ts'],
     setupFiles: ['./src/test-setup.ts'],
     // Pin a DST-observing timezone for the whole suite: the dates/recurrence
     // DST regression tests are vacuous in non-DST zones (and the host machine

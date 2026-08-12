@@ -25,6 +25,7 @@ dist-ssr
 
 # lens-design scratch
 tmp/
+dist-server/
 .firecrawl/
 .superpowers/
 
