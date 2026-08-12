@@ -18,7 +18,7 @@ export function createApp(
   const app = new Hono();
 
   app.get('/api/users/:username/data', (c) => {
-    const username = normalizeUsername(decodeURIComponent(c.req.param('username')));
+    const username = normalizeUsername(c.req.param('username'));
     if (username === null) return c.json({ error: 'bad_username' }, 400);
     const row = getUserData(db, username);
     if (row === null) return c.json({ error: 'not_found' }, 404);
@@ -26,7 +26,7 @@ export function createApp(
   });
 
   app.put('/api/users/:username/data', async (c) => {
-    const username = normalizeUsername(decodeURIComponent(c.req.param('username')));
+    const username = normalizeUsername(c.req.param('username'));
     if (username === null) return c.json({ error: 'bad_username' }, 400);
     const raw = await c.req.text();
     if (new TextEncoder().encode(raw).byteLength > MAX_BODY_BYTES) {

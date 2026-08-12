@@ -43,6 +43,11 @@ describe('GET /api/users/:username/data', () => {
     const res = await makeApp().request('/api/users/no%20spaces/data');
     expect(res.status).toBe(400);
   });
+  it('should return 400 for a username containing a percent-encoded percent sign', async () => {
+    const res = await makeApp().request('/api/users/%25/data');
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: 'bad_username' });
+  });
   it('should return the stored data and updatedAt after a PUT', async () => {
     const app = makeApp();
     await put(app, 'cooper', VALID_BODY);
