@@ -26,9 +26,9 @@ function makeTask(overrides: Partial<Task> & { id: string }): Task {
 }
 
 function renderSeal(tasks: Task[]) {
-  window.localStorage.setItem('todo-quantum.v1', JSON.stringify({ schemaVersion: 1, tasks }));
+  window.localStorage.setItem('todo-quantum.v1.testuser', JSON.stringify({ schemaVersion: 1, tasks }));
   return render(
-    <AppProvider>
+    <AppProvider username="testuser">
       <HankoSeal />
     </AppProvider>,
   );

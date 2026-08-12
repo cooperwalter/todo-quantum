@@ -44,9 +44,9 @@ function Harness() {
 }
 
 function renderToast(seed: Task[] = [makeTask()]) {
-  window.localStorage.setItem('todo-quantum.v1', JSON.stringify({ schemaVersion: 1, tasks: seed }));
+  window.localStorage.setItem('todo-quantum.v1.testuser', JSON.stringify({ schemaVersion: 1, tasks: seed }));
   return render(
-    <AppProvider>
+    <AppProvider username="testuser">
       <Toast />
       <Harness />
     </AppProvider>,
@@ -177,9 +177,9 @@ describe('Review fixes: honest toasts (F-007)', () => {
       const { showToast } = useApp();
       return <button onClick={() => showToast('List updated in another tab')}>do-info</button>;
     }
-    window.localStorage.setItem('todo-quantum.v1', JSON.stringify({ schemaVersion: 1, tasks: [] }));
+    window.localStorage.setItem('todo-quantum.v1.testuser', JSON.stringify({ schemaVersion: 1, tasks: [] }));
     render(
-      <AppProvider>
+      <AppProvider username="testuser">
         <Toast />
         <InfoProbe />
       </AppProvider>,

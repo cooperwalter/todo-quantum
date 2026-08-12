@@ -1,31 +1,38 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { COMMANDS, fuzzyMatch, fuzzySubsequence } from './commands';
 
 describe('command registry (FR-19)', () => {
-  it('exposes exactly the seven v1 commands in palette order', () => {
+  it('exposes exactly the eight v1 commands in palette order', () => {
     expect(COMMANDS.map((c) => c.id)).toEqual([
-      'today', 'upcoming', 'all', 'done', 'undo', 'redo', 'help',
+      'today', 'upcoming', 'all', 'done', 'undo', 'redo', 'help', 'user',
     ]);
   });
 
   it('runs view commands through ctx.setView', () => {
     const calls: string[] = [];
-    const ctx = { setView: (v: string) => calls.push(v), dispatch: () => {}, openCheatsheet: () => {} };
+    const ctx = { setView: (v: string) => calls.push(v), dispatch: () => {}, openCheatsheet: () => {}, switchUser: () => {} };
     COMMANDS.find((c) => c.id === 'upcoming')?.run(ctx);
     expect(calls).toEqual(['upcoming']);
   });
 
   it('runs undo and redo through ctx.dispatch', () => {
     const calls: { type: string }[] = [];
-    const ctx = { setView: () => {}, dispatch: (a: { type: string }) => calls.push(a), openCheatsheet: () => {} };
+    const ctx = { setView: () => {}, dispatch: (a: { type: string }) => calls.push(a), openCheatsheet: () => {}, switchUser: () => {} };
     COMMANDS.find((c) => c.id === 'undo')?.run(ctx);
     COMMANDS.find((c) => c.id === 'redo')?.run(ctx);
     expect(calls).toEqual([{ type: 'undo' }, { type: 'redo' }]);
   });
 
+  it('should include a user command that invokes switchUser', () => {
+    const switchUser = vi.fn();
+    const ctx = { setView: () => {}, dispatch: () => {}, openCheatsheet: () => {}, switchUser };
+    COMMANDS.find((c) => c.id === 'user')?.run(ctx);
+    expect(switchUser).toHaveBeenCalledTimes(1);
+  });
+
   it('runs help through ctx.openCheatsheet', () => {
     let opened = 0;
-    const ctx = { setView: () => {}, dispatch: () => {}, openCheatsheet: () => { opened += 1; } };
+    const ctx = { setView: () => {}, dispatch: () => {}, openCheatsheet: () => { opened += 1; }, switchUser: () => {} };
     COMMANDS.find((c) => c.id === 'help')?.run(ctx);
     expect(opened).toBe(1);
   });
@@ -56,7 +63,7 @@ describe('fuzzySubsequence', () => {
 
 describe('fuzzyMatch', () => {
   it('lists all commands for an empty query', () => {
-    expect(fuzzyMatch('', COMMANDS)).toHaveLength(7);
+    expect(fuzzyMatch('', COMMANDS)).toHaveLength(8);
   });
 
   it("returns only 'today' for the query 'tdy'", () => {

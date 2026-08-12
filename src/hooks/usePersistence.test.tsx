@@ -3,9 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { usePersistence } from './usePersistence';
 import { StorageBanner } from '../components/StorageBanner';
-import { STORAGE_KEY } from '../lib/persistence';
+import { storageKeyFor } from '../lib/username';
 import { AppProvider, useApp } from '../state/AppContext';
 import type { StorageLike, Task } from '../lib/types';
+
+const STORAGE_KEY = storageKeyFor('testuser');
 
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
@@ -77,7 +79,7 @@ function Harness({ storage }: { storage: StorageLike }) {
 
 function renderHarness(storage: StorageLike) {
   return render(
-    <AppProvider>
+    <AppProvider username="testuser">
       <Harness storage={storage} />
     </AppProvider>,
   );

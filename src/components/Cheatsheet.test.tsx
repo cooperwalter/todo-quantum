@@ -4,8 +4,9 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from '../App';
 import type { Task } from '../lib/types';
+import { USERNAME_KEY } from '../lib/username';
 
-const STORAGE_KEY = 'todo-quantum.v1';
+const STORAGE_KEY = 'todo-quantum.v1.testuser';
 
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
@@ -44,6 +45,7 @@ function focusFirstRow(): HTMLElement {
 describe('Cheatsheet', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    window.localStorage.setItem(USERNAME_KEY, 'testuser');
   });
 
   afterEach(() => {

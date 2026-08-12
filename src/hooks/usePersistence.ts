@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { STORAGE_KEY, load, save } from '../lib/persistence';
+import { load, save } from '../lib/persistence';
 import { useApp } from '../state/AppContext';
 import type { AppData, StorageLike } from '../lib/types';
 
@@ -14,7 +14,8 @@ export interface UsePersistenceResult {
 }
 
 export function usePersistence(storageOverride?: StorageLike): UsePersistenceResult {
-  const { state, dispatch, recovered, showToast, storage, storageUnavailable } = useApp();
+  const { state, dispatch, recovered, showToast, storage, storageUnavailable, storageKey } =
+    useApp();
   const [saveFailed, setSaveFailed] = useState<SaveFailure>(
     storageUnavailable ? 'unavailable' : false,
   );
@@ -27,6 +28,12 @@ export function usePersistence(storageOverride?: StorageLike): UsePersistenceRes
     storageRef.current = storageOverride ?? storage;
   }, [storageOverride, storage]);
 
+  const storageKeyRef = useRef(storageKey);
+
+  useEffect(() => {
+    storageKeyRef.current = storageKey;
+  }, [storageKey]);
+
   const flushRef = useRef<() => boolean>(() => true);
 
   const flush = useCallback((): boolean => {
@@ -35,7 +42,7 @@ export function usePersistence(storageOverride?: StorageLike): UsePersistenceRes
       timer.current = null;
     }
     if (pendingData.current === null) return true;
-    const result = save(storageRef.current, pendingData.current);
+    const result = save(storageRef.current, pendingData.current, storageKeyRef.current);
     if (result.ok) {
       pendingData.current = null;
       setSaveFailed(false);
@@ -72,8 +79,8 @@ export function usePersistence(storageOverride?: StorageLike): UsePersistenceRes
       // key === null means storage.clear() in another tab; newValue === null
       // means our key was removed. Both are external writes this tab must
       // honor (FR-43) — ignoring them resurrects deleted data on the next save.
-      if (event.key !== null && event.key !== STORAGE_KEY) return;
-      const result = load(storageRef.current);
+      if (event.key !== null && event.key !== storageKey) return;
+      const result = load(storageRef.current, new Date(), storageKey);
       dispatch({ type: 'externalReload', data: result.data });
       pendingData.current = null;
       showToast(
@@ -84,7 +91,7 @@ export function usePersistence(storageOverride?: StorageLike): UsePersistenceRes
     }
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
-  }, [dispatch, showToast]);
+  }, [dispatch, showToast, storageKey]);
 
   useEffect(() => {
     function onBeforeUnload(event: BeforeUnloadEvent) {

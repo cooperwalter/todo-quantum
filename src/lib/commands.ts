@@ -6,6 +6,7 @@ export interface CommandContext {
   setView: (view: CommandViewId) => void;
   dispatch: (action: Action) => void;
   openCheatsheet: () => void;
+  switchUser: () => void;
 }
 
 export interface Command {
@@ -25,6 +26,7 @@ export const COMMANDS: Command[] = [
   { id: 'undo', label: 'undo', run: (ctx) => ctx.dispatch({ type: 'undo' }) },
   { id: 'redo', label: 'redo', run: (ctx) => ctx.dispatch({ type: 'redo' }) },
   { id: 'help', label: 'help', run: (ctx) => ctx.openCheatsheet() },
+  { id: 'user', label: 'user', run: (ctx) => ctx.switchUser() },
 ];
 
 export function fuzzySubsequence(query: string, target: string): boolean {
