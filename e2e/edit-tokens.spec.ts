@@ -26,7 +26,7 @@ function seedSendReport(page: Page) {
   const friday = nextWeekday(5);
   return page.addInitScript((dueDate: string) => {
     window.localStorage.setItem(
-      'todo-quantum.v1',
+      'todo-quantum.v1.e2e',
       JSON.stringify({
         schemaVersion: 1,
         tasks: [
@@ -92,7 +92,7 @@ test('editing a task: typing monday displaces the seeded date, deleting #work cl
   await expect
     .poll(async () =>
       page.evaluate(() => {
-        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1') ?? '{}');
+        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1.e2e') ?? '{}');
         return data.tasks?.[0]?.dueDate as string | undefined;
       }),
     )
@@ -139,7 +139,7 @@ test('editing a task: typing monday displaces the seeded date, deleting #work cl
   await expect
     .poll(async () =>
       page.evaluate(() => {
-        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1') ?? '{}');
+        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1.e2e') ?? '{}');
         return data.tasks?.[0]?.dueDate as string | undefined;
       }),
     )
@@ -147,7 +147,7 @@ test('editing a task: typing monday displaces the seeded date, deleting #work cl
   await expect
     .poll(async () =>
       page.evaluate(() => {
-        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1') ?? '{}');
+        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1.e2e') ?? '{}');
         return data.tasks?.[0]?.list as string | null | undefined;
       }),
     )
@@ -159,7 +159,7 @@ test('editing a task: typing monday displaces the seeded date, deleting #work cl
   await expect
     .poll(async () =>
       page.evaluate(() => {
-        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1') ?? '{}');
+        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1.e2e') ?? '{}');
         return data.tasks?.[0]?.dueDate as string | undefined;
       }),
     )
@@ -167,7 +167,7 @@ test('editing a task: typing monday displaces the seeded date, deleting #work cl
   await expect
     .poll(async () =>
       page.evaluate(() => {
-        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1') ?? '{}');
+        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1.e2e') ?? '{}');
         return data.tasks?.[0]?.list as string | null | undefined;
       }),
     )
@@ -202,7 +202,7 @@ test('add bar: typing "call mom friday monday " seals to a single Monday chip an
   await expect
     .poll(async () =>
       page.evaluate(() => {
-        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1') ?? '{}');
+        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1.e2e') ?? '{}');
         return data.tasks?.length ?? 0;
       }),
     )
@@ -210,7 +210,7 @@ test('add bar: typing "call mom friday monday " seals to a single Monday chip an
   await expect
     .poll(async () =>
       page.evaluate(() => {
-        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1') ?? '{}');
+        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1.e2e') ?? '{}');
         return data.tasks?.[0]?.dueDate as string | undefined;
       }),
     )
@@ -218,7 +218,7 @@ test('add bar: typing "call mom friday monday " seals to a single Monday chip an
   await expect
     .poll(async () =>
       page.evaluate(() => {
-        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1') ?? '{}');
+        const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1.e2e') ?? '{}');
         return data.tasks?.[0]?.title as string | undefined;
       }),
     )

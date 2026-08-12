@@ -19,7 +19,7 @@ function seedTasks(page: Page) {
       completedAt: null,
     };
     window.localStorage.setItem(
-      'todo-quantum.v1',
+      'todo-quantum.v1.e2e',
       JSON.stringify({
         schemaVersion: 1,
         tasks: [

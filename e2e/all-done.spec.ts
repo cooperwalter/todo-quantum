@@ -20,7 +20,7 @@ function seedTasks(page: Page) {
       completedAt: null,
     };
     window.localStorage.setItem(
-      'todo-quantum.v1',
+      'todo-quantum.v1.e2e',
       JSON.stringify({
         schemaVersion: 1,
         tasks: [
@@ -59,7 +59,7 @@ test('typing in the bar on the All view live-filters rows and Enter captures the
   await expect(page.locator('.command-bar-input')).toHaveValue('');
   await expect(page.locator('.filter-hint')).toHaveCount(0);
   await expect(page.locator('.task-row')).toHaveCount(4);
-  await expect(page.locator('.task-row-title').last()).toHaveText('report');
+  await expect(page.locator('.task-row-title').first()).toHaveText('report');
 });
 
 test('Done view lists the completed task struck through and the checkbox reopens it', async ({ page }) => {

@@ -3,7 +3,7 @@
 // every color scheme in lens.config.json visual.themes, and fails on any violation
 // (threshold from lens.config.json). Also asserts that a visible focus indicator
 // exists for the first interactive element.
-import { test, expect } from '../e2e/fixtures';
+import { test, firstRunTest, expect } from '../e2e/fixtures';
 import AxeBuilder from '@axe-core/playwright';
 import { readFileSync } from 'node:fs';
 const cfg = JSON.parse(readFileSync(new URL('../lens.config.json', import.meta.url), 'utf8'));
@@ -33,6 +33,33 @@ for (const theme of themes) {
       }
       expect(results.violations.length).toBeLessThanOrEqual(maxViolations);
     });
+  }
+}
+
+// The first-run username gate renders only without a stored username, so it
+// needs its own axe pass — the seeded fixture never reaches it.
+if (route === '/') {
+  for (const theme of themes) {
+    for (const [name, width] of Object.entries(breakpoints)) {
+      firstRunTest(`a11y: username gate @ ${name} [${theme}]`, async ({ page }) => {
+        await page.emulateMedia({ colorScheme: theme });
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(new URL('/', baseURL).toString(), { waitUntil: 'networkidle' });
+        await expect(page.locator('.username-gate')).toBeVisible();
+
+        const results = await new AxeBuilder({ page })
+          .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+          .analyze();
+
+        if (results.violations.length > maxViolations) {
+          console.log(JSON.stringify(
+            results.violations.map(v => ({ id: v.id, impact: v.impact, nodes: v.nodes.length, help: v.help })),
+            null, 2,
+          ));
+        }
+        expect(results.violations.length).toBeLessThanOrEqual(maxViolations);
+      });
+    }
   }
 }
 

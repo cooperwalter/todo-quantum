@@ -20,7 +20,7 @@ function seedFullTask(page: Page) {
     const fmt = (d: Date) =>
       `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     window.localStorage.setItem(
-      'todo-quantum.v1',
+      'todo-quantum.v1.e2e',
       JSON.stringify({
         schemaVersion: 1,
         tasks: [

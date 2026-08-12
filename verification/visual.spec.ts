@@ -6,7 +6,7 @@
 // First run (no baseline): Playwright writes baselines and the test "fails" — this is expected.
 // INSPECT the generated PNGs against DESIGN-SYSTEM.md, then re-run to lock them in.
 // Regenerate intentionally with:  npx playwright test verification/visual.spec.ts --update-snapshots
-import { test, expect, waitForFonts } from '../e2e/fixtures';
+import { test, firstRunTest, expect, waitForFonts } from '../e2e/fixtures';
 import { readFileSync } from 'node:fs';
 const cfg = JSON.parse(readFileSync(new URL('../lens.config.json', import.meta.url), 'utf8'));
 
@@ -36,5 +36,31 @@ for (const theme of themes) {
         animations: 'disabled',
       });
     });
+  }
+}
+
+// The first-run username gate is the app's real entry screen — it only renders
+// when no username is stored, which the shared fixture deliberately seeds. It
+// lives at the root route, so it is only captured when the gate is auditing '/'.
+if (route === '/') {
+  for (const theme of themes) {
+    const suffix = theme === 'dark' ? '-dark' : '';
+    for (const [name, width] of Object.entries(breakpoints)) {
+      firstRunTest(`visual: username gate @ ${name} (${width}px) [${theme}]`, async ({ page }) => {
+        await page.emulateMedia({ colorScheme: theme });
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(new URL('/', baseURL).toString(), { waitUntil: 'networkidle' });
+        await waitForFonts(page);
+        await expect(page.locator('.username-gate')).toBeVisible();
+        await page.addStyleTag({
+          content: `*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}`,
+        });
+        await expect(page).toHaveScreenshot(`username-gate-${name}${suffix}.png`, {
+          fullPage: true,
+          maxDiffPixelRatio: maxDiffRatio,
+          animations: 'disabled',
+        });
+      });
+    }
   }
 }
