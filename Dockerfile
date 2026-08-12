@@ -10,12 +10,33 @@ COPY package.json pnpm-lock.yaml ./
 # `corepack install` with no arguments resolves pnpm from package.json's
 # packageManager field, so the version lives in exactly one place.
 RUN corepack install
+# better-sqlite3 is a regular dependency (used by the server bundle), so this
+# full install compiles its native binding too; alpine/musl has no prebuild.
+RUN apk add --no-cache python3 make g++
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 	pnpm config set store-dir /pnpm/store && pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm run build
+RUN pnpm run server:build
 
-FROM caddy:2-alpine
+# better-sqlite3 is external to the server bundle and needs its native binding
+# plus its runtime dependency subtree. alpine/musl isn't covered by
+# better-sqlite3's prebuilds, so this stage compiles from source.
+FROM node:26-alpine AS server-deps
+WORKDIR /app
+RUN npm install -g corepack@0.35.0
+COPY package.json pnpm-lock.yaml ./
+RUN corepack install
+RUN apk add --no-cache python3 make g++
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+	pnpm config set store-dir /pnpm/store && pnpm install --frozen-lockfile --prod
+
+FROM node:26-alpine
+RUN apk add --no-cache caddy
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /app/dist /srv
-CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+COPY --from=build /app/dist-server /app/dist-server
+COPY --from=server-deps /app/node_modules /app/node_modules
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+CMD ["/app/start.sh"]
