@@ -30,15 +30,18 @@ export const USERNAME_KEY = 'todo-quantum.username';
 
 // The API sidecar is a real server with one shared database for the whole run,
 // so a list pushed by one test would be pulled back down by the next one (same
-// username = same row) and clobber its seed data. Each test therefore talks to
-// the server as its own generated user: the request is real, the row is not
-// shared. Only the server-side name is swapped — the browser keeps 'e2e', which
-// is what the localStorage keys are built from.
+// username = same row) and clobber its seed data. Every username a test uses —
+// the seeded 'e2e', or a name typed into the first-run gate — is therefore
+// suffixed with a per-test token on its way to the server: the request is real,
+// the row is not shared. Distinct usernames within a test stay distinct, and the
+// browser keeps the unsuffixed name, which is what localStorage keys are built
+// from. The 32-character server limit caps the prefix.
 async function isolateRemoteUser(context: BrowserContext): Promise<void> {
-  const remoteUser = `e2e-${randomUUID().replace(/-/g, '').slice(0, 20)}`;
-  await context.route(`**/api/users/${E2E_USERNAME}/data`, async (route) => {
+  const token = randomUUID().replace(/-/g, '').slice(0, 20);
+  await context.route('**/api/users/*/data', async (route) => {
     const url = new URL(route.request().url());
-    url.pathname = `/api/users/${remoteUser}/data`;
+    const username = url.pathname.split('/')[3];
+    url.pathname = `/api/users/${decodeURIComponent(username).slice(0, 10)}-${token}/data`;
     await route.continue({ url: url.toString() });
   });
 }

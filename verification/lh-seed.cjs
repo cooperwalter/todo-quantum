@@ -8,7 +8,7 @@ const USERNAME = 'lhci';
 module.exports = async (browser, context) => {
   const page = await browser.newPage();
   await page.goto(context.url, { waitUntil: 'domcontentloaded' });
-  await page.evaluate((count, username) => {
+  await page.evaluate(async (count, username) => {
     const pad = (n) => String(n).padStart(2, '0');
     const tasks = [];
     const base = new Date();
@@ -28,8 +28,22 @@ module.exports = async (browser, context) => {
         order: i + 1,
       });
     }
+    const payload = JSON.stringify({ schemaVersion: 1, tasks });
     localStorage.setItem('todo-quantum.username', username);
-    localStorage.setItem(`todo-quantum.v1.${username}`, JSON.stringify({ schemaVersion: 1, tasks }));
+    localStorage.setItem(`todo-quantum.v1.${username}`, payload);
+
+    // The same list is pushed to the API and the returned timestamp is stored as
+    // the sync marker, so the audited page finds its row already up to date: no
+    // 404 in the console (which costs a best-practices point), no reload of the
+    // seeded list back to empty, no "updated from server" toast in the trace.
+    const res = await fetch(`/api/users/${username}/data`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: payload,
+    });
+    if (!res.ok) throw new Error(`lh-seed: seeding the api failed with ${res.status}`);
+    const { updatedAt } = await res.json();
+    localStorage.setItem(`todo-quantum.sync.${username}`, updatedAt);
   }, TASK_COUNT, USERNAME);
   await page.close();
 };

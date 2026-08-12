@@ -68,11 +68,32 @@ start_api() {
   return 1
 }
 
+ASSERTIONS="./.lighthouseci/assertion-results.json"
+
+# The configured lighthouse command ends in `|| true`, so a blown threshold
+# would otherwise be reported as a pass. The assertion file is removed first so
+# a crashed run cannot be graded against the previous run's results.
+check_lighthouse_assertions() {
+  if [[ ! -f "$ASSERTIONS" ]]; then
+    echo "FAIL: lighthouse wrote no assertion results ($ASSERTIONS)"
+    return 1
+  fi
+  local failures
+  if ! failures="$(node -e 'const f=require("'"$ASSERTIONS"'").filter(a=>!a.passed);if(f.length)console.log(JSON.stringify(f,null,2));process.exit(f.length?1:0)')"; then
+    echo "$failures"
+    echo "FAIL: lighthouse assertions below threshold"
+    return 1
+  fi
+  return 0
+}
+
 run "visual-regression" "$REG_CMD"
 run "accessibility"     "$A11Y_CMD"
+rm -f "$ASSERTIONS"
 if start_api; then
   run "lighthouse"      "$LH_CMD"
   stop_api
+  if ! check_lighthouse_assertions; then fail=1; fi
 else
   echo "==> lighthouse: FAIL"; fail=1
 fi
