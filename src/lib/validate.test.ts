@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isAppData } from './validate';
+import { isAppData, normalizeUsername } from './validate';
 import type { AppData, Task } from './types';
 
 function makeTask(overrides: Partial<Task> = {}): Task {
@@ -69,5 +69,27 @@ describe('isAppData', () => {
   });
   it('should reject a task with a non-finite order', () => {
     expect(isAppData(makeData([makeTask({ order: Number.NaN })]))).toBe(false);
+  });
+});
+
+describe('normalizeUsername', () => {
+  it('should lowercase and trim the input', () => {
+    expect(normalizeUsername('  Cooper ')).toBe('cooper');
+  });
+  it('should accept digits, dashes and underscores', () => {
+    expect(normalizeUsername('co-op_er2')).toBe('co-op_er2');
+  });
+  it('should return null for characters outside a-z 0-9 dash underscore', () => {
+    expect(normalizeUsername('coo per')).toBeNull();
+    expect(normalizeUsername('coöper')).toBeNull();
+  });
+  it('should return null for the empty string', () => {
+    expect(normalizeUsername('  ')).toBeNull();
+  });
+  it('should return null for names longer than 32 characters', () => {
+    expect(normalizeUsername('a'.repeat(33))).toBeNull();
+  });
+  it('should accept a name of exactly 32 characters', () => {
+    expect(normalizeUsername('a'.repeat(32))).toBe('a'.repeat(32));
   });
 });

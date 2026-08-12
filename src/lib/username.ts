@@ -1,14 +1,10 @@
 import { STORAGE_KEY } from './persistence';
+import { normalizeUsername } from './validate';
 import type { StorageLike } from './types';
 
 export const USERNAME_KEY = 'todo-quantum.username';
 
-const USERNAME_RE = /^[a-z0-9_-]{1,32}$/;
-
-export function normalizeUsername(raw: string): string | null {
-  const name = raw.trim().toLowerCase();
-  return USERNAME_RE.test(name) ? name : null;
-}
+export { normalizeUsername };
 
 export function getStoredUsername(storage: StorageLike): string | null {
   const raw = storage.getItem(USERNAME_KEY);
@@ -30,6 +26,12 @@ export function storageKeyFor(username: string): string {
 
 export function syncKeyFor(username: string): string {
   return `todo-quantum.sync.${username}`;
+}
+
+// Set while a push is outstanding and cleared once it lands, so a tab closed
+// mid-upload still knows on its next mount that local is the newer copy.
+export function dirtyKeyFor(username: string): string {
+  return `todo-quantum.dirty.${username}`;
 }
 
 export function migrateLegacyData(storage: StorageLike, username: string): void {

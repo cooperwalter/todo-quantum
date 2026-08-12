@@ -3,6 +3,14 @@ import type { AppData, Recurrence, Task } from './types';
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^\d{2}:\d{2}$/;
 const FREQS = ['daily', 'weekly', 'monthly'];
+const USERNAME_RE = /^[a-z0-9_-]{1,32}$/;
+
+// Shared by the client (username.ts) and the server (server/app.ts): both ends
+// must agree byte-for-byte on what a username is, so it is defined once here.
+export function normalizeUsername(raw: string): string | null {
+  const name = raw.trim().toLowerCase();
+  return USERNAME_RE.test(name) ? name : null;
+}
 
 function isRecurrence(value: unknown): value is Recurrence {
   if (typeof value !== 'object' || value === null) return false;

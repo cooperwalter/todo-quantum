@@ -1,15 +1,11 @@
 import { Hono } from 'hono';
 import type Database from 'better-sqlite3';
-import { isAppData } from '../src/lib/validate';
+import { isAppData, normalizeUsername } from '../src/lib/validate';
 import { getUserData, putUserData } from './db';
 
-const USERNAME_RE = /^[a-z0-9_-]{1,32}$/;
 const MAX_BODY_BYTES = 1_000_000;
 
-export function normalizeUsername(raw: string): string | null {
-  const name = raw.trim().toLowerCase();
-  return USERNAME_RE.test(name) ? name : null;
-}
+export { normalizeUsername };
 
 export function createApp(
   db: Database.Database,
