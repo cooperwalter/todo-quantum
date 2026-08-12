@@ -13,7 +13,10 @@
     "test": "vitest run",
     "plan:lint": "node verification/lens-plan-lint.mjs quantum.json",
     "design:preset": "node lens-design-preset.mjs",
-    "e2e": "playwright test e2e"
+    "e2e": "playwright test e2e",
+    "server:build": "esbuild server/index.ts --bundle --platform=node --format=cjs --outfile=dist-server/index.cjs --external:better-sqlite3",
+    "server:start": "node dist-server/index.cjs",
+    "server:dev": "pnpm run server:build && node dist-server/index.cjs"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.0",
