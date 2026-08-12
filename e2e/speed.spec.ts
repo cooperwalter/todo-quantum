@@ -40,7 +40,7 @@ function localDate(offsetDays: number): string {
 function seed(page: Page, tasks: SeedTask[]) {
   const payload = JSON.stringify({ schemaVersion: 1, tasks });
   return page.addInitScript((data) => {
-    window.localStorage.setItem('todo-quantum.v1', data);
+    window.localStorage.setItem('todo-quantum.v1.e2e', data);
   }, payload);
 }
 

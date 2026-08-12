@@ -6,7 +6,7 @@ import { CommandBar } from '../components/CommandBar';
 import { AppProvider } from '../state/AppContext';
 import type { Task } from '../lib/types';
 
-const STORAGE_KEY = 'todo-quantum.v1';
+const STORAGE_KEY = 'todo-quantum.v1.testuser';
 
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
@@ -31,7 +31,7 @@ function seedTasks(tasks: Task[]) {
 
 function renderAll() {
   return render(
-    <AppProvider>
+    <AppProvider username="testuser">
       <CommandBar />
       <AllView />
     </AppProvider>,

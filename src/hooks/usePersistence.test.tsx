@@ -1,11 +1,18 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { StrictMode, useEffect } from 'react';
 import { usePersistence } from './usePersistence';
+import type { SaveFailure } from './usePersistence';
 import { StorageBanner } from '../components/StorageBanner';
-import { STORAGE_KEY } from '../lib/persistence';
+import { dirtyKeyFor, storageKeyFor, syncKeyFor } from '../lib/username';
 import { AppProvider, useApp } from '../state/AppContext';
-import type { StorageLike, Task } from '../lib/types';
+import type { AppData, StorageLike, Task } from '../lib/types';
+
+const STORAGE_KEY = storageKeyFor('testuser');
+const SYNC_KEY = syncKeyFor('testuser');
+const DIRTY_KEY = dirtyKeyFor('testuser');
+const DATA_URL = '/api/users/testuser/data';
 
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
@@ -52,12 +59,72 @@ function makeQuotaFailingStorage(): StorageLike {
   };
 }
 
-function Harness({ storage }: { storage: StorageLike }) {
-  const { saveFailed, dismissSaveFailure } = usePersistence(storage);
+interface FetchCall {
+  url: string;
+  method: string;
+  body: AppData | null;
+}
+
+type FakeFetch = typeof fetch & { calls: FetchCall[] };
+
+function fakeResponse(body: unknown, status = 200): Response {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => body,
+  } as unknown as Response;
+}
+
+function makeFakeFetch(
+  handlers: {
+    get?: () => Response | Promise<Response>;
+    put?: () => Response | Promise<Response>;
+  } = {},
+): FakeFetch {
+  const calls: FetchCall[] = [];
+  const fn = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const method = init?.method ?? 'GET';
+    calls.push({
+      url: String(input),
+      method,
+      body: typeof init?.body === 'string' ? (JSON.parse(init.body) as AppData) : null,
+    });
+    if (method === 'PUT') {
+      return handlers.put === undefined
+        ? fakeResponse({ updatedAt: '2026-06-09T12:00:00.000Z' })
+        : handlers.put();
+    }
+    return handlers.get === undefined ? fakeResponse(null, 404) : handlers.get();
+  };
+  return Object.assign(fn as unknown as typeof fetch, { calls });
+}
+
+// Async work started by the sync layer settles on the microtask queue, which
+// fake timers never advance — drain it inside act() so React sees the updates.
+async function settleSync() {
+  await act(async () => {
+    for (let i = 0; i < 10; i += 1) await Promise.resolve();
+  });
+}
+
+function Harness({
+  storage,
+  fetchFn,
+  onSaveFailedChange,
+}: {
+  storage: StorageLike;
+  fetchFn: typeof fetch;
+  onSaveFailedChange?: (value: SaveFailure) => void;
+}) {
+  const { saveFailed, dismissSaveFailure } = usePersistence(storage, fetchFn);
   const { state, dispatch, toast } = useApp();
+  useEffect(() => {
+    onSaveFailedChange?.(saveFailed);
+  }, [saveFailed, onSaveFailedChange]);
   return (
     <div>
       {saveFailed !== false && <StorageBanner reason={saveFailed} onDismiss={dismissSaveFailure} />}
+      <pre data-testid="save-failed">{String(saveFailed)}</pre>
       <pre data-testid="tasks">{JSON.stringify(state.data.tasks)}</pre>
       <pre data-testid="undo-depth">{state.undoStack.length}</pre>
       <pre data-testid="toast">{toast?.message ?? ''}</pre>
@@ -75,10 +142,14 @@ function Harness({ storage }: { storage: StorageLike }) {
   );
 }
 
-function renderHarness(storage: StorageLike) {
+function renderHarness(
+  storage: StorageLike,
+  fetchFn: typeof fetch = makeFakeFetch(),
+  onSaveFailedChange?: (value: SaveFailure) => void,
+) {
   return render(
-    <AppProvider>
-      <Harness storage={storage} />
+    <AppProvider username="testuser">
+      <Harness storage={storage} fetchFn={fetchFn} onSaveFailedChange={onSaveFailedChange} />
     </AppProvider>,
   );
 }
@@ -129,7 +200,7 @@ describe('usePersistence', () => {
     act(() => {
       vi.advanceTimersByTime(1);
     });
-    expect(setItem).toHaveBeenCalledTimes(1);
+    expect(setItem.mock.calls.filter(([key]) => key === STORAGE_KEY)).toHaveLength(1);
   });
 
   it('a quota-failing save shows the storage banner with the exact danger copy', () => {
@@ -286,5 +357,389 @@ describe('Review fixes: persistence resilience (F-010, F-016, F-017)', () => {
     });
     expect(inner.getItem(STORAGE_KEY)).not.toBeNull();
     expect(document.querySelector('.storage-banner')).toBeNull();
+  });
+});
+
+describe('remote sync', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 9, 13, 0, 0));
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    window.localStorage.clear();
+  });
+
+  function seedLocalData(tasks: Task[]): AppData {
+    const data: AppData = { schemaVersion: 1, tasks };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    return data;
+  }
+
+  it('should PUT the saved blob to /api/users/<username>/data after a local save', async () => {
+    const storage = makeMemoryStorage();
+    const fetchFn = makeFakeFetch();
+    renderHarness(storage, fetchFn);
+    await settleSync();
+
+    fireEvent.click(screen.getByText('do-add'));
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    await settleSync();
+
+    const put = fetchFn.calls.find((call) => call.method === 'PUT');
+    expect(put?.url).toBe(DATA_URL);
+    expect(put?.body?.tasks.map((t) => t.id)).toEqual(['added-1']);
+  });
+
+  it('should set saveFailed to offline when the PUT rejects', async () => {
+    const storage = makeMemoryStorage();
+    const fetchFn = makeFakeFetch({
+      put: () => {
+        throw new Error('network down');
+      },
+    });
+    renderHarness(storage, fetchFn);
+    await settleSync();
+
+    fireEvent.click(screen.getByText('do-add'));
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    await settleSync();
+
+    expect(screen.getByTestId('save-failed').textContent).toBe('offline');
+  });
+
+  it('should clear the offline failure once a retried PUT succeeds', async () => {
+    const storage = makeMemoryStorage();
+    let putFailing = true;
+    const fetchFn = makeFakeFetch({
+      put: () => {
+        if (putFailing) throw new Error('network down');
+        return fakeResponse({ updatedAt: '2026-06-09T12:00:00.000Z' });
+      },
+    });
+    renderHarness(storage, fetchFn);
+    await settleSync();
+
+    fireEvent.click(screen.getByText('do-add'));
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    await settleSync();
+    expect(screen.getByTestId('save-failed').textContent).toBe('offline');
+
+    putFailing = false;
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    await settleSync();
+
+    expect(screen.getByTestId('save-failed').textContent).toBe('false');
+    expect(storage.store.get(SYNC_KEY)).toBe('2026-06-09T12:00:00.000Z');
+  });
+
+  it('should reload state from the server when the server updatedAt differs from the last-synced value', async () => {
+    const storage = makeMemoryStorage({ [SYNC_KEY]: '2026-06-01T00:00:00.000Z' });
+    const serverData: AppData = {
+      schemaVersion: 1,
+      tasks: [makeTask({ id: 'server-1', title: 'From the server' })],
+    };
+    const fetchFn = makeFakeFetch({
+      get: () => fakeResponse({ data: serverData, updatedAt: '2026-06-09T12:00:00.000Z' }),
+    });
+    renderHarness(storage, fetchFn);
+    await settleSync();
+
+    const tasks = JSON.parse(screen.getByTestId('tasks').textContent ?? '[]') as Task[];
+    expect(tasks.map((t) => t.id)).toEqual(['server-1']);
+    expect(screen.getByTestId('toast').textContent).toBe('List updated from server');
+    expect(storage.store.get(SYNC_KEY)).toBe('2026-06-09T12:00:00.000Z');
+    const cached = JSON.parse(storage.store.get(STORAGE_KEY) ?? 'null') as AppData | null;
+    expect(cached?.tasks.map((t) => t.id)).toEqual(['server-1']);
+  });
+
+  it('should not reload state when the server updatedAt matches the last-synced value', async () => {
+    seedLocalData([makeTask({ id: 'local-1', title: 'Local only' })]);
+    const storage = makeMemoryStorage({ [SYNC_KEY]: '2026-06-09T12:00:00.000Z' });
+    const serverData: AppData = {
+      schemaVersion: 1,
+      tasks: [makeTask({ id: 'server-1', title: 'From the server' })],
+    };
+    const fetchFn = makeFakeFetch({
+      get: () => fakeResponse({ data: serverData, updatedAt: '2026-06-09T12:00:00.000Z' }),
+    });
+    renderHarness(storage, fetchFn);
+    await settleSync();
+
+    const tasks = JSON.parse(screen.getByTestId('tasks').textContent ?? '[]') as Task[];
+    expect(tasks.map((t) => t.id)).toEqual(['local-1']);
+    expect(screen.getByTestId('toast').textContent).toBe('');
+  });
+
+  it('should push local data up when the server has none for a fresh username', async () => {
+    seedLocalData([makeTask({ id: 'local-1', title: 'Local only' })]);
+    const storage = makeMemoryStorage();
+    const fetchFn = makeFakeFetch({ get: () => fakeResponse(null, 404) });
+    renderHarness(storage, fetchFn);
+    await settleSync();
+
+    const put = fetchFn.calls.find((call) => call.method === 'PUT');
+    expect(put?.url).toBe(DATA_URL);
+    expect(put?.body?.tasks.map((t) => t.id)).toEqual(['local-1']);
+    expect(storage.store.get(SYNC_KEY)).toBe('2026-06-09T12:00:00.000Z');
+  });
+
+  it('should not push anything on mount when the server has no data and the local list is empty', async () => {
+    const storage = makeMemoryStorage();
+    const fetchFn = makeFakeFetch({ get: () => fakeResponse(null, 404) });
+    renderHarness(storage, fetchFn);
+    await settleSync();
+
+    expect(fetchFn.calls.filter((call) => call.method === 'PUT')).toEqual([]);
+  });
+
+  it('should keep quota precedence over offline in saveFailed', async () => {
+    const storage = makeQuotaFailingStorage();
+    const fetchFn = makeFakeFetch({
+      get: () => {
+        throw new Error('network down');
+      },
+      put: () => {
+        throw new Error('network down');
+      },
+    });
+    renderHarness(storage, fetchFn);
+    await settleSync();
+    expect(screen.getByTestId('save-failed').textContent).toBe('offline');
+
+    fireEvent.click(screen.getByText('do-add'));
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    await settleSync();
+
+    expect(screen.getByTestId('save-failed').textContent).toBe('quota');
+  });
+
+  it('should issue exactly one GET when React StrictMode double-invokes the mount effect', async () => {
+    const storage = makeMemoryStorage();
+    const fetchFn = makeFakeFetch({ get: () => fakeResponse(null, 404) });
+    render(
+      <StrictMode>
+        <AppProvider username="testuser">
+          <Harness storage={storage} fetchFn={fetchFn} />
+        </AppProvider>
+      </StrictMode>,
+    );
+    await settleSync();
+
+    expect(fetchFn.calls.filter((call) => call.method === 'GET')).toHaveLength(1);
+  });
+
+  it('should not resurrect the stale payload when an earlier push fails after a later push already succeeded', async () => {
+    const storage = makeMemoryStorage();
+    let releaseFirstPut: (() => void) | null = null;
+    const fetchFn = makeFakeFetch({
+      put: () => {
+        if (releaseFirstPut !== null) return fakeResponse({ updatedAt: '2026-06-09T12:00:00.000Z' });
+        return new Promise<Response>((resolve) => {
+          releaseFirstPut = () => resolve(fakeResponse(null, 500));
+        });
+      },
+    });
+    renderHarness(storage, fetchFn);
+    await settleSync();
+
+    fireEvent.click(screen.getByText('do-add'));
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    await settleSync();
+
+    fireEvent.click(screen.getByText('do-add'));
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    await settleSync();
+    const putsBeforeFailure = fetchFn.calls.filter((call) => call.method === 'PUT');
+    expect(putsBeforeFailure).toHaveLength(2);
+    expect(putsBeforeFailure[1].body?.tasks).toHaveLength(2);
+
+    act(() => {
+      releaseFirstPut?.();
+    });
+    await settleSync();
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    await settleSync();
+
+    const puts = fetchFn.calls.filter((call) => call.method === 'PUT');
+    expect(puts.slice(2).every((call) => call.body?.tasks.length === 2)).toBe(true);
+    expect(screen.getByTestId('save-failed').textContent).toBe('false');
+    const cached = JSON.parse(storage.store.get(STORAGE_KEY) ?? 'null') as AppData | null;
+    expect(cached?.tasks).toHaveLength(2);
+  });
+
+  it('should keep saveFailed at offline without flashing back to false across consecutive saves while the PUT keeps failing', async () => {
+    const storage = makeMemoryStorage();
+    const fetchFn = makeFakeFetch({
+      put: () => {
+        throw new Error('network down');
+      },
+    });
+    const seen: SaveFailure[] = [];
+    renderHarness(storage, fetchFn, (value) => {
+      seen.push(value);
+    });
+    await settleSync();
+
+    fireEvent.click(screen.getByText('do-add'));
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    await settleSync();
+    fireEvent.click(screen.getByText('do-add'));
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    await settleSync();
+
+    expect(screen.getByTestId('save-failed').textContent).toBe('offline');
+    const firstOffline = seen.indexOf('offline');
+    expect(firstOffline).toBeGreaterThanOrEqual(0);
+    expect(seen.slice(firstOffline)).toEqual(seen.slice(firstOffline).map(() => 'offline'));
+  });
+
+  it('should send no PUT for an edit made while the mount fetch is failing, and push that edit once a later fetch succeeds', async () => {
+    const storage = makeMemoryStorage();
+    let getFailing = true;
+    const fetchFn = makeFakeFetch({
+      get: () => {
+        if (getFailing) throw new Error('network down');
+        return fakeResponse(null, 404);
+      },
+    });
+    renderHarness(storage, fetchFn);
+    await settleSync();
+
+    fireEvent.click(screen.getByText('do-add'));
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    await settleSync();
+
+    expect(fetchFn.calls.filter((call) => call.method === 'PUT')).toEqual([]);
+    expect(screen.getByTestId('save-failed').textContent).toBe('offline');
+
+    getFailing = false;
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    await settleSync();
+    await settleSync();
+
+    const puts = fetchFn.calls.filter((call) => call.method === 'PUT');
+    expect(puts).toHaveLength(1);
+    expect(puts[0].body?.tasks.map((t) => t.id)).toEqual(['added-1']);
+    expect(screen.getByTestId('save-failed').textContent).toBe('false');
+  });
+
+  it('should PUT the local blob on mount and clear the dirty marker when the dirty marker is set and the server updatedAt equals the stored sync marker', async () => {
+    seedLocalData([makeTask({ id: 'local-1', title: 'Local only' })]);
+    const storage = makeMemoryStorage({
+      [SYNC_KEY]: '2026-06-09T12:00:00.000Z',
+      [DIRTY_KEY]: '1',
+    });
+    const serverData: AppData = {
+      schemaVersion: 1,
+      tasks: [makeTask({ id: 'server-1', title: 'From the server' })],
+    };
+    const fetchFn = makeFakeFetch({
+      get: () => fakeResponse({ data: serverData, updatedAt: '2026-06-09T12:00:00.000Z' }),
+    });
+    renderHarness(storage, fetchFn);
+    await settleSync();
+
+    const put = fetchFn.calls.find((call) => call.method === 'PUT');
+    expect(put?.body?.tasks.map((t) => t.id)).toEqual(['local-1']);
+    expect(storage.store.has(DIRTY_KEY)).toBe(false);
+    const tasks = JSON.parse(screen.getByTestId('tasks').textContent ?? '[]') as Task[];
+    expect(tasks.map((t) => t.id)).toEqual(['local-1']);
+  });
+
+  it('should PUT the local blob and never load the server copy when the dirty marker is set and the server updatedAt differs from the stored sync marker', async () => {
+    seedLocalData([makeTask({ id: 'local-1', title: 'Local only' })]);
+    const storage = makeMemoryStorage({
+      [SYNC_KEY]: '2026-06-01T00:00:00.000Z',
+      [DIRTY_KEY]: '1',
+    });
+    const serverData: AppData = {
+      schemaVersion: 1,
+      tasks: [makeTask({ id: 'server-1', title: 'From the server' })],
+    };
+    const fetchFn = makeFakeFetch({
+      get: () => fakeResponse({ data: serverData, updatedAt: '2026-06-09T12:00:00.000Z' }),
+    });
+    renderHarness(storage, fetchFn);
+    await settleSync();
+
+    const put = fetchFn.calls.find((call) => call.method === 'PUT');
+    expect(put?.body?.tasks.map((t) => t.id)).toEqual(['local-1']);
+    const tasks = JSON.parse(screen.getByTestId('tasks').textContent ?? '[]') as Task[];
+    expect(tasks.map((t) => t.id)).toEqual(['local-1']);
+    expect(screen.getByTestId('toast').textContent).toBe('');
+    expect(storage.store.has(DIRTY_KEY)).toBe(false);
+  });
+
+  it('should send no PUT after a storage event from another tab replaces state', async () => {
+    const storage = makeMemoryStorage();
+    const fetchFn = makeFakeFetch();
+    renderHarness(storage, fetchFn);
+    await settleSync();
+
+    const external = JSON.stringify({
+      schemaVersion: 1,
+      tasks: [makeTask({ id: 'other-tab-1', title: 'From another tab' })],
+    });
+    storage.setItem(STORAGE_KEY, external);
+    act(() => {
+      fireEvent(window, new StorageEvent('storage', { key: STORAGE_KEY, newValue: external }));
+    });
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    await settleSync();
+
+    expect(fetchFn.calls.filter((call) => call.method === 'PUT')).toEqual([]);
+    const tasks = JSON.parse(screen.getByTestId('tasks').textContent ?? '[]') as Task[];
+    expect(tasks.map((t) => t.id)).toEqual(['other-tab-1']);
+  });
+
+  it('should not PUT the server blob back after reloading state from the server', async () => {
+    const storage = makeMemoryStorage({ [SYNC_KEY]: '2026-06-01T00:00:00.000Z' });
+    const serverData: AppData = {
+      schemaVersion: 1,
+      tasks: [makeTask({ id: 'server-1', title: 'From the server' })],
+    };
+    const fetchFn = makeFakeFetch({
+      get: () => fakeResponse({ data: serverData, updatedAt: '2026-06-09T12:00:00.000Z' }),
+    });
+    renderHarness(storage, fetchFn);
+    await settleSync();
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    await settleSync();
+
+    expect(fetchFn.calls.filter((call) => call.method === 'PUT')).toEqual([]);
+    const tasks = JSON.parse(screen.getByTestId('tasks').textContent ?? '[]') as Task[];
+    expect(tasks.map((t) => t.id)).toEqual(['server-1']);
   });
 });

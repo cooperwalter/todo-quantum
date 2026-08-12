@@ -5,7 +5,7 @@ import { DoneView } from './DoneView';
 import { AppProvider, useApp } from '../state/AppContext';
 import type { Task } from '../lib/types';
 
-const STORAGE_KEY = 'todo-quantum.v1';
+const STORAGE_KEY = 'todo-quantum.v1.testuser';
 
 function makeDoneTask(overrides: Partial<Task> = {}): Task {
   return {
@@ -35,7 +35,7 @@ function StateProbe() {
 
 function renderDone() {
   return render(
-    <AppProvider>
+    <AppProvider username="testuser">
       <DoneView />
       <StateProbe />
     </AppProvider>,

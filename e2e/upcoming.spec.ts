@@ -50,7 +50,7 @@ function seedThreeWeeks(page: Page) {
     ],
   });
   return page.addInitScript((data) => {
-    window.localStorage.setItem('todo-quantum.v1', data);
+    window.localStorage.setItem('todo-quantum.v1.e2e', data);
   }, payload);
 }
 

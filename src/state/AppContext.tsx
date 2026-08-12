@@ -6,6 +6,7 @@ import { nextOccurrence } from '../lib/recurrence';
 import { initialStoreState, reducer } from '../lib/store';
 import type { Action, StoreState } from '../lib/store';
 import type { StorageLike } from '../lib/types';
+import { migrateLegacyData, storageKeyFor } from '../lib/username';
 
 export type View = 'today' | 'upcoming' | 'all' | 'done';
 
@@ -28,6 +29,8 @@ interface AppContextValue {
   setSelectedTaskId: (id: string | null) => void;
   recovered: boolean;
   storage: StorageLike;
+  username: string;
+  storageKey: string;
   storageUnavailable: boolean;
   toast: ToastState | null;
   showToast: (message: string, undoable?: boolean) => void;
@@ -88,12 +91,16 @@ function toastFor(action: Action, state: StoreState): ToastState | null {
   }
 }
 
-export function AppProvider({ children }: { children: ReactNode }) {
+export function AppProvider({ username, children }: { username: string; children: ReactNode }) {
   const storageHandle = useMemo(() => {
     const real = getLocalStorage();
     return { storage: real ?? memoryStorage(), unavailable: real === null };
   }, []);
-  const loadResult = useMemo(() => load(storageHandle.storage), [storageHandle]);
+  const storageKey = storageKeyFor(username);
+  const loadResult = useMemo(() => {
+    migrateLegacyData(storageHandle.storage, username);
+    return load(storageHandle.storage, new Date(), storageKeyFor(username));
+  }, [storageHandle, username]);
   const [state, rawDispatch] = useReducer(reducer, loadResult.data, initialStoreState);
   const [view, setView] = useState<View>('today');
   const [barText, setBarText] = useState('');
@@ -135,10 +142,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
       recovered: loadResult.recovered,
       storage: storageHandle.storage,
       storageUnavailable: storageHandle.unavailable,
+      username,
+      storageKey,
       toast,
       showToast,
     }),
-    [state, dispatch, view, barText, selectedTaskId, loadResult.recovered, storageHandle, toast, showToast],
+    [
+      state,
+      dispatch,
+      view,
+      barText,
+      selectedTaskId,
+      loadResult.recovered,
+      storageHandle,
+      username,
+      storageKey,
+      toast,
+      showToast,
+    ],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

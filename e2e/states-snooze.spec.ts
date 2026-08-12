@@ -11,7 +11,7 @@ function seedTask(page: Page) {
       `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
     window.localStorage.setItem(
-      'todo-quantum.v1',
+      'todo-quantum.v1.e2e',
       JSON.stringify({
         schemaVersion: 1,
         tasks: [
@@ -56,7 +56,7 @@ test('pressing 1 on a j-selected overdue row sets dueDate to tomorrow in storage
     .poll(
       () =>
         page.evaluate(() => {
-          const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1') ?? '{}');
+          const data = JSON.parse(window.localStorage.getItem('todo-quantum.v1.e2e') ?? '{}');
           return data.tasks?.[0]?.dueDate as string | undefined;
         }),
       { message: 'debounced persistence flushes the snoozed dueDate to localStorage' },

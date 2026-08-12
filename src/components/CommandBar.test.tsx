@@ -16,7 +16,7 @@ function TasksProbe() {
 
 function renderBar() {
   return render(
-    <AppProvider>
+    <AppProvider username="testuser">
       <CommandBar now={NOW} />
       <TasksProbe />
     </AppProvider>,
@@ -151,7 +151,7 @@ function ViewProbe() {
 
 function renderBarWithView() {
   return render(
-    <AppProvider>
+    <AppProvider username="testuser">
       <CommandBar now={NOW} />
       <ViewProbe />
       <TasksProbe />
@@ -177,7 +177,7 @@ describe('CommandBar command mode (FR-18, FR-19)', () => {
     await user.type(screen.getByRole('textbox'), '>');
     const listbox = screen.getByRole('listbox');
     expect(listbox).toBeTruthy();
-    expect(screen.getAllByRole('option')).toHaveLength(7);
+    expect(screen.getAllByRole('option')).toHaveLength(8);
   });
 
   it("'>tdy' highlights today and Enter switches the view", async () => {

@@ -1,14 +1,20 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import './CommandBar.css';
 import { ParsedInput } from './ParsedInput';
 import { COMMANDS, fuzzyMatch } from '../lib/commands';
 import type { ParseResult } from '../lib/parser';
 import { useApp } from '../state/AppContext';
+import { clearUsername } from '../lib/username';
 
 export function CommandBar({ now, openCheatsheet }: { now?: Date; openCheatsheet?: () => void }) {
-  const { barText, setBarText, dispatch, setView, barRef } = useApp();
+  const { barText, setBarText, dispatch, setView, barRef, storage } = useApp();
   const [error, setError] = useState<string | null>(null);
   const [selectedCommand, setSelectedCommand] = useState(0);
+
+  const switchUser = useCallback(() => {
+    clearUsername(storage);
+    window.location.reload();
+  }, [storage]);
 
   const commandMode = barText.startsWith('>');
   const commandQuery = commandMode ? barText.slice(1).trim() : '';
@@ -50,6 +56,7 @@ export function CommandBar({ now, openCheatsheet }: { now?: Date; openCheatsheet
         setView,
         dispatch,
         openCheatsheet: openCheatsheet ?? (() => {}),
+        switchUser,
       });
       setBarText('');
       setSelectedCommand(0);
@@ -130,7 +137,12 @@ export function CommandBar({ now, openCheatsheet }: { now?: Date; openCheatsheet
               className={`command-bar-option${index === activeCommand ? ' command-bar-option--active' : ''}`}
               onMouseDown={(event) => {
                 event.preventDefault();
-                command.run({ setView, dispatch, openCheatsheet: openCheatsheet ?? (() => {}) });
+                command.run({
+                  setView,
+                  dispatch,
+                  openCheatsheet: openCheatsheet ?? (() => {}),
+                  switchUser,
+                });
                 setBarText('');
                 setSelectedCommand(0);
               }}

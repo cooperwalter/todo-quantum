@@ -13,7 +13,7 @@ for (const [name, width] of BREAKPOINTS) {
     const input = page.getByRole('textbox', { name: 'Capture a task' });
     await input.fill('>');
     await expect(page.getByRole('listbox')).toBeVisible();
-    await expect(page.getByRole('option')).toHaveCount(7);
+    await expect(page.getByRole('option')).toHaveCount(8);
     await page.addStyleTag({
       content:
         '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}',

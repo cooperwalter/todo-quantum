@@ -23,6 +23,10 @@
 	# security headers from every 404.
 	header -Server
 
+	handle /api/* {
+		reverse_proxy 127.0.0.1:3000
+	}
+
 	# No try_files here: a missing asset must 404 rather than fall back to the
 	# shell, which would otherwise be served under the immutable header below.
 	# The file guard keys the year-long TTL on the served file rather than the

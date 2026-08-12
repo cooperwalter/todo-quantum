@@ -28,7 +28,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
 
 function renderList(sections: TaskListSection[]) {
   return render(
-    <AppProvider>
+    <AppProvider username="testuser">
       <TaskList sections={sections} />
     </AppProvider>,
   );
@@ -109,7 +109,7 @@ describe('TaskList controlled selection', () => {
     const b = makeTask({ title: 'Second' });
     const selections: (string | null)[] = [];
     render(
-      <AppProvider>
+      <AppProvider username="testuser">
         <TaskList
           sections={[{ label: 'Due today', tasks: [a, b] }]}
           selectedId={a.id}

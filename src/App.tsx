@@ -1,15 +1,18 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import './App.css';
 import { Cheatsheet } from './components/Cheatsheet';
 import { HankoSeal } from './components/HankoSeal';
 import { CommandBar } from './components/CommandBar';
 import { StorageBanner } from './components/StorageBanner';
 import { Toast } from './components/Toast';
+import { UsernameGate } from './components/UsernameGate';
 import { ViewTabs } from './components/ViewTabs';
 import { useKeymap } from './hooks/useKeymap';
 import { usePersistence } from './hooks/usePersistence';
 import { usePointerMode } from './hooks/usePointerMode';
 import { todayStr } from './lib/dates';
+import { getLocalStorage, memoryStorage } from './lib/persistence';
+import { getStoredUsername, storeUsername } from './lib/username';
 import { AppProvider, useApp } from './state/AppContext';
 import { AllView } from './views/AllView';
 import { DoneView } from './views/DoneView';
@@ -96,8 +99,22 @@ function Shell() {
 }
 
 function App() {
+  const storage = useMemo(() => getLocalStorage() ?? memoryStorage(), []);
+  const [username, setUsername] = useState<string | null>(() => getStoredUsername(storage));
+
+  if (username === null) {
+    return (
+      <UsernameGate
+        onSubmit={(name) => {
+          storeUsername(storage, name);
+          setUsername(name);
+        }}
+      />
+    );
+  }
+
   return (
-    <AppProvider>
+    <AppProvider username={username} key={username}>
       <Shell />
     </AppProvider>
   );

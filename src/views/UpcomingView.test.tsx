@@ -5,7 +5,7 @@ import { UpcomingView } from './UpcomingView';
 import { AppProvider } from '../state/AppContext';
 import type { Task } from '../lib/types';
 
-const STORAGE_KEY = 'todo-quantum.v1';
+const STORAGE_KEY = 'todo-quantum.v1.testuser';
 
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
@@ -30,7 +30,7 @@ function seedTasks(tasks: Task[]) {
 
 function renderUpcoming() {
   return render(
-    <AppProvider>
+    <AppProvider username="testuser">
       <UpcomingView />
     </AppProvider>,
   );

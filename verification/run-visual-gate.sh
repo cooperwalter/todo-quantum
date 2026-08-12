@@ -42,9 +42,61 @@ run() { # label, command
   if bash -c "$cmd"; then echo "==> $label: PASS"; else echo "==> $label: FAIL"; fail=1; fi
 }
 
+# The playwright legs get their API sidecar from playwright.config.ts webServer;
+# lighthouse drives its own preview server, so the sidecar is started here for
+# that leg alone. Without it the app's first sync 502s through the preview
+# proxy and lighthouse audits an offline-bannered screen (and docks
+# best-practices for the console error). The database is thrown away.
+API_PORT=3000
+API_PID=""
+stop_api() { [[ -n "$API_PID" ]] && kill "$API_PID" 2>/dev/null; API_PID=""; }
+trap stop_api EXIT
+
+start_api() {
+  if curl -sS -o /dev/null --max-time 2 "http://127.0.0.1:$API_PORT/" 2>/dev/null; then
+    echo "FAIL: something is already serving port $API_PORT — stop it so the gate can start a fresh api"
+    return 1
+  fi
+  pnpm run server:build >/dev/null || return 1
+  DB_PATH="$(mktemp -u -t todo-quantum-lh).db" node dist-server/index.cjs >/dev/null 2>&1 &
+  API_PID=$!
+  for _ in $(seq 1 40); do
+    curl -sS -o /dev/null --max-time 2 "http://127.0.0.1:$API_PORT/" 2>/dev/null && return 0
+    sleep 0.25
+  done
+  echo "FAIL: api sidecar never came up on port $API_PORT"
+  return 1
+}
+
+ASSERTIONS="./.lighthouseci/assertion-results.json"
+
+# The configured lighthouse command ends in `|| true`, so a blown threshold
+# would otherwise be reported as a pass. The assertion file is removed first so
+# a crashed run cannot be graded against the previous run's results.
+check_lighthouse_assertions() {
+  if [[ ! -f "$ASSERTIONS" ]]; then
+    echo "FAIL: lighthouse wrote no assertion results ($ASSERTIONS)"
+    return 1
+  fi
+  local failures
+  if ! failures="$(node -e 'const f=require("'"$ASSERTIONS"'").filter(a=>!a.passed);if(f.length)console.log(JSON.stringify(f,null,2));process.exit(f.length?1:0)')"; then
+    echo "$failures"
+    echo "FAIL: lighthouse assertions below threshold"
+    return 1
+  fi
+  return 0
+}
+
 run "visual-regression" "$REG_CMD"
 run "accessibility"     "$A11Y_CMD"
-run "lighthouse"        "$LH_CMD"
+rm -f "$ASSERTIONS"
+if start_api; then
+  run "lighthouse"      "$LH_CMD"
+  stop_api
+  if ! check_lighthouse_assertions; then fail=1; fi
+else
+  echo "==> lighthouse: FAIL"; fail=1
+fi
 
 echo "==================================================================="
 if [[ "$fail" -eq 0 ]]; then

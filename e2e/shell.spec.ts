@@ -18,10 +18,20 @@ function hexToRgb(hex: string): string {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
+// A first visit for a username the server has never seen answers 404 by design
+// ("no remote list yet"), and Chromium logs every 404 as a console error. Only
+// that exact combination is ignored — the endpoint AND a 404 — so a 500, a CORS
+// rejection or a dropped connection on the same endpoint still fails, as does a
+// 404 anywhere else (a missing font, a broken asset).
+const REMOTE_DATA_ENDPOINT = /\/api\/users\/[^/]+\/data$/;
+const NOT_FOUND = /\b404\b/;
+
 function collectConsoleErrors(page: Page): string[] {
   const errors: string[] = [];
   page.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(msg.text());
+    if (msg.type() !== 'error') return;
+    if (REMOTE_DATA_ENDPOINT.test(msg.location().url) && NOT_FOUND.test(msg.text())) return;
+    errors.push(msg.text());
   });
   page.on('pageerror', (err) => errors.push(err.message));
   return errors;

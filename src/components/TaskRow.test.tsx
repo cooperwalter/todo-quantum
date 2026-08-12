@@ -31,11 +31,11 @@ function TasksProbe() {
 
 function renderRow(task: Task, extra: { rollover?: boolean } = {}) {
   window.localStorage.setItem(
-    'todo-quantum.v1',
+    'todo-quantum.v1.testuser',
     JSON.stringify({ schemaVersion: 1, tasks: [task] }),
   );
   return render(
-    <AppProvider>
+    <AppProvider username="testuser">
       <TaskRow task={task} rollover={extra.rollover ?? false} />
       <TasksProbe />
     </AppProvider>,
@@ -157,11 +157,11 @@ describe('TaskRow edit close returns selection to the row', () => {
   function renderRowWithSelect(task: Task) {
     const onSelect = vi.fn();
     window.localStorage.setItem(
-      'todo-quantum.v1',
+      'todo-quantum.v1.testuser',
       JSON.stringify({ schemaVersion: 1, tasks: [task] }),
     );
     render(
-      <AppProvider>
+      <AppProvider username="testuser">
         <TaskRow task={task} onSelect={onSelect} />
         <TasksProbe />
       </AppProvider>,
